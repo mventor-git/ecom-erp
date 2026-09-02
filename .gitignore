@@ -1,0 +1,81 @@
+# ── Dependencies ──
+node_modules/
+**/node_modules/
+
+# ── Environment / secrets (NEVER commit) ──
+.env
+.env.*
+!.env.example
+credentials.md
+secrets/
+
+# ── Databases / data ──
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+server/data/
+server/*.sqlite
+
+# ── Build output ──
+client/dist/
+client-admin/dist/
+dist/
+
+# ── Uploads / user content / backups ──
+server/public/uploads/
+server/public/images/
+server/backups/
+
+# ── Logs ──
+logs/
+**/logs/
+*.log
+
+# ── Browser / verification artifacts ──
+browser-evidence/
+test-results/
+coverage/
+.nyc_output/
+.eslintcache
+
+# ── Local tooling / session state (do NOT commit) ──
+.claude/
+.claude-omniroute/
+.cache/
+.codex/
+.cursor/
+.expo/
+.gemini/
+.omniroute/
+.openclaw/
+.cua-driver/
+.dsh/
+.agents/
+__pycache__/
+*.pyc
+.vscode/
+.idea/
+*.swp
+*.swo
+*.mventor
+*.muse
+.mventor/
+.tickets/
+
+# ── Scratch / probe scripts (some hardcode live credentials) ──
+server/_*.js
+server/_*.cjs
+server/_*.mjs
+_*.cjs
+_*.mjs
+_*.py
+
+# ── Separate nested app (its own git repo) — excluded from this repo ──
+mobile-app/
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+worker-app/

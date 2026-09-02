@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>السعر النهائي — RTL &amp; LTR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#f6f2e8; color:#1a2332; padding:40px 24px; font-family:Inter,'Segoe UI',sans-serif; }
+  h1 { text-align:center; font-weight:600; font-size:22px; margin-bottom:30px; }
+  .row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; max-width:1000px; margin:0 auto 26px; }
+  .panel { border-radius:18px; padding:28px 34px; box-shadow:0 8px 24px rgba(0,0,0,.07); }
+  .light { background:#fffdf7; }
+  .darkp { background:#101c2c; color:#f5efdd; }
+  h2 { font-size:12px; letter-spacing:.14em; text-transform:uppercase; opacity:.45; margin:0 0 16px; font-weight:700; }
+
+  .rtl .price-line { direction:rtl; }
+  .price-line { display:flex; align-items:baseline; gap:.3em; font-size:30px; font-weight:700; white-space:nowrap; }
+  .word { font-family:'Aref Ruqaa',serif; font-weight:700; color:#a8811f; font-size:.62em; line-height:1; transform:translateY(.08em); }
+  .darkp .word { color:#e9c46a; }
+  .small { font-size:17px; }
+  .tiny { font-size:13.5px; }
+
+  .cards { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; max-width:1000px; margin:0 auto; }
+  .pcard { background:#fffdf7; border-radius:14px; box-shadow:0 6px 18px rgba(0,0,0,.06); padding:20px 24px; width:230px; }
+  .pname { font-size:15px; font-weight:600; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<h1>شكل السعر الرسمي — «جنيه مصري» بالرقعة الذهبية</h1>
+
+<div class="row">
+  <!-- ══ RTL ══ -->
+  <div class="panel light rtl">
+    <h2>RTL · عربي · أرقام هندية</h2>
+    <div class="price-line"><span class="amount">١٬٢٤٩٫٠٠</span><span class="word">جنيه مصري</span></div>
+    <div class="price-line small" style="margin-top:14px"><span class="amount">٨٩٫٥٠</span><span class="word">جنيه مصري</span></div>
+    <div class="price-line tiny" style="margin-top:12px; opacity:.75"><span class="amount">الإجمالي: ٢٬٧٤٧٫٥٠</span><span class="word">جنيه مصري</span></div>
+  </div>
+
+  <!-- ══ LTR ══ -->
+  <div class="panel light">
+    <h2>LTR · English · Western digits</h2>
+    <div class="price-line"><span class="amount">1,249.00</span><span class="word">جنيه مصري</span></div>
+    <div class="price-line small" style="margin-top:14px"><span class="amount">89.50</span><span class="word">جنيه مصري</span></div>
+    <div class="price-line tiny" style="margin-top:12px; opacity:.75"><span class="amount">Total: 2,747.50</span><span class="word">جنيه مصري</span></div>
+  </div>
+
+  <!-- ══ DARK ══ -->
+  <div class="panel darkp rtl">
+    <h2>Dark mode · ذهبي فاتح للتباين</h2>
+    <div class="price-line"><span class="amount">١٬٢٤٩٫٠٠</span><span class="word">جنيه مصري</span></div>
+    <div class="price-line small" style="margin-top:14px; direction:ltr"><span class="amount">1,249.00</span><span class="word">جنيه مصري</span></div>
+  </div>
+</div>
+
+<!-- ══ PRODUCT CARDS ══ -->
+<h2 style="text-align:center;opacity:.45;font-size:12px;letter-spacing:.14em;margin-bottom:14px">على كروت المنتجات</h2>
+<div class="cards rtl">
+  <div class="pcard">
+    <div class="pname">جهاز مساج كهربائي</div>
+    <div class="price-line small"><span class="amount">١٬٢٤٩٫٠٠</span><span class="word">جنيه مصري</span></div>
+  </div>
+  <div class="pcard">
+    <div class="pname">حزام دعم الظهر</div>
+    <div class="price-line small"><span class="amount">٣٤٩٫٧٥</span><span class="word">جنيه مصري</span></div>
+  </div>
+  <div class="pcard" dir="ltr">
+    <div class="pname" style="direction:rtl">حزام دعم الظهر</div>
+    <div class="price-line small"><span class="amount">349.75</span><span class="word">جنيه مصري</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+:root {
+  --primary: #1f857a;
+  --primary-light: #83d2c9;
+  --surface: #fafaf9;
+  --surface-dark: #1c1917;
+  --surface-dark-2: #211d1b;
+  --border-dark: #302b28;
+  --text-dark: #fafaf9;
+  --text-dark-2: #e7e5e4;
+  --text-dark-3: #d6d3d1;
+  --text-muted: #8b837f;
+  --accent: #83d2c9;
+}
+.dark body { background-color: #0c0a09; color: #e7e5e4; }
+.dark .bg-white { background-color: var(--surface-dark) !important; }
+.dark .bg-gray-50 { background-color: #0c0a09 !important; }
+.dark .bg-stone-50 { background-color: #211d1b !important; }
+.dark .border-stone-200 { border-color: #302b28 !important; }
+.dark .text-stone-900 { color: #fafaf9 !important; }
+.dark .text-stone-500 { color: #8b837f !important; }
+.dark .text-primary-600 { color: var(--primary-light) !important; }
+.dark .bg-primary-50 { background-color: rgba(31,133,122,0.16) !important; }
+/* Premium typography: intentional hierarchy, responsive scale */
+:root {
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica Neue, Arial, sans-serif;
+  --font-display: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --text-3xl: clamp(1.875rem, 4vw, 3rem); /* headings */
+  --text-2xl: clamp(1.5rem, 3vw, 2.25rem);
+  --text-xl: clamp(1.25rem, 2.5vw, 1.75rem);
+  --line-height-tight: 1.1;
+  --line-height-normal: 1.5;
+  --line-height-loose: 1.75;
+  --letter-spacing-tight: -0.035em;
+  --letter-spacing-normal: 0.01em;
+}
+/* Focus ring — accessible interaction */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 4px; }
+/* Reduced motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

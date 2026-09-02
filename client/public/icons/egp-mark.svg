@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" fill="none">
+  <!-- EGP Mark — square-Kufi ligature for the Egyptian pound (ج.م).
+       Prestige currency mark, language-neutral (cf. the Saudi Riyal sign).
+       Use currentColor contexts via the React <EgpSymbol/> component; this
+       standalone copy defaults to ink #0f172a. -->
+  <g stroke="#0f172a" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M2 7 H30" />
+    <path d="M30 7 V26 H14" />
+    <path d="M14 26 V15" />
+    <path d="M46 15 H60 V27 H46 Z" />
+    <path d="M53 27 V39" />
+  </g>
+  <circle cx="22" cy="33" r="4" fill="#0f172a" />
+  <circle cx="38.5" cy="31" r="3.4" fill="#0f172a" opacity="0.85" />
+</svg>

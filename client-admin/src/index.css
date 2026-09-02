@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   DARK MODE GLOBAL OVERRIDES (mventor-ticket-047/052)
+   Tailwind `class` mode; warm-stone dark surfaces to match the
+   Clinical Teal identity. Emojis/icons keep natural colors.
+   ══════════════════════════════════════════════════════════════════ */
+.dark body {
+  background-color: #0c0a09;
+  color: #e7e5e4;
+}
+
+/* Surfaces */
+.dark .bg-white { background-color: #1c1917 !important; }
+.dark .bg-gray-50 { background-color: #0c0a09 !important; }
+.dark .bg-gray-100 { background-color: #262220 !important; }
+.dark .bg-gray-200 { background-color: #37312e !important; }
+
+/* Text */
+.dark .text-gray-900 { color: #fafaf9 !important; }
+.dark .text-gray-800 { color: #e7e5e4 !important; }
+.dark .text-gray-700 { color: #d6d3d1 !important; }
+.dark .text-gray-600 { color: #a8a29e !important; }
+.dark .text-gray-500 { color: #8b837f !important; }
+.dark .text-gray-400 { color: #6b6560 !important; }
+.dark .text-gray-300 { color: #514b47 !important; }
+
+/* Borders & dividers */
+.dark .border-gray-100 { border-color: #262220 !important; }
+.dark .border-gray-200 { border-color: #302b28 !important; }
+.dark .border-gray-300 { border-color: #3d3733 !important; }
+.dark .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #262220 !important; }
+.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #302b28 !important; }
+
+/* Hover surfaces */
+.dark .hover\:bg-gray-50:hover { background-color: #211d1b !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #2b2724 !important; }
+.dark .hover\:bg-gray-200:hover { background-color: #38322e !important; }
+
+/* Primary tinting (active nav, links, focus) — Clinical Teal */
+.dark .bg-primary-50 { background-color: rgba(31, 133, 122, 0.16) !important; }
+.dark .hover\:bg-primary-50:hover { background-color: rgba(31, 133, 122, 0.25) !important; }
+.dark .text-primary-600 { color: #83d2c9 !important; }
+.dark .text-primary-700 { color: #b3e5de !important; }
+.dark .hover\:text-primary-600:hover { color: #83d2c9 !important; }
+.dark .hover\:bg-primary-700:hover { filter: brightness(1.12); }
+
+/* Status / banner colors */
+.dark .bg-green-50 { background-color: rgba(34, 197, 94, 0.12) !important; }
+.dark .text-green-700, .dark .text-green-800 { color: #86efac !important; }
+.dark .border-green-200 { border-color: rgba(34, 197, 94, 0.35) !important; }
+.dark .bg-red-50 { background-color: rgba(239, 68, 68, 0.12) !important; }
+.dark .text-red-700, .dark .text-red-800 { color: #fca5a5 !important; }
+.dark .border-red-200 { border-color: rgba(239, 68, 68, 0.35) !important; }
+.dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.18) !important; }
+.dark .bg-amber-50 { background-color: rgba(245, 158, 11, 0.12) !important; }
+.dark .text-amber-700, .dark .text-amber-800 { color: #fcd34d !important; }
+.dark .text-amber-600 { color: #fbbf24 !important; }
+.dark .border-amber-200 { border-color: rgba(245, 158, 11, 0.35) !important; }
+.dark .bg-blue-50 { background-color: rgba(59, 130, 246, 0.12) !important; }
+.dark .text-blue-700, .dark .text-blue-800 { color: #93c5fd !important; }
+.dark .border-blue-200 { border-color: rgba(59, 130, 246, 0.35) !important; }
+.dark .bg-purple-50 { background-color: rgba(168, 85, 247, 0.12) !important; }
+.dark .text-purple-700 { color: #d8b4fe !important; }
+
+/* Form controls */
+.dark input, .dark select, .dark textarea {
+  background-color: #171412;
+  color: #e7e5e4;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #57534e; }
+.dark .input-field {
+  background-color: #171412;
+  border-color: #3d3733;
+  color: #e7e5e4;
+}
+
+/* Cards & shadows read better with a subtle ring in the dark */
+.dark .card { box-shadow: 0 0 0 1px #292524, 0 1px 3px rgba(0,0,0,.45); }
+
+/* Scrollbars */
+.dark ::-webkit-scrollbar { width: 10px; height: 10px; }
+.dark ::-webkit-scrollbar-track { background: #0c0a09; }
+.dark ::-webkit-scrollbar-thumb { background: #37312e; border-radius: 6px; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #48413c; }
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-100 text-gray-800 font-semibold py-3 px-6 rounded-lg border border-gray-300 transition duration-200 ease-in-out;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition duration-200;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden;
+  }
+}
+
+/* ── DARK FONT VISIBILITY PATCH (mventor-ticket-059) ── */
+.dark .text-primary-800, .dark .text-primary-900 { color: #b3e5de !important; }
+.dark .text-green-900, .dark .text-red-900, .dark .text-amber-900 { color: #e7e5e4 !important; }
+.dark .text-emerald-700, .dark .text-emerald-800 { color: #6ee7b7 !important; }
+.dark .text-sky-700, .dark .text-sky-800 { color: #bae6fd !important; }
+.dark .text-indigo-700, .dark .text-purple-800 { color: #c7d2fe !important; }
+.dark .placeholder-gray-400::placeholder, .dark .placeholder-gray-500::placeholder { color: #6b6560; }
+.dark .hover\:text-gray-900:hover { color: #f1f5f9 !important; }
+.dark .hover\:text-gray-700:hover { color: #e2e8f0 !important; }
+.dark .ring-gray-300 { --tw-ring-color: #3d3733 !important; }
+.dark .stroke-gray-400 { stroke: #6b6560; }
+.dark .fill-gray-400 { fill: #6b6560; }
+
+/* ── Creamy prestige surfaces (no pure white) ───────────────────────────
+   Light mode: warm ivory page + cream cards. Dark mode: navy palette.
+   Scoped overrides so Tailwind utilities keep working everywhere else.   */
+body { background-color: #f6f2e8; }
+html:not(.dark) .bg-white { background-color: #fffdf7 !important; }
+html:not(.dark) .hover\:bg-gray-50:hover { background-color: #faf6ec !important; }
+html:not(.dark) .border-gray-100 { border-color: #efe9da !important; }
+html:not(.dark) .border-gray-200 { border-color: #e7e0cf !important; }
+
+.dark body, html.dark body { background-color: #101c2c; }

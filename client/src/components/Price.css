@@ -1,0 +1,39 @@
+/* ── Official EGP price line — «جنيه مصري» in Ottoman ruqʿah, mint gold ── */
+
+.price-egp {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3em;
+  white-space: nowrap;
+}
+[dir='ltr'] .price-egp { direction: ltr; }
+[dir='rtl'] .price-egp { direction: rtl; }
+
+.price-egp-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.price-egp-word {
+  font-family: 'Aref Ruqaa', 'Amiri', serif;
+  font-weight: 700;
+  color: #c9a227;                 /* true gold */
+  font-size: 0.7em;               /* small, sits beside the numeral */
+  line-height: 1;
+  transform: translateY(0.08em);  /* optical alignment with digits */
+  letter-spacing: 0;
+}
+
+/* English twin: «EGP» engraved italic serif — banknote lettering, same gold */
+.price-egp-word-en {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  color: #c9a227;
+  font-size: 0.72em;
+  line-height: 1;
+  transform: translateY(-0.02em);
+}
+
+/* Dark surfaces: the bright contrast gold from egp-final-preview.html */
+.dark .price-egp-word { color: #e9c46a; }
+.dark .price-egp-word-en { color: #e9c46a; }

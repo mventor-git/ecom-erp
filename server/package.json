@@ -1,0 +1,40 @@
+{
+  "name": "comfort-sign-server",
+  "version": "1.0.0",
+  "description": "Backend for Comfort-Sign Medical Equipment Store",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "seed": "node seed-comfort-sign.js",
+    "test": "jest --runInBand --testPathPatterns tests/cache.test --testPathPatterns tests/email.test --testPathPatterns tests/validate.test --testPathPatterns tests/inventory.test --testPathPatterns tests/productTrash.test --testPathPatterns tests/salesBridge.test --testPathPatterns tests/warehouseOrders.test --testPathPatterns tests/workflow.test --testPathPatterns tests/priceLists.test --testPathPatterns tests/paymob.test --testPathPatterns tests/pickingPacking.test --testPathPatterns tests/shipping.test --testPathPatterns tests/rbacMultiRole.test --testPathPatterns tests/profitReports.test --testPathPatterns tests/purchaseOrder.test --testPathPatterns tests/signature.test --testPathPatterns tests/addressSnapshot.test --testPathPatterns tests/paymentDomain.test --testPathPatterns tests/notificationsRefunds.test --testPathPatterns tests/customers.test --testPathPatterns tests/vip.test --verbose",
+    "test:integration": "node run-integration-tests.js",
+    "test:all": "npm test && npm run test:integration"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "express-rate-limit": "^8.6.0",
+    "express-session": "^1.18.0",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.11.0",
+    "multer": "^2.2.0",
+    "nodemailer": "^9.0.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pdfkit": "^0.15.0",
+    "qrcode": "^1.5.4",
+    "session-file-store": "^1.5.0",
+    "sharp": "^0.35.3",
+    "speakeasy": "^2.0.0",
+    "sql.js": "^1.10.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

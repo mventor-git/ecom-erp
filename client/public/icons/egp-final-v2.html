@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EGP Price — Final · RTL &amp; LTR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Great+Vibes&family=Playfair+Display:ital,wght@1,500&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#f6f2e8; color:#1a2332; padding:40px 24px; font-family:Inter,'Segoe UI',sans-serif; }
+  h1 { text-align:center; font-weight:600; font-size:22px; margin-bottom:28px; }
+  h2 { font-size:12px; letter-spacing:.14em; text-transform:uppercase; opacity:.45; margin:0 0 16px; font-weight:700; }
+  .row { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; max-width:1060px; margin:0 auto 26px; }
+  .panel { border-radius:18px; padding:26px 34px; box-shadow:0 8px 24px rgba(0,0,0,.07); }
+  .light { background:#fffdf7; } .darkp { background:#101c2c; color:#f5efdd; }
+  .price-line { display:flex; align-items:baseline; gap:.32em; font-size:30px; font-weight:700; white-space:nowrap; }
+  .rtl .price-line { direction:rtl; }
+  .word-ar { font-family:'Aref Ruqaa',serif; font-weight:700; color:#a8811f; font-size:.62em; line-height:1; transform:translateY(.08em); }
+  .word-en { font-family:'Great Vibes',cursive; font-weight:400; color:#a8811f; font-size:.85em; line-height:1; }
+  .alt { font-family:'Playfair Display',serif; font-style:italic; font-weight:500; color:#a8811f; font-size:.72em; }
+  .darkp .word-ar, .darkp .word-en, .darkp .alt { color:#e9c46a; }
+  .small { font-size:17px; margin-top:14px; }
+</style>
+</head>
+<body>
+<h1>السعر الرسمي النهائي — ذهبي في الاتجاهين</h1>
+
+<div class="row">
+  <div class="panel light rtl">
+    <h2>RTL · عربي — رقعة عثمانية</h2>
+    <div class="price-line"><span>١٬٢٤٩٫٠٠</span><span class="word-ar">جنيه مصري</span></div>
+    <div class="price-line small"><span>٨٩٫٥٠</span><span class="word-ar">جنيه مصري</span></div>
+    <div class="price-line small"><span>٢٬٧٤٧٫٥٠</span><span class="word-ar">جنيه مصري</span></div>
+  </div>
+
+  <div class="panel light">
+    <h2>LTR · English — calligraphic «Egp»</h2>
+    <div class="price-line" style="direction:ltr"><span>1,249.00</span><span class="word-en">Egp</span></div>
+    <div class="price-line small" style="direction:ltr"><span>89.50</span><span class="word-en">Egp</span></div>
+    <div class="price-line small" style="direction:ltr"><span>2,747.50</span><span class="word-en">Egp</span></div>
+  </div>
+
+  <div class="panel darkp">
+    <h2>Dark · gold contrast</h2>
+    <div class="price-line rtl" style="direction:rtl"><span>١٬٢٤٩٫٠٠</span><span class="word-ar">جنيه مصري</span></div>
+    <div class="price-line small" style="direction:ltr"><span>1,249.00</span><span class="word-en">Egp</span></div>
+    <h2 style="margin-top:20px">Alt: engraved italic serif</h2>
+    <div class="price-line small" style="direction:ltr"><span>1,249.00</span><span class="alt">Egp</span></div>
+  </div>
+</div>
+</body>
+</html>

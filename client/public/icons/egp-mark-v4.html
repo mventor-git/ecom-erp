@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>EGP SIGN v4 — Abstract Monogram</title>
+<style>
+  body { margin:0; font-family:'Segoe UI',Tahoma,sans-serif; background:#f4f3ee; color:#111827; padding:44px 24px; }
+  h1 { text-align:center; font-weight:600; letter-spacing:.05em; margin-bottom:6px; }
+  .sub { text-align:center; opacity:.55; font-size:14px; margin-bottom:36px; }
+  .wrap { max-width:1080px; margin:0 auto; display:flex; flex-direction:column; gap:26px; }
+  .hero { background:#fff; border-radius:22px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:44px 48px; display:flex; gap:56px; align-items:center; justify-content:center; flex-wrap:wrap; }
+  .legend { display:flex; flex-direction:column; gap:15px; font-size:13.5px; max-width:300px; line-height:1.55; }
+  .legend b { display:inline-flex; align-items:center; gap:8px; }
+  .key { display:inline-block; width:22px; height:4px; border-radius:2px; }
+  .k1{background:#1d4ed8} .k2{background:#b45309} .k3{background:#047857}
+  .row { display:flex; gap:26px; flex-wrap:wrap; justify-content:center; }
+  .card { background:#fff; border-radius:18px; box-shadow:0 8px 24px rgba(0,0,0,.07); padding:28px 34px; text-align:center; min-width:270px; }
+  .card.dark { background:#101c2c; color:#f8fafc; }
+  .tag { font-size:11.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; opacity:.45; margin-bottom:18px; }
+  .price { display:inline-flex; align-items:center; gap:10px; font-size:30px; font-weight:700; direction:ltr; justify-content:center; }
+  .ladder { display:flex; align-items:flex-end; gap:30px; justify-content:center; }
+  .ladder .cell { display:flex; flex-direction:column; align-items:center; gap:8px; font-size:11px; opacity:.6; }
+</style>
+</head>
+<body>
+<h1>EGP SIGN · Abstract Monogram</h1>
+<div class="sub">E · G · P — three letters, one continuous gesture, one global crossbar</div>
+
+<div class="wrap">
+
+  <!-- ═══ HERO ANATOMY ═══ -->
+  <div class="hero">
+    <svg width="430" height="275" viewBox="0 0 86 56">
+      <!-- E arms (amber) -->
+      <path d="M8 8 H38"  stroke="#b45309" stroke-width="6" stroke-linecap="round"/>
+      <path d="M8 46 H38" stroke="#b45309" stroke-width="6" stroke-linecap="round"/>
+      <!-- stem / P spine (amber too — same letter E spine doubles as P stem) -->
+      <path d="M38 6 V50" stroke="#b45309" stroke-width="6" stroke-linecap="round"/>
+      <!-- GLOBAL CROSSBAR: E's middle arm runs straight through the stem,
+           deep into the ring, becoming G's mouth bar (blue) -->
+      <path d="M8 27 H72" stroke="#1d4ed8" stroke-width="6" stroke-linecap="round"/>
+      <!-- G/P ring (green): P's bowl completed into G with a north-east gap -->
+      <path d="M71 13 A19 19 0 1 0 71 41" fill="none" stroke="#047857" stroke-width="6" stroke-linecap="round"/>
+    </svg>
+    <div class="legend">
+      <span><b><i class="key k2"></i> E — the voice</b><br>Three arms + tall spine. The spine doubles as the stem of P.</span>
+      <span><b><i class="key k1"></i> The Global Crossbar</b><br>E's middle arm never stops: it slices through the spine and pierces the ring — pure € DNA.</span>
+      <span><b><i class="key k3"></i> G · P — the vessel</b><br>One open ring: closes P's bowl, opens G's mouth against the crossbar. Two letters, one circle.</span>
+      <span><b style="opacity:.6">Negative space does the talking</b><br>The NE gap breathes; nothing touches by accident.</span>
+    </div>
+  </div>
+
+  <!-- ═══ SAMA LAYOUTS ═══ -->
+  <div class="row">
+    <div class="card">
+      <div class="tag">English · Western digits</div>
+      <div class="price">
+        <svg width="56" height="36.5" viewBox="0 0 86 56"><g fill="none"><path d="M8 8 H38" stroke="#111827" stroke-width="7" stroke-linecap="round"/><path d="M8 46 H38" stroke="#111827" stroke-width="7" stroke-linecap="round"/><path d="M38 6 V50" stroke="#111827" stroke-width="7" stroke-linecap="round"/><path d="M8 27 H72" stroke="#111827" stroke-width="7" stroke-linecap="round"/><path d="M71 13 A19 19 0 1 0 71 41" stroke="#111827" stroke-width="7"/></g></svg>
+        <span>1,249.00</span>
+      </div>
+    </div>
+    <div class="card dark">
+      <div class="tag">العربية · أرقام هندية</div>
+      <div class="price">
+        <svg width="56" height="36.5" viewBox="0 0 86 56"><g fill="none"><path d="M8 8 H38" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/><path d="M8 46 H38" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/><path d="M38 6 V50" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/><path d="M8 27 H72" stroke="#f8fafc" stroke-width="7" stroke-linecap="round"/><path d="M71 13 A19 19 0 1 0 71 41" stroke="#f8fafc" stroke-width="7"/></g></svg>
+        <span>١٬٢٤٩٫٠٠</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="tag">Brand teal</div>
+      <div class="price">
+        <svg width="56" height="36.5" viewBox="0 0 86 56"><g fill="none"><path d="M8 8 H38" stroke="#1f857a" stroke-width="7" stroke-linecap="round"/><path d="M8 46 H38" stroke="#1f857a" stroke-width="7" stroke-linecap="round"/><path d="M38 6 V50" stroke="#1f857a" stroke-width="7" stroke-linecap="round"/><path d="M8 27 H72" stroke="#1f857a" stroke-width="7" stroke-linecap="round"/><path d="M71 13 A19 19 0 1 0 71 41" stroke="#1f857a" stroke-width="7"/></g></svg>
+        <span style="color:#1f857a">89,500</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SCALE LADDER ═══ -->
+  <div class="card">
+    <div class="tag">Scale integrity · 16 → 256 px</div>
+    <div class="ladder">
+      <div class="cell"><svg width="16" height="10.4" viewBox="0 0 86 56"><g fill="none" stroke="#111827" stroke-width="9" stroke-linecap="round"><path d="M8 8 H38"/><path d="M8 46 H38"/><path d="M38 6 V50"/><path d="M8 27 H72"/><path d="M71 13 A19 19 0 1 0 71 41"/></g></svg>16px</div>
+      <div class="cell"><svg width="26" height="17" viewBox="0 0 86 56"><g fill="none" stroke="#111827" stroke-width="8" stroke-linecap="round"><path d="M8 8 H38"/><path d="M8 46 H38"/><path d="M38 6 V50"/><path d="M8 27 H72"/><path d="M71 13 A19 19 0 1 0 71 41"/></g></svg>26px</div>
+      <div class="cell"><svg width="48" height="31" viewBox="0 0 86 56"><g fill="none" stroke="#111827" stroke-width="7" stroke-linecap="round"><path d="M8 8 H38"/><path d="M8 46 H38"/><path d="M38 6 V50"/><path d="M8 27 H72"/><path d="M71 13 A19 19 0 1 0 71 41"/></g></svg>48px</div>
+      <div class="cell"><svg width="128" height="83" viewBox="0 0 86 56"><g fill="none" stroke="#111827" stroke-width="6.5" stroke-linecap="round"><path d="M8 8 H38"/><path d="M8 46 H38"/><path d="M38 6 V50"/><path d="M8 27 H72"/><path d="M71 13 A19 19 0 1 0 71 41"/></g></svg>128px</div>
+      <div class="cell"><svg width="256" height="167" viewBox="0 0 86 56"><g fill="none" stroke="#111827" stroke-width="6" stroke-linecap="round"><path d="M8 8 H38"/><path d="M8 46 H38"/><path d="M38 6 V50"/><path d="M8 27 H72"/><path d="M71 13 A19 19 0 1 0 71 41"/></g></svg>256px</div>
+    </div>
+  </div>
+
+</div>
+<p style="text-align:center;opacity:.5;margin-top:26px">حروف إنجليزية E·G·P بتتشاحم بذوق: الذراع الوسطانية بتاعة E هي نفسها كروسبار G — حرفين في دايرة واحدة.</p>
+</body>
+</html>
