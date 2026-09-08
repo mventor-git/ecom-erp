@@ -1,9 +1,0 @@
-{
-  "title": "Mventor Control Center",
-  "subtitle": "Mventor-Site.Com — platform services",
-  "services": [
-    { "name": "Backend",     "port": 5172, "cwd": "server",       "cmd": ["node", "index.js"],      "log": "backend" },
-    { "name": "Storefront",  "port": 5173, "cwd": "client",       "cmd": ["npm.cmd", "run", "dev"], "log": "client" },
-    { "name": "Admin Panel", "port": 5174, "cwd": "client-admin", "cmd": ["npm.cmd", "run", "dev"], "log": "admin" }
-  ]
-}
