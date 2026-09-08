@@ -63,7 +63,7 @@ export default function AdminLogin() {
             </svg>
           </div>
           <div>
-            <p className="font-bold tracking-tight">Comfort Sign</p>
+            <p className="font-bold tracking-tight">Ecom-ERP</p>
             <p className="text-xs text-white/50">Operations Platform</p>
           </div>
         </div>
@@ -96,7 +96,7 @@ export default function AdminLogin() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">{t('Comfort Sign')}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Ecom-ERP</h1>
             <p className="text-sm text-gray-500 mt-1">{t('Sign in to manage your store')}</p>
           </div>
 

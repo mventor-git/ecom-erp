@@ -207,7 +207,7 @@ function buildSystemPrompt(userQuery) {
   const categoryContext = getCategoryContext();
   const policiesContext = getStorePolicies();
 
-  return `You are a helpful AI assistant for ${settingsService.siteIdentity().name} — ${settingsService.get('store_description','an online store')}.
+  return `You are a helpful AI assistant for ${settingsService.siteIdentity().name} ï¿½ ${settingsService.get('store_description','an online store')}.
 
 Your role:
 - Help customers find products
@@ -384,18 +384,20 @@ function generateActions(response, userQuery) {
 
   // Category-specific actions
   const categoryKeywords = {
-    'yoga': '/products?category=exercise-fitness',
-    'fitness': '/products?category=exercise-fitness',
-    'exercise': '/products?category=exercise-fitness',
-    'knee': '/products?category=orthopedic-support',
-    'brace': '/products?category=orthopedic-support',
-    'support': '/products?category=orthopedic-support',
-    'insole': '/products?category=insoles-foot-care',
-    'foot': '/products?category=insoles-foot-care',
-    'massage': '/products?category=massage-therapy',
-    'therapy': '/products?category=massage-therapy',
-    'mobility': '/products?category=mobility-rehabilitation',
-    'rehabilitation': '/products?category=mobility-rehabilitation',
+    'speaker': '/products?category=electronics',
+    'headphone': '/products?category=electronics',
+    'audio': '/products?category=electronics',
+    'mug': '/products?category=home-kitchen',
+    'lamp': '/products?category=home-kitchen',
+    'mixer': '/products?category=home-kitchen',
+    'kettle': '/products?category=home-kitchen',
+    'shirt': '/products?category=fashion',
+    'sneaker': '/products?category=fashion',
+    'bag': '/products?category=fashion',
+    'coffee': '/products?category=grocery',
+    'honey': '/products?category=grocery',
+    'lotion': '/products?category=beauty-care',
+    'shampoo': '/products?category=beauty-care',
   };
 
   for (const [keyword, path] of Object.entries(categoryKeywords)) {

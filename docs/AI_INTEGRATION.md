@@ -1,7 +1,7 @@
 # AI Assistant Integration - Implementation Summary
 
 ## Overview
-Successfully integrated Ollama AI assistant into Comfort Sign e-commerce platform with full admin control over model selection, personality configuration, and performance optimization.
+Successfully integrated Ollama AI assistant into Ecom-ERP e-commerce platform with full admin control over model selection, personality configuration, and performance optimization.
 
 ## System Specifications
 - **CPU:** AMD Ryzen 5 2600 (6 cores, 12 threads, 3.4GHz)

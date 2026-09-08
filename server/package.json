@@ -1,13 +1,13 @@
 {
-  "name": "comfort-sign-server",
+  "name": "ecom-erp-server",
   "version": "1.0.0",
-  "description": "Backend for Comfort-Sign Medical Equipment Store",
+  "description": "Backend for Ecom-ERP open-source e-commerce + ERP",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "seed": "node seed-comfort-sign.js",
-    "test": "jest --runInBand --testPathPatterns tests/cache.test --testPathPatterns tests/email.test --testPathPatterns tests/validate.test --testPathPatterns tests/inventory.test --testPathPatterns tests/productTrash.test --testPathPatterns tests/salesBridge.test --testPathPatterns tests/warehouseOrders.test --testPathPatterns tests/workflow.test --testPathPatterns tests/priceLists.test --testPathPatterns tests/paymob.test --testPathPatterns tests/pickingPacking.test --testPathPatterns tests/shipping.test --testPathPatterns tests/rbacMultiRole.test --testPathPatterns tests/profitReports.test --testPathPatterns tests/purchaseOrder.test --testPathPatterns tests/signature.test --testPathPatterns tests/addressSnapshot.test --testPathPatterns tests/paymentDomain.test --testPathPatterns tests/notificationsRefunds.test --testPathPatterns tests/customers.test --testPathPatterns tests/vip.test --verbose",
+    "seed": "node seed-catalog.js",
+    "test": "jest --runInBand tests/cache.test tests/email.test tests/validate.test tests/inventory.test tests/productTrash.test tests/salesBridge.test tests/warehouseOrders.test tests/workflow.test tests/priceLists.test tests/priceListsGuards.test tests/pricingEngineCanonical.test tests/orderSnapshot.test tests/orderItemsContract.test tests/orderLines.test tests/bridgeLineCosts.test tests/webCostThreading.test tests/chartOfAccounts.test tests/journalFoundation.test tests/mobileCheckoutPricing.test tests/adminAuthGaps.test tests/pickingPacking.test tests/shipping.test tests/rbacMultiRole.test tests/profitReports.test tests/purchaseOrder.test tests/signature.test tests/addressSnapshot.test tests/paymentDomain.test tests/notificationsRefunds.test tests/customers.test tests/vip.test tests/financialPeriod.test --verbose",
     "test:integration": "node run-integration-tests.js",
     "test:all": "npm test && npm run test:integration"
   },

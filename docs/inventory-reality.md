@@ -1,4 +1,4 @@
-# Inventory Reality — Comfort Sign (Audit Only)
+# Inventory Reality — Ecom-ERP (Audit Only)
 
 SOURCE OF TRUTH: inventory_movements (ledger); inventory table is read snapshot.
 STOCK INCREASE: receipt / opening_balance / transfer / correction / count / return / supply_orders (to inventory_movements, qty_before→qty_after; unit_cost captured).

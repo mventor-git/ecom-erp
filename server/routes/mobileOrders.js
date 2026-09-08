@@ -68,6 +68,25 @@ router.post('/', authenticateToken, (req, res) => {
       });
     }
 
+    // Authoritative repricing (067, web P0.4 parity): never trust raw
+    // products.price — resolve overrides/list-discounts server-side exactly
+    // like the storefront listing; reject unknown/inactive/bad-qty lines.
+    // Identical values while storefront=retail with no overrides.
+    const { resolveItem } = require('../services/orderPricing');
+    for (const item of cartItems) {
+      const priced = resolveItem({ product_id: item.product_id, quantity: item.quantity });
+      if (!priced.ok) {
+        return res.status(400).json({
+          success: false,
+          error: {
+            code: 'INVALID_ITEM',
+            message: `Item cannot be priced (product ${item.product_id}: ${priced.reason})`,
+          },
+        });
+      }
+      item.price = priced.unitPrice;
+    }
+
     // Check stock availability
     for (const item of cartItems) {
       if (item.stock < item.quantity) {
@@ -90,14 +109,15 @@ router.post('/', authenticateToken, (req, res) => {
     // Generate order number
     const orderNumber = `ORD-${Date.now()}`;
 
-    // Create order
+    // Create order (066: snapshot storefront list code — same one rule as web checkout)
+    const priceListCode = require('../services/priceListService').storefrontListCode();
     const orderResult = db.prepare(`
       INSERT INTO orders (
         customer_id, user_id, order_number, status, subtotal, shipping, total,
         shipping_name, shipping_phone, shipping_address, shipping_city,
         shipping_governorate, shipping_postal_code,
-        payment_method, payment_status, notes
-      ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+        payment_method, payment_status, notes, price_list_code
+      ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
     `).run(
       customerId,
       customerId,
@@ -112,17 +132,19 @@ router.post('/', authenticateToken, (req, res) => {
       shipping_address.governorate || null,
       shipping_address.postal_code || null,
       payment_method,
-      notes || null
+      notes || null,
+      priceListCode
     );
 
     const orderId = orderResult.lastInsertRowid;
 
-    // Create order items
+    // Create order items (066: same snapshot code per line;
+    // 069: mirror normalized qty/prices — same facts, both names)
     const insertItem = db.prepare(`
       INSERT INTO order_items (
         order_id, product_id, product_name, quantity, price,
-        variant_color, variant_size
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        variant_color, variant_size, price_list_code, qty, base_price, final_price
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     for (const item of cartItems) {
@@ -133,18 +155,29 @@ router.post('/', authenticateToken, (req, res) => {
         item.quantity,
         item.price,
         item.variant_color,
-        item.variant_size
+        item.variant_size,
+        priceListCode,
+        item.quantity,
+        item.price,
+        item.price
       );
     }
 
     // Sales ↔ Inventory bridge: proper ISSUE movements replace the legacy
-    // direct `products.stock` decrement (mventor-ticket-048)
+    // direct `products.stock` decrement (mventor-ticket-048).
+    // Cost threading (072): snapshot the just-computed unit COGS into the
+    // lines — best-effort AFTER truthful order+stock, never fails checkout.
     const bridge = require('../services/salesInventoryBridge');
-    bridge.issueForOrder(
+    const bridgeResult = bridge.issueForOrder(
       orderId,
       cartItems.map(ci => ({ product_id: ci.product_id, quantity: ci.quantity })),
       req.user?.id || 'mobile_customer'
     );
+    try {
+      require('../services/orderLines').applyLineCosts(orderId, bridgeResult.costs || []);
+    } catch (costErr) {
+      console.error('Line cost snapshot error:', costErr.message);
+    }
 
     // Clear cart
     db.prepare('DELETE FROM cart_items WHERE user_id = ?').run(customerId);

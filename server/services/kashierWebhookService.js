@@ -108,7 +108,14 @@ function handleTransactionSuccess(payload) {
     const bridge = require('./salesInventoryBridge');
     const items = parseItems(order);
     bridge.releaseForOrder(orderId, items, 'kashier-webhook');
-    bridge.issueForOrder(orderId, items, 'kashier-webhook');
+    const issued = bridge.issueForOrder(orderId, items, 'kashier-webhook');
+    // Cost threading (073): snapshot unit COGS into the lines INSIDE the
+    // atomic unit — rolls back with the paid state. Best-effort, logged.
+    try {
+      require('./orderLines').applyLineCosts(orderId, (issued && issued.costs) || []);
+    } catch (costErr) {
+      console.error('[kashier-webhook] line cost snapshot error:', costErr.message);
+    }
     db.prepare(`
       UPDATE orders SET status = 'paid', payment_status = 'verified', payment_method = 'kashier',
         paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP

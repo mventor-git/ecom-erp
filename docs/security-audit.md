@@ -1,4 +1,4 @@
-# Security Audit — Comfort Sign (Audit Only, No Fixes)
+# Security Audit — Ecom-ERP (Audit Only, No Fixes)
 
 CONFIRMED ARCHITECTURE (from index.js / routes / middleware):
 - Helmet CSP with directives allowing self + fonts.googleapis.com + images + unsafe-inline/eval (needed for React dev)

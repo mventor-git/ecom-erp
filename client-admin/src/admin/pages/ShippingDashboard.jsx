@@ -5,18 +5,11 @@ import {
   getShipments, createShipment, updateShipmentStatus, getAdminOrders, viewShippingUrl,
 } from '../../api/adminApi';
 import DocumentViewer from '../components/DocumentViewer';
+import StatusBadge from '../components/StatusBadge';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { useAdminCurrency } from '../../utils/currency';
 
 const SHIPMENT_STATUSES = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed', 'returned'];
-
-const STATUS_STYLE = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  in_transit: 'bg-blue-100 text-blue-700',
-  out_for_delivery: 'bg-indigo-100 text-indigo-700',
-  delivered: 'bg-green-100 text-green-700',
-  failed: 'bg-red-100 text-red-700',
-  returned: 'bg-gray-200 text-gray-600',
-};
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500';
 const labelClass = 'block text-xs font-medium text-gray-600 mb-1';
@@ -45,6 +38,9 @@ export default function ShippingDashboard() {
   const [provForm, setProvForm] = useState({ name: '', type: 'company', contact_phone: '', website: '', tracking_url_template: '' });
   const [provSaving, setProvSaving] = useState(false);
 
+  // delete-provider confirmation (replaces window.confirm)
+  const [pendingDelete, setPendingDelete] = useState(null);
+
   useEffect(() => { loadAll(); }, []);
 
   function loadAll() {
@@ -59,7 +55,7 @@ export default function ShippingDashboard() {
         setShipments(shipRes.data || []);
         setOrders(ordersRes.data?.orders || []);
       })
-      .catch(err => console.error('Error loading shipping:', err))
+      .catch(err => setError(err.response?.data?.error || 'Failed to load shipping'))
       .finally(() => setLoading(false));
   }
 
@@ -120,12 +116,14 @@ export default function ShippingDashboard() {
   };
 
   const handleDeleteProvider = async (p) => {
-    if (!window.confirm(`Delete provider "${p.name}"? Its shipments will be removed too.`)) return;
     try {
       await deleteShipmentProvider(p.id);
       await loadAll();
+      flash('Provider deleted');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to delete');
+    } finally {
+      setPendingDelete(null);
     }
   };
 
@@ -167,7 +165,7 @@ export default function ShippingDashboard() {
                   >
                     Edit
                   </button>
-                  <button onClick={() => handleDeleteProvider(p)} className="px-2 py-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">✕</button>
+                  <button onClick={() => setPendingDelete(p)} className="px-2 py-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100" aria-label={`Delete ${p.name}`}>✕</button>
                 </div>
               </div>
               {p.tracking_url_template && <p className="text-[10px] text-gray-400 mt-1 truncate font-mono">{p.tracking_url_template}</p>}
@@ -191,7 +189,7 @@ export default function ShippingDashboard() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-gray-900">Shipment #{s.id} · Order #{s.order_id}</span>
-                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[s.status] || 'bg-gray-100 text-gray-600'}`}>{s.status.replace(/_/g, ' ')}</span>
+                      <StatusBadge status={s.status} />
                     </div>
                     <p className="text-xs text-gray-500 mt-0.5">
                       {s.provider_name || '—'} · Tracking: <span className="font-mono">{s.tracking_number}</span> · {format(s.total || 0)}
@@ -312,6 +310,18 @@ export default function ShippingDashboard() {
           </div>
         </div>
       )}
+
+      {/* Delete-provider confirmation — replaces native confirm for intentional, auditable action */}
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Delete delivery provider?"
+        message={`Delete provider "${pendingDelete?.name || ''}"? Its shipments will be removed too. This cannot be undone.`}
+        confirmLabel="Yes, delete"
+        cancelLabel="Keep provider"
+        tone="danger"
+        onConfirm={() => pendingDelete && handleDeleteProvider(pendingDelete)}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       {viewDoc && <DocumentViewer url={viewDoc.url} title={viewDoc.title} onClose={() => setViewDoc(null)} />}
     </div>

@@ -17,7 +17,7 @@ function parseFilters(req) {
   };
 }
 
-router.get('/', adminAuth, (req, res) => {
+router.get('/', adminAuth, requirePermission('reports.read'), (req, res) => {
   try {
     const types = Object.entries(reportService.REPORT_TYPES).map(([key, meta]) => ({
       type: key,
@@ -86,7 +86,7 @@ router.get('/files/:filename', adminAuth, requirePermission('reports.read'), (re
   }
 });
 
-router.get('/:reportType', adminAuth, (req, res) => {
+router.get('/:reportType', adminAuth, requirePermission('reports.read'), (req, res) => {
   try {
     const { reportType } = req.params;
 
@@ -119,7 +119,7 @@ router.get('/:reportType', adminAuth, (req, res) => {
   }
 });
 
-router.get('/:reportType/export', adminAuth, (req, res) => {
+router.get('/:reportType/export', adminAuth, requirePermission('reports.read'), (req, res) => {
   try {
     const { reportType } = req.params;
 

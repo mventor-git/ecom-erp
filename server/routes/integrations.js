@@ -206,7 +206,7 @@ async function testSendgrid(to) {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        personalizations: [{ to: [{ email: recipient }], subject: 'Comfort Sign — SendGrid test' }],
+        personalizations: [{ to: [{ email: recipient }], subject: 'Ecom-ERP — SendGrid test' }],
         from: { email: from },
         content: [{ type: 'text/html', value: '<p>If you received this email, your SendGrid configuration works correctly.</p>' }],
       }),

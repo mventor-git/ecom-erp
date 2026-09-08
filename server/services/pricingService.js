@@ -66,6 +66,57 @@ function resolveRetail({ priceCents = 0, costCents = 0 }) {
   return { price: derivedPrice, derived: derivedPrice > 0 };
 }
 
+/**
+ * Canonical PricingEngine math — mventor-ticket-057.
+ * Single server-authoritative preview used by routes/pricingManager.js
+ * (preview + apply). Modes mirror the former inline logic verbatim:
+ *   markup — value% on top of cost | margin — target margin on retail
+ *   match — keep current, re-round only | offer — value% OFF current retail
+ * Cost basis unification (057 follow-up, owner-confirmed): caller resolves
+ * cost via valuation layers where present, else cost_price fallback —
+ * see pricingManager.computeRows `cost_basis`/`cost_source`.
+ * VIP (owner-confirmed): pure % off retail preview, labeled, never stored,
+ * never gateway-paid. See vipPriceFromRetail.
+ */
+function roundPrice(centsValue, style) {
+  if (!style || style === 'none') return centsValue;
+  const whole = Math.floor(centsValue / 100);
+  if (style === '99') return whole * 100 + 99;
+  if (style === '95') return whole * 100 + 95;
+  if (style === '5') return Math.max(Math.round(centsValue / 500) * 500, 500);
+  if (style === '10') return Math.max(Math.round(centsValue / 1000) * 1000, 1000);
+  return centsValue;
+}
+
+function computeRetailPreview({ costCents = 0, currentCents = 0, mode = 'markup', value = 0, rounding = 'none' } = {}) {
+  const cost = Math.max(Math.round(Number(costCents) || 0), 0);
+  const current = Math.max(Math.round(Number(currentCents) || 0), 0);
+  const v = Number(value || 0);
+  let raw;
+  if (mode === 'margin') {
+    const m = Math.min(Math.max(v, -90), 95) / 100;
+    raw = m < 0.95 ? cost / (1 - m) : cost * 20;
+  } else if (mode === 'match') {
+    raw = current;
+  } else if (mode === 'offer') {
+    raw = current * (1 - Math.min(Math.max(v, 0), 90) / 100);
+  } else {
+    raw = cost * (1 + v / 100);
+  }
+  return Math.max(roundPrice(Math.round(raw), rounding), 5);
+}
+
+/**
+ * VIP preview (owner-confirmed 057): percent OFF retail.
+ * Pure derivation for display only — never written to products.price,
+ * never represented as gateway-paid. Clamped 0–90%.
+ */
+function vipPriceFromRetail(retailCents, vipPct = 0) {
+  const retail = Math.max(Math.round(Number(retailCents) || 0), 0);
+  const pct = Math.min(Math.max(Number(vipPct || 0), 0), 90);
+  return Math.round(retail * (1 - pct / 100));
+}
+
 module.exports = {
   SETTING_KEY,
   DEFAULT_MARKUP,
@@ -74,5 +125,7 @@ module.exports = {
   charmEnding,
   retailFromCost,
   resolveRetail,
+  roundPrice,
+  computeRetailPreview,
+  vipPriceFromRetail,
 };
-function tierDiscount(priceCents, tiers = []) { const best = tiers.filter(t => qty >= t.minQty).sort((a,b)=>b.pct - a.pct)[0]; return best ? Math.round(priceCents * (1 - best.pct/100)) : priceCents; }

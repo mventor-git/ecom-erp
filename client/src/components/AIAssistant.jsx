@@ -132,20 +132,20 @@ export default function AIAssistant() {
           { label: t('Featured Items'), path: '/products?featured=true' }
         ]
       };
-    } else if (lowerInput.includes('yoga') || lowerInput.includes('mat')) {
+    } else if (lowerInput.includes('audio') || lowerInput.includes('speaker') || lowerInput.includes('headphone')) {
       return {
-        text: t('We have excellent yoga mats! Here are some options:'),
+        text: t('We have great audio gear! Here are some options:'),
         actions: [
-          { label: t('View Yoga Mats'), path: '/products?search=yoga' },
+          { label: t('View Electronics'), path: '/products?search=speaker' },
           { label: t('Browse Categories'), path: '/products' }
         ]
       };
-    } else if (lowerInput.includes('knee') || lowerInput.includes('brace')) {
+    } else if (lowerInput.includes('shirt') || lowerInput.includes('shoe') || lowerInput.includes('fashion')) {
       return {
-        text: t('We have knee support braces for all sizes. Would you like to see them?'),
+        text: t('Fresh fashion picks just for you. Want to see them?'),
         actions: [
-          { label: t('Knee Braces'), path: '/products?search=knee' },
-          { label: t('Orthopedic Support'), path: '/products?category=orthopedic-support' }
+          { label: t('View Fashion'), path: '/products?search=shirt' },
+          { label: t('Electronics'), path: '/products?category=electronics' }
         ]
       };
     } else if (lowerInput.includes('price') || lowerInput.includes('cost')) {

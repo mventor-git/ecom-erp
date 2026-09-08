@@ -9,8 +9,10 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const pricing = require('../routes/pricingManager');
+const adminAuth = require('../middleware/adminAuth');
+const { requirePermission } = require('../middleware/rbac');
 
-router.get('/', async (req, res) => {
+router.get('/', adminAuth, requirePermission('reports.read'), async (req, res) => {
   try {
     // Read-only advisory forecasts — no mutations, no order changes
     const products = db.prepare('SELECT id, name, price, cost_price, sale_price_list FROM products WHERE deleted_at IS NULL').all();

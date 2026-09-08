@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getSettingsByCategory, updateSetting } from '../../api/adminApi';
 import AdminIcon from '../components/AdminIcon';
 import { playTone } from '../../utils/sounds';
@@ -19,6 +20,14 @@ const TABS = [
   { key: 'documents',     label: 'Documents',     icon: 'receipt' },
   { key: 'security',      label: 'Security',      icon: 'shield' },
 ];
+
+// One home per setting (070): these keys have a richer dedicated editor and
+// are hidden here so two screens never fight over the same value.
+const DEDICATED_HOME_KEYS = {
+  store_name: '/site-config/homepage',
+  site_logo_url: '/site-config/homepage',
+  site_tagline: '/site-config/homepage',
+};
 
 // Friendly labels for known keys (everything else shows the raw key)
 const LABELS = {
@@ -43,11 +52,19 @@ function pretty(key) {
 
 export default function SettingsPage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [tab, setTab] = useState('general');
   const [rows, setRows] = useState(null);       // loaded rows for active tab
   const [draft, setDraft] = useState({});       // key -> edited value
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
+
+  // Visible rows: keys with a dedicated home are edited there, not here.
+  const visibleRows = useMemo(
+    () => (rows || []).filter(r => !(r.key in DEDICATED_HOME_KEYS)),
+    [rows]
+  );
+  const hiddenCount = (rows || []).length - visibleRows.length;
 
   const loadTab = useCallback((k) => {
     setRows(null);
@@ -112,11 +129,17 @@ export default function SettingsPage() {
         <div className="space-y-3">
           {[0, 1, 2].map(i => <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />)}
         </div>
-      ) : rows.length === 0 ? (
+      ) : visibleRows.length === 0 && hiddenCount === 0 ? (
         <p className="text-sm text-gray-400 py-10 text-center">{t('Nothing configured under this tab yet.')}</p>
       ) : (
         <div className="space-y-3">
-          {rows.map(row => (
+          {hiddenCount > 0 && (
+            <button onClick={() => navigate('/site-config/homepage')}
+              className="w-full text-start rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-500 hover:border-primary-300 hover:text-primary-700 transition-colors">
+              {t('Brand & Identity (name, logo, tagline) lives in Site Config →')}
+            </button>
+          )}
+          {visibleRows.map(row => (
             <Field key={row.key} row={row} value={draft[row.key] ?? row.value}
                    onChange={v => setValue(row.key, v)} />
           ))}

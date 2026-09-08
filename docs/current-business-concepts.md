@@ -1,4 +1,4 @@
-# Current Business Concepts — Comfort Sign
+# Current Business Concepts — Ecom-ERP
 
 | NAME | MEANING FROM CURRENT UI | WHERE IT APPEARS | RELATED CONCEPTS | OPEN QUESTIONS |
 |---|---|---|---|---|

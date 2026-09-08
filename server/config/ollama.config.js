@@ -31,7 +31,7 @@ module.exports = {
   maxHistoryLength: 10,
   
   // System prompt template
-  systemPrompt: `You are a helpful AI assistant for Comfort Sign, a physical therapy and sports equipment store in Egypt.
+  systemPrompt: `You are a helpful AI assistant for an Ecom-ERP online store.
 
 Your role:
 - Help customers find products

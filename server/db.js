@@ -283,6 +283,46 @@ async function initDb() {
       UNIQUE(product_id, price_list_id)
     )
   `);
+  // mventor-ticket-075: Chart of Accounts (neutral skeleton — no business seeds)
+  // Survives system reset (not in WIPE_TABLES — like settings/price_lists).
+  // Journals arrive in later tickets; delete-if-referenced activates then.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS accounts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,          -- admin-assigned, verbatim (e.g. 1000)
+      name TEXT NOT NULL,
+      type TEXT NOT NULL,                 -- asset | liability | equity | revenue | expense | other
+      description TEXT DEFAULT '',
+      is_active INTEGER DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  // mventor-ticket-077: Journals (double-entry foundation — no postings yet)
+  // Financial history: NOT in WIPE_TABLES (survives reset like events audit).
+  // Money INTEGER cents (ADR-014). Status transitions arrive in Ticket D.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS journal_entries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entry_no TEXT NOT NULL UNIQUE,          -- JE-YYYY-NNNN via document_sequences
+      entry_date TEXT NOT NULL,               -- YYYY-MM-DD
+      description TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'draft',   -- draft | posted (posting in D)
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  db.run(`
+    CREATE TABLE IF NOT EXISTS journal_lines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entry_id INTEGER NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
+      account_id INTEGER NOT NULL REFERENCES accounts(id),
+      debit INTEGER NOT NULL DEFAULT 0,       -- cents, never negative
+      credit INTEGER NOT NULL DEFAULT 0,      -- cents, never negative; never both > 0
+      description TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
   // mventor-ticket-047: Paymob payment links (bulk upload + per-order intentions)
   db.run(`
     CREATE TABLE IF NOT EXISTS paymob_links (
@@ -1267,7 +1307,7 @@ async function initDb() {
   // once SUP/ISS existed, so PO/SO/GR/GI/TO/RT/CM/ADJ were never created → PO
   // creation threw "No sequence configured for document type: PO". Add each
   // missing type with WHERE NOT EXISTS (existing numbers are preserved).
-  for (const dt of ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ']) {
+  for (const dt of ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ', 'JE']) {
     try {
       db.run(`INSERT INTO document_sequences (doc_type, prefix, separator, year_format, current_number, padding)
         SELECT '${dt}', '${dt}', '-', 'YYYY', 0, 4
@@ -1403,7 +1443,7 @@ async function initDb() {
     ['notify_low_stock', '1', 'boolean', 'notifications', 'Send notification when stock falls below threshold', 0],
     ['notify_admin_email', '', 'string', 'notifications', 'Email address for admin notifications (empty = use mail admin email)', 0],
     // Documents
-    ['doc_company_name', 'Comfort Sign', 'string', 'documents', 'Company name shown on invoices and documents', 0],
+    ['doc_company_name', 'Ecom-ERP', 'string', 'documents', 'Company name shown on invoices and documents', 0],
     ['doc_invoice_prefix', 'INV', 'string', 'documents', 'Invoice number prefix', 0],
     ['doc_tax_rate', '14', 'number', 'documents', 'Tax rate percentage applied on documents', 0],
     ['doc_show_tax', '1', 'boolean', 'documents', 'Show tax line on invoices', 0],
@@ -1477,20 +1517,21 @@ async function initDb() {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // SEED DEFAULT PRICE LISTS (mventor-ticket-046) — insert-if-missing
+  // SEED DEFAULT PRICE LISTS (mventor-ticket-046; 065: wholesale/semi legacy-inactive)
+  // insert-if-missing by code — never flips existing rows (live DB handled separately)
   // ═══════════════════════════════════════════════════════════════
 
   const defaultPriceLists = [
-    ['Retail', 'retail', 0, 1],
-    ['Wholesale', 'wholesale', 15, 0],
-    ['Semi Wholesale', 'semi_wholesale', 7, 0],
-    ['Offer', 'offer', 20, 0],
+    ['Retail', 'retail', 0, 1, 1],
+    ['Wholesale', 'wholesale', 15, 0, 0],
+    ['Semi Wholesale', 'semi_wholesale', 7, 0, 0],
+    ['Offer', 'offer', 20, 0, 1],
   ];
-  defaultPriceLists.forEach(([name, code, discount, isDefault]) => {
+  defaultPriceLists.forEach(([name, code, discount, isDefault, isActive]) => {
     db.run(`
       INSERT INTO price_lists (name, code, discount_percent, is_default, is_active)
-      SELECT ?, ?, ?, ?, 1 WHERE NOT EXISTS (SELECT 1 FROM price_lists WHERE code = ?)
-    `, [name, code, discount, isDefault, code]);
+      SELECT ?, ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM price_lists WHERE code = ?)
+    `, [name, code, discount, isDefault, isActive, code]);
   });
 
   // ═══════════════════════════════════════════════════════════════
@@ -1718,17 +1759,11 @@ function runSql(sql, params = []) {
   // SEED CATEGORY ICONS (fake defaults for categories missing one)
   // ═══════════════════════════════════════════════════════════════
   const categoryIconDefaults = {
-    'Exercise & Fitness': '💪',
-    'Orthopedic Support': '🦴',
-    'Insoles & Foot Care': '🦶',
-    'Massage & Therapy': '💆',
-    'Mobility & Rehabilitation': '♿',
-    'Accessories': '🎒',
-    'Diagnostic Equipment': '🩺',
-    'Patient Monitoring': '📟',
-    'Mobility & Accessibility': '♿',
-    'Respiratory Care': '🫁',
-    'First Aid & Emergency': '⛑️',
+    'Electronics': '🔌',
+    'Home & Kitchen': '🏠',
+    'Fashion': '👕',
+    'Grocery': '🛒',
+    'Beauty & Care': '🧴',
     'General': '📦',
   };
   const cats = db.exec('SELECT id, name, icon FROM categories');

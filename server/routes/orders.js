@@ -65,15 +65,25 @@ router.post('/', (req, res) => {
     const snapGov = shipping_governorate || customer.governorate || '';
     const snapPost = shipping_postal_code || '';
 
-    // Create order
+    // Create order (066: snapshot the validated storefront list code so
+    // reports always know which list priced this order — equals DEFAULT
+    // 'retail' while the storefront sells at retail, zero behavior change)
+    const priceListCode = require('../services/priceListService').storefrontListCode();
     const result = db.prepare(`
       INSERT INTO orders (customer_id, stripe_session_id, total, status, items, temp_issue, payment_method, idempotency_key,
-        shipping_name, shipping_phone, shipping_address, shipping_city, shipping_governorate, shipping_postal_code)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        shipping_name, shipping_phone, shipping_address, shipping_city, shipping_governorate, shipping_postal_code, price_list_code)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(customer.id, stripe_session_id || null, total, initialStatus, JSON.stringify(items), vipOnBill ? 1 : 0, payment_method || 'cod', idempotency_key || null,
-      snapName, snapPhone, snapAddr, snapCity, snapGov, snapPost);
+      snapName, snapPhone, snapAddr, snapCity, snapGov, snapPost, priceListCode);
 
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
+
+    // Line-item truth (071, rows-canonical): mirror the authoritative JSON
+    // items into order_items through the single builder. Throws loudly on
+    // failure — a checkout must never silently diverge JSON vs rows.
+    // No stock effects here (bridge below is untouched).
+    const { buildLineRows, insertLineRows } = require('../services/orderLines');
+    insertLineRows(buildLineRows(order.id, items, priceListCode).rows);
 
     // Sales → Inventory bridge.
     // Online (card/Kashier) orders: RESERVE stock at creation so two customers
@@ -91,7 +101,12 @@ router.post('/', (req, res) => {
     }
     if (!stripe_session_id && !vipOnBill && !isKashier) {
       try {
-        bridge.issueForOrder(order.id, items, 'web_cod');
+        const issued = bridge.issueForOrder(order.id, items, 'web_cod');
+        try {
+          require('../services/orderLines').applyLineCosts(order.id, (issued && issued.costs) || []);
+        } catch (costErr) {
+          console.error('Line cost snapshot error:', costErr.message);
+        }
       } catch (bridgeErr) {
         console.error('Stock bridge error:', bridgeErr.message);
       }
@@ -288,6 +303,11 @@ router.post('/admin/:id/accept-onbill', adminAuth, (req, res) => {
     // Release stock through the bridge (real movements now)
     const bridge = require('../services/salesInventoryBridge');
     const result = bridge.issueForOrder(order.id, items, req.session.username || 'admin');
+    try {
+      require('../services/orderLines').applyLineCosts(order.id, (result && result.costs) || []);
+    } catch (costErr) {
+      console.error('Line cost snapshot error:', costErr.message);
+    }
 
     // Flip the temp issue into a real one
     db.prepare('UPDATE issue_orders SET is_temp = 0 WHERE order_id = ?').run(order.id);

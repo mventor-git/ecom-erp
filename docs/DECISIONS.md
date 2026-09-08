@@ -64,3 +64,8 @@
 **Context:** SPA admin panel needs CSRF protection on state-changing requests  
 **Decision:** Custom CSRF middleware using session-stored tokens. Token generated on login, retrieved via `GET /api/admin/csrf-token`, sent as `X-CSRF-Token` header  
 **Consequence:** No additional dependencies. Works with SPA pattern (no form-hidden fields). Token rotates on re-login. Exempts public routes (login, health, webhook, checkout).
+
+## ADR-014: Accounting truth = posted journals; operational modules own operational state (074)
+**Context:** Finance domain extraction must not create competing money truths (cf. products.stock vs ledger, JSON vs rows lessons)  
+**Decision:** Posted journal entries/lines are the future accounting truth. Inventory owns qty/movements/cost-layers; Accounting owns asset/AP/AR/revenue/COGS/expense/clearing balances. INTEGER-cents money kept (stronger than reference REAL — float money rejected). SmartAccounting used as semantics/test oracle only, never architecture.  
+**Consequence:** All future postings derive from journals; idempotency reuses existing event_key/idempotency/bridge-skip infrastructure; period enforcement, CoA, and mappings arrive in Tickets B–G before any posting behavior.

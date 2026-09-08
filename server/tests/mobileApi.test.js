@@ -11,7 +11,7 @@ const crypto = require('crypto');
 
 const BASE = `http://localhost:${process.env.PORT || 3099}`;
 
-const STAFF_EMAIL = 'integration.staff@comfortsign.local';
+const STAFF_EMAIL = 'integration.staff@ecom-erp.local';
 const STAFF_PASSWORD = 'IntegrationTest123!';
 
 let staffToken = '';
@@ -222,8 +222,9 @@ describe('Mobile â€” Cart API', () => {
   let cartItemId = null;
 
   beforeAll(async () => {
-    const res = await req('GET', '/api/v1/products?limit=1');
-    productId = res.body.data[0].id;
+    const res = await req('GET', '/api/v1/products?limit=50');
+    const inStock = (res.body.data || []).find(p => p.stock > 0);
+    productId = inStock ? inStock.id : null;
     await req('DELETE', '/api/v1/cart', { token: customerToken });
   });
 
@@ -292,8 +293,9 @@ describe('Mobile â€” Orders API', () => {
   let orderNumber = null;
 
   beforeAll(async () => {
-    const res = await req('GET', '/api/v1/products?limit=1');
-    productId = res.body.data[0].id;
+    const res = await req('GET', '/api/v1/products?limit=50');
+    const inStock = (res.body.data || []).find(p => p.stock > 0);
+    productId = inStock ? inStock.id : null;
   });
 
   test('POST /api/v1/orders with empty cart returns 400', async () => {

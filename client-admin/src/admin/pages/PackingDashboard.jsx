@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ClipboardList, Package, Printer, Check } from 'lucide-react';
 import DocumentViewer from '../components/DocumentViewer';
+import StatusBadge from '../components/StatusBadge';
 import {
   getPickingTasks, updatePickingStatus,
   getPackingTasks, getPackingStats, assignPackingTask, updatePackingStatus,
@@ -10,15 +11,6 @@ import { useAdminCurrency } from '../../utils/currency';
 
 const PICKING_STATUS = ['pending', 'in_progress', 'picked'];
 const PACKING_STATUS = ['pending', 'in_progress', 'packed', 'problem', 'completed'];
-
-const STATUS_STYLE = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  in_progress: 'bg-blue-100 text-blue-700',
-  packed: 'bg-green-100 text-green-700',
-  problem: 'bg-red-100 text-red-700',
-  completed: 'bg-gray-200 text-gray-600',
-  picked: 'bg-green-100 text-green-700',
-};
 
 export default function PackingDashboard() {
   const { format } = useAdminCurrency();
@@ -51,7 +43,7 @@ export default function PackingDashboard() {
         setStats(statsRes.data || {});
         setUsers(usersRes.data || []);
       })
-      .catch(err => console.error('Error loading tasks:', err))
+      .catch(err => setError(err.response?.data?.error || 'Failed to load tasks'))
       .finally(() => setLoading(false));
   }
 
@@ -60,7 +52,7 @@ export default function PackingDashboard() {
   const handlePicking = async (task, status) => {
     try {
       await updatePickingStatus(task.id, status, notes[`p-${task.id}`] || '');
-      flash(`Picking task #${task.id} → ${status}`);
+      flash(`Picking task #${task.id} -> ${status}`);
       await loadAll();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update');
@@ -70,7 +62,7 @@ export default function PackingDashboard() {
   const handlePacking = async (task, status) => {
     try {
       await updatePackingStatus(task.id, status, notes[`k-${task.id}`] || '');
-      flash(`Packing task #${task.id} → ${status}`);
+      flash(`Packing task #${task.id} -> ${status}`);
       await loadAll();
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update');
@@ -87,7 +79,7 @@ export default function PackingDashboard() {
     }
   };
 
-  const statusBadge = (s) => <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[s] || 'bg-gray-100 text-gray-600'}`}>{s.replace(/_/g, ' ')}</span>;
+  const statusBadge = (s) => <StatusBadge status={s} />;
 
   return (
     <div>
@@ -108,8 +100,8 @@ export default function PackingDashboard() {
         </div>
       </div>
 
-      {msg && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">{msg}</div>}
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
+      {msg && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700" role="status">{msg}</div>}
+      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700" role="alert">{error}</div>}
 
       {loading ? (
         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
@@ -150,7 +142,7 @@ export default function PackingDashboard() {
                 onChange={e => handleAssign(t, e.target.value ? parseInt(e.target.value) : null)}
                 className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
               >
-                <option value="">Assign to…</option>
+                <option value="">Assign to...</option>
                 {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
               </select>
               <button onClick={() => setViewDoc({ url: viewPackingSheetUrl(t.order_id), title: `Packing Sheet #${t.order_id}` })} className="px-2.5 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50"><Printer className="w-3 h-3 inline" /> Sheet</button>
@@ -189,7 +181,7 @@ function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, stat
                     {statusBadge(t.status)}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {t.customer_name || '—'} · {format(t.total || 0)} · {new Date(t.created_at).toLocaleString('en-GB')}
+                    {t.customer_name || '—'} · {format(t.total || 0)} · {new Date(t.created_at).toLocaleString()}
                   </p>
                   {t.assignee_id && (
                     <p className="text-xs text-primary-600 mt-0.5">

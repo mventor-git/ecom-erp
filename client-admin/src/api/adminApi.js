@@ -200,7 +200,7 @@ export const getPurchaseOrder = (id) => api.get(`/admin/purchase-orders/${id}`);
 
 export const createPurchaseOrder = (data) => api.post('/admin/purchase-orders', data);
 
-export const updatePurchaseOrderStatus = (id, status) => api.put(`/admin/purchase-orders/${id}/status`, { status });
+export const updatePurchaseOrderStatus = (id, status, reject_reason) => api.put(`/admin/purchase-orders/${id}/status`, reject_reason ? { status, reject_reason } : { status });
 
 export const receivePurchaseOrder = (id, items) => api.post(`/admin/purchase-orders/${id}/receive`, { items });
 
@@ -319,6 +319,8 @@ export const createPriceList = (data) => api.post('/admin/price-lists', data);
 export const updatePriceList = (id, data) => api.put(`/admin/price-lists/${id}`, data);
 
 export const deletePriceList = (id) => api.delete(`/admin/price-lists/${id}`);
+
+export const getPriceListUsage = () => api.get('/admin/price-lists/usage');
 
 export const getProductPrices = (productId) => api.get(`/admin/price-lists/products/${productId}/prices`);
 

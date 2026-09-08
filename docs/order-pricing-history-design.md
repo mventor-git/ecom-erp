@@ -14,3 +14,8 @@ SNAPSHOT RULES:
 JSON COMPATIBILITY: orders.items remains; new code reads from order_items for calculations; JSON kept for legacy / display simplicity; sync script can regenerate JSON from order_items if needed.
 
 NO DB MIGRATION APPLIED.
+
+## Reality status (mventor-ticket-069, 2026-09-07)
+- Migrations 004/005 HAVE applied the normalized columns live; writers now mirror qty/base_price/final_price (same facts, both names); admin lines carry real FIFO unit cost_snapshot.
+- cost_snapshot is honestly UNKNOWN for pre-069 history and mobile lines — line-cost truth stays in inventory_movements + cost_consumption until a dedicated costing ticket. Never fabricated.
+- orders.items JSON duality + "new code reads order_items for calculations" remain DESIGN (not yet reality) — separate track.

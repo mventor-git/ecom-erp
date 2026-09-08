@@ -1,13 +1,13 @@
 /**
- * Comfort-Sign Database Seed Script
+ * Catalog Database Seed Script
  * 
  * Reads the Excel seed data file and populates the database with
- * actual medical equipment / fitness products for the Comfort-Sign store.
+ * generic demo-catalog products for a neutral Ecom-ERP store.
  * 
- * Usage: node seed-comfort-sign.js
+ * Usage: node seed-catalog.js
  * 
- * Reads from: D:\Comfort-Sign-Seed-Data\Work Sheet-1.xlsx
- * Copies images from: D:\Comfort-Sign-Seed-Data\Products Images\
+ * Reads from: <seed-data-dir>/Work Sheet-1.xlsx
+ * Copies images from: <seed-data-dir>/Products Images/
  * Images to: server/public/images/products/
  */
 
@@ -20,7 +20,7 @@ const db = require('./db');
 
 // ─── Paths ───────────────────────────────────────────────────────────────────
 
-const SEED_DATA_DIR = 'D:\\Comfort-Sign-Seed-Data';
+const SEED_DATA_DIR = './seed-data';
 const EXCEL_PATH = path.join(SEED_DATA_DIR, 'Work Sheet-1.xlsx');
 const IMAGES_SOURCE_DIR = path.join(SEED_DATA_DIR, 'Products Images');
 const IMAGES_TARGET_DIR = path.join(__dirname, 'public', 'images', 'products');
@@ -28,19 +28,17 @@ const IMAGES_TARGET_DIR = path.join(__dirname, 'public', 'images', 'products');
 // ─── Categories ──────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { name_en: 'Exercise & Fitness', name_ar: 'التمارين واللياقة البدنية', slug: 'exercise-fitness' },
-  { name_en: 'Orthopedic Support', name_ar: 'الدعم العظمي', slug: 'orthopedic-support' },
-  { name_en: 'Insoles & Foot Care', name_ar: 'النعال والعناية بالقدمين', slug: 'insoles-foot-care' },
-  { name_en: 'Massage & Therapy', name_ar: 'المساج والعلاج', slug: 'massage-therapy' },
-  { name_en: 'Baby & Child', name_ar: 'الأطفال والرضع', slug: 'baby-child' },
-  { name_en: 'Mobility Aids', name_ar: 'مساعدات الحركة', slug: 'mobility-aids' },
-  { name_en: 'Health Accessories', name_ar: 'إكسسوارات صحية', slug: 'health-accessories' },
+  { name_en: 'Electronics', name_ar: 'إلكترونيات', slug: 'electronics' },
+  { name_en: 'Home & Kitchen', name_ar: 'المنزل والمطبخ', slug: 'home-kitchen' },
+  { name_en: 'Fashion', name_ar: 'أزياء', slug: 'fashion' },
+  { name_en: 'Grocery', name_ar: 'بقالة', slug: 'grocery' },
+  { name_en: 'Beauty & Care', name_ar: 'الجمال والعناية', slug: 'beauty-care' },
 ];
 
 // ─── Brand ───────────────────────────────────────────────────────────────────
 
 const BRANDS = [
-  { name: 'Comfort-Sign', slug: 'comfort-sign', icon_url: '' },
+  { name: 'Demo', slug: 'demo', icon_url: '' },
   { name: 'Generic', slug: 'generic', icon_url: '' },
 ];
 
@@ -97,108 +95,51 @@ function resolveDuplicates(rows) {
 }
 
 // ─── Image Folder → Product Name Mapping ─────────────────────────────────────
-// Maps folder names (from Products Images) to product name keys
-
-const IMAGE_FOLDER_MAP = {
-  '3in1 Baby Weight Scale': ['3in1 Baby Scale'],
-  '3in1 Travel Set': ['3in1 Travel Set'],
-  '3Pcs Resistance Bands Set': ['Bands 3'],
-  'AB Roller': ['Ab Wheels (New)'],
-  'Baby Weight Scale': ['Baby Scale with Pan'],
-  'Bamboo Seat': ['Bamboo Seat'],
-  'Bosu Ball': ['Bosu Ball'],
-  'BoxingBands': ['Bands 3'],
-  'Foam Foller Set': ['Foam Roller', 'Pilates Set'],
-  'Grand Pedal Exercise 111': ['Grand Pedal Exercise 111'],
-  'Green Flat Feet Kids': ['Green & Blue Insoles', 'Green & Orange Insoles'],
-  'GreenInsole': ['Green & Blue Insoles', 'Green & Orange Insoles'],
-  'GymBall': ['GymBall'],
-  'Healthy Leg Machine': ['Healthy Legs Machine'],
-  'HealthyLegExercise': ['Healthy Legs Machine'],
-  'High Increase Tall': ['Height Increase Insoles'],
-  'Jump Rope': ['Jump Rope'],
-  'Knee Pads': ['Knee Pads'],
-  'Knee Support': ['Knee Support'],
-  'Memory Gel Foam Pillow': ['Memory Gel Foam Pillow'],
-  'MemoryGelFoamPillow': ['Memory Gel Foam Pillow'],
-  'Mini Bike': ['Mini Exercise Bike'],
-  'Mini Cycle': ['Mini Cycle'],
-  'PullUpBar': ['Pull Up Bar'],
-  'Revoflex Extreme': ['Revoflex Extreme'],
-  'Silicone Insoles': ['Silicone Insoles 3/4', 'Regular Silicone Insoles', 'Flat Foot Silicone Insoles'],
-  'Stepper': ['Stepper Machine'],
-  'ThaiMaster': ['Thai Master'],
-  'Thigh Trainer': ['Thigh Trainer'],
-  'Toilet Seat': ['Toilet Seat Cover'],
-  'Vibration Crazy': ['Vibration Crazy Machine'],
-  'Yoga Mat': ['Yoga Mat'],
-};
+// Legacy Excel image-folder map retired (no external source). Kept for shape.
+const IMAGE_FOLDER_MAP = {};
 
 // ─── Product Category Assignment ────────────────────────────────────────────
 
 function getCategorySlug(productName) {
   const name = productName.toLowerCase();
-  
-  // Exercise & Fitness
-  if (/gymball|yoga\s*mat|jump\s*rope|pull\s*up\s*bar|stepper|mini\s*(bike|cycle|electronic)|vibration\s*crazy|healthy\s*leg|bosu\s*ball|ab\s*(wheel|roller)|pilates|foam\s*roller|thai\s*master|band|boxing|revoflex|thigh\s*trainer|pedal\s*exercise|resistance\s*band|grand\s*pedal|منفاخ\s*كور/.test(name)) {
-    return 'exercise-fitness';
+
+  // Electronics
+  if (/speaker|headphone|earbud|charger|power\s*bank|phone|tablet|laptop/.test(name)) {
+    return 'electronics';
   }
-  
-  // Orthopedic Support
-  if (/knee\s*(support|pads)|مشد\s*فقرات|back\s*brace|bamboo\s*seat|pillow|memory\s*gell/.test(name)) {
-    return 'orthopedic-support';
+
+  // Fashion
+  if (/shirt|sneaker|shoe|bag|tote|jacket|dress|jeans|cap|scarf/.test(name)) {
+    return 'fashion';
   }
-  
-  // Insoles & Foot Care
-  if (/فرش\s*سيليكون|فرش\s*أخضر|فرش\s*تطويل|insole|high\s*increase|tall|flat\s*feet|green\s*flat|silicone\s*insoles/.test(name)) {
-    return 'insoles-foot-care';
+
+  // Grocery
+  if (/coffee|honey|tea|sugar|rice|pasta|beans|chocolate|snack/.test(name)) {
+    return 'grocery';
   }
-  
-  // Massage & Therapy
-  if (/massage|vibration|double\s*head/.test(name)) {
-    return 'massage-therapy';
+
+  // Beauty & Care
+  if (/lotion|shampoo|soap|cream|perfume|cosmetic|skincare/.test(name)) {
+    return 'beauty-care';
   }
-  
-  // Baby & Child
-  if (/baby\s*scale|ميزان\s*أطفال|children.*pillow|3in1\s*baby/.test(name)) {
-    return 'baby-child';
-  }
-  
-  // Mobility Aids
-  if (/toilet\s*seat|علاية\s*تواليت|bamboo\s*seat/.test(name)) {
-    return 'mobility-aids';
-  }
-  
-  // Health Accessories (default for rest)
-  return 'health-accessories';
+
+  // Home & Kitchen (default for rest)
+  return 'home-kitchen';
 }
 
 // ─── Arabic → English Name Translation ──────────────────────────────────────
 
 const ARABIC_TO_ENGLISH = {
-  'منفاخ كور الجيم': 'Gym Ball Pump',
-  'فرش سيليكون 3/4': 'Silicone Insoles 3/4',
-  'فرش تطويل': 'Height Increase Insoles',
-  'رقبة عادية': 'Regular Neck Pillow',
-  'رقبة كبسولة': 'Capsule Neck Pillow',
-  'كور فاصوليا': 'Kidney Bean Pillow',
-  'فرش سيليكون عادي': 'Regular Silicone Insoles',
-  'فرش سيليكون (فلات فوت)': 'Flat Foot Silicone Insoles',
-  'فرش أخضر أزرق': 'Green & Blue Insoles',
-  'فرش أخضر برتقالي': 'Green & Orange Insoles',
-  'ميزانDegital Electronic Constant Scale': 'Digital Electronic Scale',
-  'ميزان أطفال بكفة': 'Baby Scale with Pan',
-  'علاية تواليت Toilet Set': 'Toilet Seat Cover',
-  'INDIAGO3&1 طقم السفر': '3in1 Travel Set',
-  'مشد فقرات الظهر': 'Spine Support Brace',
-  'Baby Scale 3*1': '3in1 Baby Scale',
+  'مكبر صوت': 'Bluetooth Speaker',
+  'تيشيرت قطن': 'Cotton T-Shirt',
+  'بن عربي': 'Arabica Coffee Beans',
 };
 
 // ─── Duplicate Resolution ───────────────────────────────────────────────────
 // Products that appear to be the same item entered with different names.
 // The key is the name to KEEP, the value is an array of names to MERGE into it.
 const DUPLICATE_MERGE = {
-  'Mini Exercise Bike': ['Mini Electronic Bike', 'Mini Bike Machine'],
+  'Cotton T-Shirt': ['Cotton Tee', 'Basic T-Shirt'],
 };
 
 // ─── Color Name → Hex Mapping ───────────────────────────────────────────────
@@ -277,7 +218,7 @@ function parseExcel() {
 // Each variant entry includes: name (color), hex, size (if applicable), stock.
 
 function groupProducts(rows) {
-  // --- Step 1: Resolve duplicates (merge like Mini Electronic Bike → Mini Exercise Bike)
+  // --- Step 1: Resolve duplicates (merge like Cotton Tee → Cotton T-Shirt)
   const resolved = resolveDuplicates(rows);
   
   // --- Step 2: Group by final English name
@@ -341,7 +282,7 @@ function groupProducts(rows) {
         }
       }
     } else if (hasSizes) {
-      // Size-only variants (Memory Gel Foam Pillow, Silicone Insoles)
+      // Size-only variants (throw pillows, shoe sizes)
       for (const row of nameRows) {
         const cleanSize = String(row.size).replace(/[()]/g, '').replace(/\s+/g, ' ').trim();
         variants.push({
@@ -352,7 +293,7 @@ function groupProducts(rows) {
         });
       }
     } else if (hasColors) {
-      // Color-only variants (رقبة عادية, رقبة كبسولة, كور فاصوليا)
+      // Color-only variants (cushion covers, tote bags)
       const seenColors = new Set();
       for (const row of nameRows) {
         const hex = getColorHex(row.color);
@@ -503,7 +444,7 @@ function copyFolderImages(folderName, files, product) {
 async function seedComfortSign() {
   try {
     await db.initPromise;
-    console.log('🌱  Seeding Comfort-Sign database...\n');
+    console.log('🌱  Seeding catalog database...\n');
     
     // ── 1. Clear existing data ──
     console.log('🧹  Clearing existing products, categories, brands...');

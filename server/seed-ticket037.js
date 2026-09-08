@@ -215,12 +215,12 @@ async function seedHeroSlides() {
   
   // Map of product names to real image folders
   const realImageMap = {
-    'Professional Yoga Mat': 'yoga-mat',
-    'Resistance Bands Set': 'pilates-set',
-    'Knee Support Brace': 'stepper',
-    'Posture Corrector': 'neck-pillow-capsule',
-    'Foam Roller': 'foam-roller',
-    'Gym Bag Duffle': 'pull-up-bar',
+    'Bluetooth Speaker': 'bluetooth-speaker',
+    'Stand Mixer': 'stand-mixer',
+    'Denim Tote Bag': 'denim-tote-bag',
+    'Ceramic Mug Set': 'ceramic-mug-set',
+    'Table Lamp': 'table-lamp',
+    'Canvas Sneakers': 'canvas-sneakers',
   };
   
   let count = 0;
@@ -273,7 +273,7 @@ async function seedAnnouncements() {
   
   const announcements = [
     { text: 'Free shipping on orders over 500 Ø¬.Ù…!', icon: 'ðŸšš' },
-    { text: 'New arrivals: Premium orthopedic supports now in stock', icon: 'âœ¨' },
+    { text: 'New arrivals just landed — shop the latest deals', icon: 'âœ¨' },
     { text: 'Ramadan Sale â€” Up to 30% off selected items', icon: 'ðŸŒ™' },
   ];
   

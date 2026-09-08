@@ -1,7 +1,7 @@
-# System Audit — Comfort Sign ERP / E-Commerce Platform
+# System Audit — Ecom-ERP ERP / E-Commerce Platform
 
 Date: 2026-08-25
-Source: D:\Projects\on-dev\comfort-sign-deploy (project root)
+Source: ecom-erp (project root)
 Status: INITIAL (post-audit, pre-implementation)
 
 ## A. System Architecture

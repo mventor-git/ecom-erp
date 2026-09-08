@@ -1,4 +1,4 @@
-# Data Integrity Decisions — Comfort Sign (Design Only)
+# Data Integrity Decisions — Ecom-ERP (Design Only)
 
 SOURCE OF TRUTH (Part A): inventory_movements ledger is authoritative; inventory snapshot is derived materialized state; products is metadata only. products.stock should become read-only or deprecated (backward compat via migration that copies current value into opening_balance + removes writes to stock field).
 

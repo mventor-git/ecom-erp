@@ -223,7 +223,7 @@ router.get('/me', authenticateToken, (req, res) => {
   try {
     const user = db.prepare(`
       SELECT u.id, u.email, u.name, u.role_id, u.is_active, u.last_login_at, u.created_at,
-             r.name as role_name, r.description as role_description
+             r.name as role_name
       FROM users u
       JOIN roles r ON u.role_id = r.id
       WHERE u.id = ?

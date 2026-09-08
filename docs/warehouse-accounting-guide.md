@@ -1,6 +1,6 @@
 ---
 name: ERP-Warehouses-EComerece
-description: Expert ERP warehouse, inventory, purchasing, sales, pricing, payments, COGS, accounting, and ecommerce business-logic skill for the comfort-sign-deploy project. Use when working with admin/customer web, VIP pricing, recommendations (advisory only), design tokens (Clinical Teal #1f857a), profile redesign, and zero-destructive-change rules.
+description: Expert ERP warehouse, inventory, purchasing, sales, pricing, payments, COGS, accounting, and ecommerce business-logic skill for the ecom-erp-deploy project. Use when working with admin/customer web, VIP pricing, recommendations (advisory only), design tokens (Clinical Teal #1f857a), profile redesign, and zero-destructive-change rules.
 ---
 
 # ERP Warehouse & Accounting

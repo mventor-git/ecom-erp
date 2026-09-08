@@ -144,7 +144,7 @@ export default function AdminLayout() {
           <div className="p-6 text-xs text-slate-500">Loading permissions...</div>
         ) : null}
         <div className="p-6">
-          <div className="text-amber-400 font-extrabold text-xl tracking-tight">Comfort Sign</div>
+          <div className="text-amber-400 font-extrabold text-xl tracking-tight">Ecom-ERP</div>
           <div className="text-xs text-slate-500 uppercase tracking-widest mt-1">Admin Panel</div>
         </div>
         <nav className="flex-1 px-3 space-y-6 overflow-y-auto">

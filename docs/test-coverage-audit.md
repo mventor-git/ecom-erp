@@ -1,4 +1,4 @@
-# Test Coverage Audit — Comfort Sign (Read Only)
+# Test Coverage Audit — Ecom-ERP (Read Only)
 
 TEST FRAMEWORK: Jest (jest.config.js present); integration via run-integration-tests.js
 FILES IN server/tests/ (observed): api.test.js, cache.test.js, customers.test.js, email.test.js, inventory.test.js, mobileApi.test.js, notificationsRefunds.test.js, pickingPacking.test.js, priceLists.test.js + jest.setup.js

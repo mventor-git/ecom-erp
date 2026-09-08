@@ -38,13 +38,14 @@ afterAll(() => {
 });
 
 describe('Price Lists', () => {
-  test('default lists are seeded', () => {
-    const lists = priceListService.listPriceLists();
-    const codes = lists.map(l => l.code);
-    expect(codes).toContain('retail');
-    expect(codes).toContain('wholesale');
-    expect(codes).toContain('semi_wholesale');
-    expect(codes).toContain('offer');
+  test('default lists are seeded (065: wholesale/semi legacy-inactive)', () => {
+    const all = priceListService.listPriceLists(true);
+    const allCodes = all.map(l => l.code);
+    expect(allCodes).toEqual(expect.arrayContaining(['retail', 'wholesale', 'semi_wholesale', 'offer']));
+    const activeCodes = priceListService.listPriceLists().map(l => l.code);
+    expect(activeCodes).toEqual(expect.arrayContaining(['retail', 'offer']));
+    expect(activeCodes).not.toContain('wholesale');
+    expect(activeCodes).not.toContain('semi_wholesale');
   });
 
   test('create/update/delete price list', () => {
@@ -80,24 +81,26 @@ describe('Price Lists', () => {
 
   test('effective price: discount applied', () => {
     const product = db.prepare('SELECT id, price FROM products WHERE id = ?').get(pid);
-    const eff = priceListService.getEffectivePrice(product, 'wholesale');
-    // wholesale seeded with 15%
-    expect(eff.price).toBe(Math.round(product.price * 0.85));
-    expect(eff.discount_percent).toBe(15);
+    const eff = priceListService.getEffectivePrice(product, 'offer');
+    // offer seeded with 20% (065: wholesale is legacy-inactive)
+    expect(eff.price).toBe(Math.round(product.price * 0.80));
+    expect(eff.discount_percent).toBe(20);
     expect(eff.base_price).toBe(product.price);
   });
 
   test('effective price: per-product override wins over discount', () => {
-    const wholesale = priceListService.getPriceList('wholesale');
-    priceListService.setProductPrices(pid, [{ price_list_id: wholesale.id, price: 12345 }]);
+    const offer = priceListService.getPriceList('offer');
+    try {
+      priceListService.setProductPrices(pid, [{ price_list_id: offer.id, price: 12345 }]);
 
-    const product = db.prepare('SELECT id, price FROM products WHERE id = ?').get(pid);
-    const eff = priceListService.getEffectivePrice(product, 'wholesale');
-    expect(eff.price).toBe(12345);
-    expect(eff.base_price).toBe(product.price);
-
-    // cleanup
-    priceListService.setProductPrices(pid, []);
+      const product = db.prepare('SELECT id, price FROM products WHERE id = ?').get(pid);
+      const eff = priceListService.getEffectivePrice(product, 'offer');
+      expect(eff.price).toBe(12345);
+      expect(eff.base_price).toBe(product.price);
+    } finally {
+      // cleanup even on failure — never leak overrides into other suites
+      priceListService.setProductPrices(pid, []);
+    }
   });
 
   test('applyPriceList attaches effective prices to arrays', () => {

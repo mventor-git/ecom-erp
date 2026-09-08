@@ -1,7 +1,7 @@
-﻿# VISION â€” Comfort Sign ERP Platform
+﻿# VISION â€” Ecom-ERP ERP Platform
 
-> **Project:** Comfort Sign â€” Modular ERP Platform for Physical Therapy & Sports Equipment
-> **Location:** `D:\Projects\On-Dev\comfort-sign`
+> **Project:** Ecom-ERP â€” Modular ERP Platform for Physical Therapy & Sports Equipment
+> **Location:** `D:\Projects\On-Dev\ecom-erp`
 > **Date:** July 28, 2026
 > **Author:** CODEX
 > **Version:** 3.0.0 â€” Architectural Pivot to ERP Platform
@@ -653,7 +653,7 @@ Stripe webhook â†’ /webhook updates order status
 ## 26. Folder Structure (Current)
 
 ```
-D:\Projects\On-Dev\comfort-sign\
+D:\Projects\On-Dev\ecom-erp\
 â”œâ”€â”€ VISION.MD                    # This file
 â”œâ”€â”€ Brainstorm.md                # ERP Inventory Manager brainstorm
 â”œâ”€â”€ .codex/                      # CODEX internal files
@@ -838,4 +838,4 @@ D:\Projects\On-Dev\comfort-sign\
 
 ---
 
-*This document serves as the architectural blueprint for the Comfort Sign ERP Platform. All implementation shall follow this vision.*
+*This document serves as the architectural blueprint for the Ecom-ERP ERP Platform. All implementation shall follow this vision.*

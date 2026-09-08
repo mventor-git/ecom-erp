@@ -25,7 +25,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl p-8">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-extrabold text-amber-400 tracking-tight">Comfort Sign</h1>
+          <h1 className="text-3xl font-extrabold text-amber-400 tracking-tight">Ecom-ERP</h1>
           <p className="text-sm text-slate-400 mt-1">Admin Access</p>
         </div>
         <div className="space-y-3">

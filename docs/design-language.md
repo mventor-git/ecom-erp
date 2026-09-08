@@ -1,4 +1,4 @@
-# Design Language — Existing Comfort Sign
+# Design Language — Existing Ecom-ERP
 
 ## Customer (5173)
 - Theme: Warm prestige / comfort — cream (#f6f2e8 body), gold accent (#a8811f / #e9d9a8 selection), near-black text (#26231d)

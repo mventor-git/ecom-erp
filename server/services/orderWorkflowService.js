@@ -215,7 +215,12 @@ function transitionOrder(orderId, toStatus, { userId = 'admin', reason = '' } = 
   }
   if (toStatus === 'shipped') {
     bridge.releaseForOrder(orderId, orderItems, userId); // free the promise�
-    bridge.issueForOrder(orderId, orderItems, userId);   // �then take the goods
+    const issued = bridge.issueForOrder(orderId, orderItems, userId);   // �then take the goods
+    try {
+      require('./orderLines').applyLineCosts(orderId, (issued && issued.costs) || []);
+    } catch (costErr) {
+      console.error('Line cost snapshot error:', costErr.message);
+    }
   }
   if (toStatus === 'cancelled' || toStatus === 'refunded') {
     bridge.releaseForOrder(orderId, orderItems, userId);

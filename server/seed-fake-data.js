@@ -1,5 +1,5 @@
 /**
- * Fake Data Seed Script for Comfort-Sign
+ * Fake demo-catalog seed script
  * 
  * Generates sample products with:
  * - SVG placeholder images (no external files needed)
@@ -20,18 +20,17 @@ const IMAGES_DIR = path.join(__dirname, 'public', 'images', 'products');
 // ─── Categories ──────────────────────────────────────────────────────────────
 
 const CATEGORIES = [
-  { name: 'Exercise & Fitness', slug: 'exercise-fitness' },
-  { name: 'Orthopedic Support', slug: 'orthopedic-support' },
-  { name: 'Insoles & Foot Care', slug: 'insoles-foot-care' },
-  { name: 'Massage & Therapy', slug: 'massage-therapy' },
-  { name: 'Mobility & Rehabilitation', slug: 'mobility-rehabilitation' },
-  { name: 'Accessories', slug: 'accessories' },
+  { name: 'Electronics', slug: 'electronics' },
+  { name: 'Home & Kitchen', slug: 'home-kitchen' },
+  { name: 'Fashion', slug: 'fashion' },
+  { name: 'Grocery', slug: 'grocery' },
+  { name: 'Beauty & Care', slug: 'beauty-care' },
 ];
 
 // ─── Brands ──────────────────────────────────────────────────────────────────
 
 const BRANDS = [
-  { name: 'Comfort-Sign', slug: 'comfort-sign' },
+  { name: 'Demo', slug: 'demo' },
   { name: 'Generic', slug: 'generic' },
 ];
 
@@ -53,292 +52,147 @@ const COLORS = {
 // ─── Product Templates ───────────────────────────────────────────────────────
 
 const PRODUCTS = [
-  // Exercise & Fitness
+  // Electronics
   {
-    name: 'Professional Yoga Mat',
-    description: 'High-density non-slip yoga mat for comfortable practice. Perfect for yoga, pilates, and floor exercises.',
-    category: 'exercise-fitness',
+    name: 'Bluetooth Speaker',
+    description: 'Portable Bluetooth speaker with deep bass and 12-hour battery life.',
+    category: 'electronics',
     price: 45000, // 450 EGP
     stock: 50,
     variants: {
-      colors: ['Red', 'Blue', 'Purple', 'Black'],
-      sizes: ['Small', 'Medium', 'Large'],
+      colors: ['Black', 'Blue', 'Gray'],
     },
     featured: true,
   },
   {
-    name: 'Resistance Bands Set',
-    description: 'Set of 5 resistance bands with different tension levels. Ideal for strength training and physical therapy.',
-    category: 'exercise-fitness',
-    price: 35000,
-    stock: 75,
+    name: 'Wireless Earbuds',
+    description: 'True wireless earbuds with charging case and touch controls.',
+    category: 'electronics',
+    price: 28000,
+    stock: 80,
     variants: {
-      colors: ['Red', 'Blue', 'Green', 'Orange', 'Purple'],
+      colors: ['White', 'Black'],
     },
-    featured: true,
   },
   {
-    name: 'Adjustable Dumbbells',
-    description: 'Pair of adjustable dumbbells (2-20 kg). Compact design for home gym workouts.',
-    category: 'exercise-fitness',
+    name: 'Power Bank 20000',
+    description: '20000mAh fast-charging power bank with dual USB ports.',
+    category: 'electronics',
+    price: 35000,
+    stock: 60,
+    variants: {
+      colors: ['Black', 'White'],
+    },
+  },
+
+  // Home & Kitchen
+  {
+    name: 'Ceramic Mug Set',
+    description: 'Set of 4 glazed ceramic mugs, 350ml each.',
+    category: 'home-kitchen',
+    price: 15000,
+    stock: 100,
+    variants: {
+      colors: ['White', 'Blue', 'Green'],
+    },
+  },
+  {
+    name: 'Stand Mixer',
+    description: '5L stand mixer with 3 attachments and 6 speeds.',
+    category: 'home-kitchen',
     price: 125000,
     stock: 30,
     variants: {
-      colors: ['Black', 'Gray'],
-    },
-  },
-  {
-    name: 'Exercise Ball',
-    description: 'Anti-burst exercise ball for core training and stability exercises.',
-    category: 'exercise-fitness',
-    price: 28000,
-    stock: 60,
-    variants: {
-      colors: ['Blue', 'Purple', 'Pink'],
-      sizes: ['Small (55cm)', 'Medium (65cm)', 'Large (75cm)'],
-    },
-  },
-  {
-    name: 'Jump Rope Professional',
-    description: 'Speed jump rope with ball bearings. Adjustable length for all heights.',
-    category: 'exercise-fitness',
-    price: 15000,
-    stock: 100,
-    variants: {
-      colors: ['Black', 'Red', 'Blue'],
-    },
-  },
-
-  // Orthopedic Support
-  {
-    name: 'Knee Support Brace',
-    description: 'Elastic knee support with patella stabilizer. Provides compression and support during activities.',
-    category: 'orthopedic-support',
-    price: 32000,
-    stock: 80,
-    variants: {
-      colors: ['Black', 'Gray'],
-      sizes: ['Small', 'Medium', 'Large', 'X-Large'],
+      colors: ['Red', 'Black', 'Gray'],
     },
     featured: true,
   },
   {
-    name: 'Lumbar Support Belt',
-    description: 'Adjustable lumbar support belt for back pain relief. Provides firm support for lower back.',
-    category: 'orthopedic-support',
-    price: 48000,
-    stock: 45,
-    variants: {
-      colors: ['Black', 'Beige'],
-      sizes: ['Small', 'Medium', 'Large'],
-    },
-  },
-  {
-    name: 'Wrist Support Brace',
-    description: 'Elastic wrist support with thumb loop. Ideal for carpal tunnel syndrome and wrist injuries.',
-    category: 'orthopedic-support',
+    name: 'Table Lamp',
+    description: 'LED table lamp with 3 brightness levels and USB port.',
+    category: 'home-kitchen',
     price: 22000,
     stock: 90,
     variants: {
-      colors: ['Black', 'Gray'],
-      sizes: ['Small', 'Medium', 'Large'],
+      colors: ['White', 'Black'],
     },
   },
   {
-    name: 'Ankle Support Brace',
-    description: 'Adjustable ankle support with figure-8 strap system. Provides stability for sprained ankles.',
-    category: 'orthopedic-support',
+    name: 'Electric Kettle',
+    description: '1.7L stainless electric kettle with auto shut-off.',
+    category: 'home-kitchen',
     price: 38000,
     stock: 55,
     variants: {
-      colors: ['Black'],
-      sizes: ['Small', 'Medium', 'Large'],
+      colors: ['Black', 'Gray'],
+    },
+  },
+
+  // Fashion
+  {
+    name: 'Cotton T-Shirt',
+    description: '100% cotton crew-neck t-shirt, pre-shrunk.',
+    category: 'fashion',
+    price: 12000,
+    stock: 200,
+    variants: {
+      colors: ['White', 'Black', 'Blue', 'Red'],
+      sizes: ['Small', 'Medium', 'Large', 'X-Large'],
     },
   },
   {
-    name: 'Posture Corrector',
-    description: 'Adjustable posture corrector for upper back and shoulders. Helps maintain proper spine alignment.',
-    category: 'orthopedic-support',
+    name: 'Denim Tote Bag',
+    description: 'Heavy-duty denim tote with inner pocket.',
+    category: 'fashion',
+    price: 25000,
+    stock: 70,
+    variants: {
+      colors: ['Blue', 'Black'],
+    },
+    featured: true,
+  },
+  {
+    name: 'Canvas Sneakers',
+    description: 'Classic canvas sneakers with rubber sole.',
+    category: 'fashion',
     price: 55000,
     stock: 40,
     variants: {
-      colors: ['Black', 'Beige'],
-      sizes: ['Small/Medium', 'Large/X-Large'],
-    },
-    featured: true,
-  },
-
-  // Insoles & Foot Care
-  {
-    name: 'Orthotic Insoles',
-    description: 'Arch support insoles for flat feet and plantar fasciitis. Provides cushioning and support.',
-    category: 'insoles-foot-care',
-    price: 25000,
-    stock: 120,
-    variants: {
-      sizes: ['Small (35-37)', 'Medium (38-40)', 'Large (41-43)', 'X-Large (44-46)'],
-    },
-  },
-  {
-    name: 'Gel Heel Cups',
-    description: 'Soft gel heel cups for heel pain relief. Absorbs shock and reduces pressure on heels.',
-    category: 'insoles-foot-care',
-    price: 18000,
-    stock: 150,
-    variants: {
-      colors: ['Transparent', 'Blue'],
-      sizes: ['Small', 'Medium', 'Large'],
-    },
-  },
-  {
-    name: 'Metatarsal Pads',
-    description: 'Soft metatarsal pads for ball-of-foot pain relief. Reduces pressure on metatarsal heads.',
-    category: 'insoles-foot-care',
-    price: 20000,
-    stock: 100,
-    variants: {
-      colors: ['Beige', 'Gray'],
-      sizes: ['Small', 'Medium', 'Large'],
-    },
-  },
-  {
-    name: 'Toe Separators',
-    description: 'Silicone toe separators for bunion relief and toe alignment. Soft and flexible material.',
-    category: 'insoles-foot-care',
-    price: 12000,
-    stock: 200,
-    variants: {
-      colors: ['Blue', 'Pink', 'Transparent'],
+      colors: ['White', 'Black', 'Red'],
+      sizes: ['40', '41', '42', '43', '44'],
     },
   },
 
-  // Massage & Therapy
+  // Grocery
   {
-    name: 'Foam Roller',
-    description: 'High-density foam roller for muscle recovery and myofascial release. Improves flexibility.',
-    category: 'massage-therapy',
-    price: 35000,
-    stock: 65,
-    variants: {
-      colors: ['Black', 'Blue', 'Purple'],
-      sizes: ['Small (30cm)', 'Medium (45cm)', 'Large (90cm)'],
-    },
-    featured: true,
-  },
-  {
-    name: 'Massage Ball Set',
-    description: 'Set of 3 massage balls with different textures. Target trigger points and tight muscles.',
-    category: 'massage-therapy',
-    price: 22000,
-    stock: 85,
-    variants: {
-      colors: ['Blue', 'Green', 'Orange'],
-    },
-  },
-  {
-    name: 'Therapy Putty',
-    description: 'Resistance putty for hand therapy and grip strengthening. Available in multiple resistance levels.',
-    category: 'massage-therapy',
-    price: 15000,
-    stock: 110,
-    variants: {
-      colors: ['Yellow (Extra Soft)', 'Red (Soft)', 'Green (Medium)', 'Blue (Firm)', 'Black (Extra Firm)'],
-    },
-  },
-  {
-    name: 'Neck Massager',
-    description: 'Electric neck massager with heat function. Relieves tension and improves blood circulation.',
-    category: 'massage-therapy',
-    price: 85000,
-    stock: 35,
-    variants: {
-      colors: ['White', 'Gray'],
-    },
-  },
-
-  // Mobility & Rehabilitation
-  {
-    name: 'Walking Cane Adjustable',
-    description: 'Adjustable aluminum walking cane with ergonomic handle. Lightweight and sturdy.',
-    category: 'mobility-rehabilitation',
+    name: 'Arabica Coffee Beans',
+    description: 'Medium-roast Arabica coffee beans, 1kg bag.',
+    category: 'grocery',
     price: 42000,
-    stock: 50,
-    variants: {
-      colors: ['Black', 'Brown', 'Silver'],
-    },
+    stock: 65,
   },
   {
-    name: 'Quad Cane',
-    description: 'Four-legged cane for enhanced stability. Wide base provides extra support.',
-    category: 'mobility-rehabilitation',
-    price: 65000,
-    stock: 30,
-    variants: {
-      colors: ['Black', 'Silver'],
-    },
-  },
-  {
-    name: 'Hand Grip Strengthener',
-    description: 'Adjustable hand grip strengthener for finger and wrist exercises. Improves grip strength.',
-    category: 'mobility-rehabilitation',
+    name: 'Organic Honey',
+    description: 'Raw organic honey, 500g jar.',
+    category: 'grocery',
     price: 18000,
-    stock: 95,
-    variants: {
-      colors: ['Black', 'Blue', 'Red'],
-    },
-  },
-  {
-    name: 'Finger Exerciser',
-    description: 'Individual finger exerciser with resistance bands. Rehabilitates finger strength and flexibility.',
-    category: 'mobility-rehabilitation',
-    price: 14000,
     stock: 120,
-    variants: {
-      colors: ['Blue', 'Green', 'Orange'],
-    },
   },
 
-  // Accessories
+  // Beauty & Care
   {
-    name: 'Gym Towel',
-    description: 'Quick-dry microfiber gym towel. Compact and absorbent.',
-    category: 'accessories',
-    price: 12000,
-    stock: 200,
-    variants: {
-      colors: ['Blue', 'Gray', 'Pink', 'Black'],
-    },
-  },
-  {
-    name: 'Water Bottle Sports',
-    description: 'Insulated sports water bottle (750ml). Keeps drinks cold for 24 hours.',
-    category: 'accessories',
+    name: 'Shea Body Lotion',
+    description: 'Shea butter body lotion, 400ml pump bottle.',
+    category: 'beauty-care',
     price: 25000,
-    stock: 150,
-    variants: {
-      colors: ['Blue', 'Black', 'Red', 'Green'],
-    },
+    stock: 85,
   },
   {
-    name: 'Gym Bag Duffle',
-    description: 'Spacious gym bag with shoe compartment. Durable and water-resistant material.',
-    category: 'accessories',
-    price: 55000,
-    stock: 70,
-    variants: {
-      colors: ['Black', 'Gray', 'Blue'],
-    },
-    featured: true,
-  },
-  {
-    name: 'Resistance Band Door Anchor',
-    description: 'Door anchor for resistance band exercises. Secure attachment point for various workouts.',
-    category: 'accessories',
-    price: 18000,
-    stock: 80,
-    variants: {
-      colors: ['Black'],
-    },
+    name: 'Herbal Shampoo',
+    description: 'Herbal shampoo for all hair types, 500ml.',
+    category: 'beauty-care',
+    price: 14000,
+    stock: 110,
   },
 ];
 
@@ -441,7 +295,7 @@ function generateVariants(product) {
 async function seedFakeData() {
   try {
     await db.initPromise;
-    console.log('🌱  Seeding fake data for Comfort-Sign...\n');
+    console.log('🌱  Seeding fake demo catalog...\n');
 
     // ── 1. Clear existing data ──
     console.log('🧹  Clearing existing data...');
@@ -485,7 +339,7 @@ async function seedFakeData() {
 
     for (const product of PRODUCTS) {
       const categoryId = catMap[product.category];
-      const brandId = brandMap['comfort-sign']; // Use Comfort-Sign brand
+      const brandId = brandMap['demo']; // Use Demo brand
 
       if (!categoryId) {
         console.log(`  ⚠️  Skipped: "${product.name}" — unknown category`);
@@ -531,7 +385,7 @@ async function seedFakeData() {
       if (variants.length > 0) {
         for (let i = 0; i < variants.length; i++) {
           const variant = variants[i];
-          const sku = `CS-${product.name.substring(0, 3).toUpperCase()}-${i + 1}`;
+          const sku = ` EE-${product.name.substring(0, 3).toUpperCase()}-${i + 1}`;
           const barcode = `600000000${productId}${i}`;
 
           db.run(`
@@ -568,7 +422,7 @@ async function seedFakeData() {
         INSERT INTO inventory_movements (
           product_id, warehouse_id, type, reason, qty_change,
           qty_before, qty_after, note, created_by
-        ) VALUES (?, ?, 'opening_balance', 'Initial stock', ?, 0, ?, 'Fake data seed', 'system')
+        ) VALUES (?, ?, 'opening_balance', 'Initial stock', ?, 0, ?, 'Demo seed', 'system')
       `, [productId, defaultWarehouseId, product.stock, product.stock]);
 
       const priceEg = (product.price / 100).toFixed(2);

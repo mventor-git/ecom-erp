@@ -1,4 +1,4 @@
-# Accounting Reality — Comfort Sign (Audit Only, No Fixes)
+# Accounting Reality — Ecom-ERP (Audit Only, No Fixes)
 
 SCHEMA SUPPORT (exists in DB):
 - financial_periods (open/closed, opening_balance_set, start/end, months)

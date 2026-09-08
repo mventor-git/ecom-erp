@@ -85,8 +85,8 @@ function generateInvoice({ orderId } = {}) {
     invoiceDate = new Date();
     items = [
       { name: 'Knee Support Brace', price: 12500, qty: 1 },
-      { name: 'Orthopedic Insoles', price: 8500, qty: 2 },
-      { name: 'Massage Roller', price: 23000, qty: 1 },
+      { name: 'Ceramic Mug Set', price: 8500, qty: 2 },
+      { name: 'Table Lamp', price: 23000, qty: 1 },
     ];
     subtotal = items.reduce((s, i) => s + (i.price * (i.qty || 1)), 0);
     customerName = 'Test Customer';
@@ -299,8 +299,8 @@ function generateMovementDocument({ type, movementId } = {}) {
     // Test sample data
     const samples = [
       ['Knee Support Brace', qty || 12, 12500],
-      ['Orthopedic Insoles', qty || 20, 8500],
-      ['Massage Roller', qty || 8, 23000],
+      ['Ceramic Mug Set', qty || 20, 8500],
+      ['Table Lamp', qty || 8, 23000],
     ];
     samples.forEach((s, i) => {
       rows.push([i + 1, s[0], s[1], money(s[2], sym), money(s[2] * s[1], sym)]);

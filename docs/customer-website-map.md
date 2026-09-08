@@ -1,4 +1,4 @@
-# Customer Website UX Map — Comfort Sign
+# Customer Website UX Map — Ecom-ERP
 
 | PAGE | PURPOSE | HOW TO REACH | IMPORTANT UI | USER ACTIONS | NEXT DESTINATION | STATE |
 |---|---|---|---|---|---|---|

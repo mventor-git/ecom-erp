@@ -12,7 +12,7 @@ WORKING FROM USER PERSPECTIVE:
 
 PARTIALLY WORKING / OBSERVED ONLY:
 - Some modules (ERP accounting, full inventory movement, VIP invitations, receipt issuance) have UI but backend full flow not verified in this phase
-- Data may be mocked/seeded (seed scripts exist: seed-comfort-sign.js, seed-fake-data.js, seed-ticket037.js)
+- Data may be mocked/seeded (seed scripts exist: seed-ecom-erp.js, seed-fake-data.js, seed-ticket037.js)
 - Announcement rotation uses 5s interval; depends on /api/announcements/active
 
 BROKEN / EMPTY / PLACEHOLDER (identified only — not fixed):
@@ -31,6 +31,6 @@ TOOLS USED (Node.js only — no Python):
 - Bash / grep / find / cat / head for file inspection
 - WebFetch attempts for localhost (failed; relied on source inspection instead)
 - Source code inspection of React JSX / CSS / sidebar / routes
-- Server scripts: seed-comfort-sign.js, seed.js, _test_db.js, verify-database.js available for DB inspection
+- DB inspection: Jest suite `server/tests/dbIntegrity.test.js` (`cd server && npm test`)
 
 DO NOT FIX IN THIS PHASE.

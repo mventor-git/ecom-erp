@@ -7,7 +7,10 @@ describe('Phase 4.1 DB Reconciliation', () => {
   let db;
   beforeAll(async () => {
     const SQL = await initSqlJs();
-    db = new SQL.Database();
+    const DB_PATH = path.join(__dirname, '../data/store.db');
+    db = fs.existsSync(DB_PATH)
+      ? new SQL.Database(fs.readFileSync(DB_PATH))
+      : new SQL.Database();
     db.run('PRAGMA foreign_keys = ON');
   });
 
@@ -59,16 +62,16 @@ describe('Phase 4.1 DB Reconciliation', () => {
     expect(names).toContain('idx_order_items_product');
   });
 
-  test('existing orders readable', () => {
+  test('existing orders readable', async () => {
     // Use real DB file (read-only inspection)
-    const SQL = require('sql.js');
+    const SQL = await require('sql.js')();
     const real = new SQL.Database(fs.readFileSync(path.join(__dirname, '../data/store.db')));
     const r = real.exec('SELECT count(*) as c FROM orders');
     expect(r[0].values[0][0]).toBeGreaterThanOrEqual(0);
   });
 
-  test('existing orders.items JSON intact', () => {
-    const SQL = require('sql.js');
+  test('existing orders.items JSON intact', async () => {
+    const SQL = await require('sql.js')();
     const real = new SQL.Database(fs.readFileSync(path.join(__dirname, '../data/store.db')));
     const r = real.exec('SELECT items FROM orders LIMIT 1');
     // If no rows, just verify column exists

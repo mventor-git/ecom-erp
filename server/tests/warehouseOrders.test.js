@@ -231,7 +231,7 @@ describe('Markdown Documents', () => {
 describe('PDF Writer', () => {
   test('produces a valid PDF buffer', () => {
     const pdf = new PdfWriter();
-    pdf.title('Comfort Sign');
+    pdf.title('Ecom-ERP');
     pdf.text('Report line');
     pdf.table(['A', 'B'], [['1', '2'], ['3', '4']]);
     pdf.setFooter('footer');

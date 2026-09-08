@@ -39,6 +39,7 @@ export default function PricingEngine() {
   const [busyId, setBusyId] = useState(null);
   const [lastApply, setLastApply] = useState(null);
   const [undoing, setUndoing] = useState(false);
+  const [vipPct, setVipPct] = useState(10); // VIP preview % off retail — display only, never stored/applied
 
   const flashMsg = (ok, msg) => {
     playTone(ok ? 'success' : 'error');
@@ -200,9 +201,9 @@ export default function PricingEngine() {
           {t('Pricing defaults')}
         </h2>
         <p className="text-xs text-gray-400 mb-4 -mt-2">
-          {t('New products without a retail price get wholesale × markup. The chosen list is what customers pay.')}
+          {t('New products without a retail price get wholesale × markup. The chosen list is what customers pay. Cost basis uses inventory layers where present, else wholesale cost. VIP is a preview % off retail — never stored, never gateway-paid.')}
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl">
           <label className="block">
             <span className="block text-xs font-medium text-gray-500 mb-1.5">{t('Default markup over wholesale (%)')}</span>
             <div className="flex items-center gap-2">
@@ -225,6 +226,12 @@ export default function PricingEngine() {
               ))}
             </select>
           </label>
+          <label className="block">
+            <span className="block text-xs font-medium text-gray-500 mb-1.5">{t('VIP preview (% off retail, display only)')}</span>
+            <input type="number" min="0" max="90" className="w-24 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+              value={vipPct}
+              onChange={e => setVipPct(Math.min(Math.max(Number(e.target.value) || 0, 0), 90))} />
+          </label>
         </div>
       </div>
 
@@ -234,7 +241,7 @@ export default function PricingEngine() {
           const st = catState[c.id];
           if (!st) return null;
           return (
-            <CategoryCard key={c.id} cat={c} st={st} busyId={busyId}
+            <CategoryCard key={c.id} cat={c} st={st} busyId={busyId} vipPct={vipPct}
               onApply={applyCategory} onUpdate={updateSt} />
           );
         })}
@@ -276,9 +283,11 @@ export default function PricingEngine() {
 }
 
 /* ── One category card with debounced live preview ─────────────────── */
-function CategoryCard({ cat, st, busyId, onApply, onUpdate }) {
+function CategoryCard({ cat, st, busyId, vipPct, onApply, onUpdate }) {
   const { t } = useLanguage();
   const [preview, setPreview] = useState(null);   // totals from the preview API
+  const [rows, setRows] = useState([]);           // honest per-product Cost→Retail→VIP rows
+  const [basis, setBasis] = useState('');
   const timer = useRef(null);
 
   // Debounced live projection as the admin types markup/offer %
@@ -286,14 +295,14 @@ function CategoryCard({ cat, st, busyId, onApply, onUpdate }) {
     clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const params = st.offerOn
-        ? { scope: 'category', category_id: cat.id, mode: 'offer', value: st.offerPct ?? 10, rounding: 'none' }
-        : { scope: 'category', category_id: cat.id, mode: 'markup', value: st.markup ?? 0, rounding: 'none' };
+        ? { scope: 'category', category_id: cat.id, mode: 'offer', value: st.offerPct ?? 10, rounding: 'none', vip_pct: vipPct ?? 0 }
+        : { scope: 'category', category_id: cat.id, mode: 'markup', value: st.markup ?? 0, rounding: 'none', vip_pct: vipPct ?? 0 };
       pricingPreview(params)
-        .then(r => setPreview(r.data?.totals || null))
-        .catch(() => setPreview(null));
+        .then(r => { setPreview(r.data?.totals || null); setRows(r.data?.rows || []); setBasis(r.data?.rows?.[0]?.retail_basis || ''); })
+        .catch(() => { setPreview(null); setRows([]); });
     }, 350);
     return () => clearTimeout(timer.current);
-  }, [cat.id, st.offerOn, st.offerPct, st.markup]);
+  }, [cat.id, st.offerOn, st.offerPct, st.markup, vipPct]);
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
@@ -327,6 +336,37 @@ function CategoryCard({ cat, st, busyId, onApply, onUpdate }) {
             <span>{preview.below_cost > 0 ? <span className="inline-flex items-center gap-1 text-amber-600"><AlertTriangle className="w-3.5 h-3.5" /> {t('items below cost')}</span> : t('vs current')}{preview.below_cost > 0 ? '' : ` ${fmt(preview.profit_delta >= 0 ? '+' : '')}${fmt(preview.profit_delta)}`}</span>
             <span>{t('avg')} {preview.avg_margin_pct}%</span>
           </div>
+          {basis && <div className="mt-1 opacity-70">{t('Cost basis')}: {basis} · {t('VIP preview')} {vipPct}% {t('off retail, display only')}</div>}
+        </div>
+      )}
+
+      {/* Honest Cost→Retail→VIP rows — missing-pricing guard built in */}
+      {rows.length > 0 ? (
+        <div className="mb-3 overflow-x-auto rounded-lg border border-gray-100">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="text-gray-400 text-start">
+                <th className="text-start font-medium px-2 py-1">{t('Product')}</th>
+                <th className="text-end font-medium px-2 py-1">{t('Cost')}</th>
+                <th className="text-end font-medium px-2 py-1">{t('Retail')}</th>
+                <th className="text-end font-medium px-2 py-1">{t('VIP')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(r => (
+                <tr key={r.id} className="border-t border-gray-50">
+                  <td className="px-2 py-1 max-w-28 truncate" title={`${r.name} · ${r.cost_source}`}>{r.name}</td>
+                  <td className="px-2 py-1 text-end text-gray-500" title={r.cost_source}>{fmt(r.cost_basis)}</td>
+                  <td className={`px-2 py-1 text-end font-semibold ${r.new_margin <= 0 ? 'text-red-600' : 'text-gray-900'}`}>{fmt(r.proposed_price)}</td>
+                  <td className="px-2 py-1 text-end text-emerald-700">{fmt(r.vip_price)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="mb-3 rounded-lg px-3 py-2 text-xs bg-gray-50 border border-gray-200 text-gray-500">
+          {t('No priced products here yet — products need a wholesale cost above zero.')}
         </div>
       )}
 

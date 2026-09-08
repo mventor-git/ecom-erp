@@ -1,6 +1,6 @@
 const db = require('../db');
 
-const VALID_DOC_TYPES = ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ', 'SUP', 'ISS'];
+const VALID_DOC_TYPES = ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ', 'SUP', 'ISS', 'JE'];
 
 function formatYear(yearFormat) {
   const now = new Date();

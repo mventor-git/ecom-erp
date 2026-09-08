@@ -17,6 +17,8 @@ const adminAuth = require('../middleware/adminAuth');
 const { requirePermission } = require('../middleware/rbac');
 const cache = require('../cache');
 const eventService = require('../services/eventService');
+const pricingService = require('../services/pricingService');
+const valuationService = require('../services/valuationService');
 
 function buildScope(req) {
   const { scope, category_id, product_id } = req.query;
@@ -33,25 +35,23 @@ function buildScope(req) {
   return { whereSql: where.join(' AND '), params };
 }
 
-/** Round a price (in cents) to the chosen commercial ending. */
+/** Round a price (in cents) to the chosen commercial ending. Single engine: pricingService (057). */
 function roundPrice(centsValue, style) {
-  if (!style || style === 'none') return centsValue;
-  const whole = Math.floor(centsValue / 100);
-  if (style === '99') return whole * 100 + 99;            // x.99 charm
-  if (style === '95') return whole * 100 + 95;            // x.95 charm
-  if (style === '5')  return Math.max(Math.round(centsValue / 500) * 500, 500);   // nearest 5 EGP
-  if (style === '10') return Math.max(Math.round(centsValue / 1000) * 1000, 1000); // nearest 10 EGP
-  return centsValue;
+  return pricingService.roundPrice(centsValue, style);
 }
 
 /**
- * Pricing Engine core.
+ * Pricing Engine core — 057 canonical + follow-up (owner-confirmed).
+ * Cost basis: valuation layers where present (retail_cost_basis), else
+ * products.cost_price fallback with explicit `cost_source`. Never nulls out
+ * a priced product: fallback preserves prior behavior where layers absent.
+ * VIP: pure % off proposed retail for display only (never stored).
  * modes:
  *   markup — value% on top of cost          price = cost × (1 + v)
  *   margin — value% target margin on retail price = cost ÷ (1 − v)
  *   match  — keep current prices, re-round endings only
  */
-function computeRows(req, { mode = 'markup', value = 0, rounding = 'none' }) {
+function computeRows(req, { mode = 'markup', value = 0, rounding = 'none', vip_pct = 0 } = {}) {
   const { whereSql, params } = buildScope(req);
   const products = db.prepare(`
     SELECT p.id, p.name, p.name_ar, p.cost_price, p.price AS current_price,
@@ -62,24 +62,25 @@ function computeRows(req, { mode = 'markup', value = 0, rounding = 'none' }) {
     ORDER BY p.name ASC
   `).all(...params);
 
+  let retailBasis = 'HIGHEST_PURCHASE_COST';
+  try { retailBasis = valuationService.getRetailBasis(); } catch { /* keep default */ }
+  const vipPct = Math.min(Math.max(Number(vip_pct || 0), 0), 90);
+
   const v = Number(value || 0);
   const rows = products.map(p => {
-    let raw;
-    if (mode === 'margin') {
-      const m = Math.min(Math.max(v, -90), 95) / 100;
-      raw = m < 0.95 ? p.cost_price / (1 - m) : p.cost_price * 20;
-    } else if (mode === 'match') {
-      raw = p.current_price;
-    } else if (mode === 'offer') {
-      // Offer mode: value% OFF the CURRENT retail price
-      raw = p.current_price * (1 - Math.min(Math.max(v, 0), 90) / 100);
-    } else {
-      raw = p.cost_price * (1 + v / 100);
-    }
-    const proposed = Math.max(roundPrice(Math.round(raw), rounding), 5);
+    let costBasis = p.cost_price;
+    let costSource = 'cost_price';
+    try {
+      const layered = valuationService.costBasis(p.id);
+      if (layered != null && layered > 0) { costBasis = layered; costSource = 'layer:' + retailBasis; }
+    } catch { /* fallback to cost_price */ }
+    const proposed = pricingService.computeRetailPreview({
+      costCents: costBasis, currentCents: p.current_price, mode, value: v, rounding,
+    });
+    const vipPrice = pricingService.vipPriceFromRetail(proposed, vipPct);
 
-    const currentMargin = p.current_price - p.cost_price;
-    const newMargin = proposed - p.cost_price;
+    const currentMargin = p.current_price - costBasis;
+    const newMargin = proposed - costBasis;
     const isOfferNow = p.offer_badge === 1 || (p.old_price > p.current_price);
 
     return {
@@ -88,6 +89,9 @@ function computeRows(req, { mode = 'markup', value = 0, rounding = 'none' }) {
       name_ar: p.name_ar,
       category_name: p.category_name,
       cost_price: p.cost_price,
+      cost_basis: costBasis,
+      cost_source: costSource,
+      retail_basis: retailBasis,
       current_price: p.current_price,
       old_price: p.old_price,
       has_offer: !!isOfferNow,
@@ -96,23 +100,26 @@ function computeRows(req, { mode = 'markup', value = 0, rounding = 'none' }) {
         ? Math.round(((p.current_price - proposed) / p.current_price) * 100)
         : 0,
       proposed_price: proposed,
+      vip_pct: vipPct,
+      vip_price: vipPrice,
       current_margin: currentMargin,
       new_margin: newMargin,
       delta_margin: newMargin - currentMargin,
-      margin_pct: p.cost_price > 0 ? Math.round(((proposed - p.cost_price) / p.cost_price) * 100) : 0,
-      current_margin_pct: p.cost_price > 0 ? Math.round((currentMargin / p.cost_price) * 100) : 0,
+      margin_pct: costBasis > 0 ? Math.round(((proposed - costBasis) / costBasis) * 100) : 0,
+      current_margin_pct: costBasis > 0 ? Math.round((currentMargin / costBasis) * 100) : 0,
     };
   });
 
   const totals = rows.reduce((acc, r) => ({
-    total_cost: acc.total_cost + r.cost_price,
+    total_cost: acc.total_cost + r.cost_basis,
     total_current_revenue: acc.total_current_revenue + r.current_price,
     total_proposed_revenue: acc.total_proposed_revenue + r.proposed_price,
+    total_vip_revenue: (acc.total_vip_revenue || 0) + r.vip_price,
     total_current_profit: acc.total_current_profit + r.current_margin,
     total_new_profit: acc.total_new_profit + r.new_margin,
     offers_created: acc.offers_created + (r.will_offer ? 1 : 0),
   }), { total_cost: 0, total_current_revenue: 0, total_proposed_revenue: 0,
-        total_current_profit: 0, total_new_profit: 0, offers_created: 0 });
+        total_vip_revenue: 0, total_current_profit: 0, total_new_profit: 0, offers_created: 0 });
 
   totals.profit_delta = totals.total_new_profit - totals.total_current_profit;
   totals.avg_margin_pct = rows.length
@@ -122,13 +129,14 @@ function computeRows(req, { mode = 'markup', value = 0, rounding = 'none' }) {
   return { rows, totals };
 }
 
-// GET /api/admin/pricing/preview?scope=store|category|product&mode=markup|margin|match&value=&rounding=
+// GET /api/admin/pricing/preview?scope=store|category|product&mode=markup|margin|match&value=&rounding=&vip_pct=
 router.get('/preview', adminAuth, requirePermission('products.update'), (req, res) => {
   try {
     const opts = {
       mode: req.query.mode || 'markup',
       value: parseFloat(req.query.value ?? req.query.margin) || 0,
       rounding: req.query.rounding || 'none',
+      vip_pct: Math.min(Math.max(parseFloat(req.query.vip_pct) || 0, 0), 90),
     };
     const { rows, totals } = computeRows(req, opts);
     res.json({ ...opts, rows, totals });

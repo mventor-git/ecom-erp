@@ -2,7 +2,7 @@
 
 Date: 2026-08-26
 Agent: Ox Alpha
-Project: D:/Projects/on-dev/comfort-sign-deploy
+Project: ecom-erp
 Stack: Node.js only
 
 Migration: server/migrations/006_inventory_cost_layers.sql (additive)
@@ -91,7 +91,7 @@ Verdict: PASS (service + DB + endpoint + UI all verified by inspection/DB; inter
 
 Date: 2026-08-26
 Agent: Ox Alpha
-Project: D:/Projects/on-dev/comfort-sign-deploy
+Project: ecom-erp
 Stack: Node.js (no Python)
 Constraint: EXISTING PROJECT REPAIR — no replacement of backend/DB/customer site
 
@@ -160,7 +160,7 @@ DB: users, roles, permissions preserved.
 - 5172 (backend): LISTENING — `/api/admin-sale` responds 401 (auth middleware active, route exists)
 - 5174 (admin): LISTENING — rebuilt with ERP sidebar
 - 5173 (customer): LISTENING — unchanged
-- Admin login (`admin/admin123`): 200 OK, cookie set
+- Admin login (`admin/********`): 200 OK, cookie set
 - DB: `store.db` contains previous warehouse/inventory/cost-layer data intact
 
 ## Limitations (Post Phase 09 Partial)
@@ -189,14 +189,14 @@ No broken routes. No duplicate modules. No replacement of backend or DB.
 Status: COMPLETE (verification passed; corrections applied; acceptance recorded)
 
 A. Runtime: VERIFIED
-- 5172 (backend): PID 8843, node index.js from D:/Projects/on-dev/comfort-sign-deploy/server/ (current source)
+- 5172 (backend): PID 8843, node index.js from server/ (current source)
 - 5174 (admin): PID 629, npm run dev --port 5174 (current source)
 - 5173 (customer): PID 1597, npm run dev --port 5173 (current source)
-- DB: D:/Projects/on-dev/comfort-sign-deploy/server/data/store.db (503808 bytes, current)
+- DB: server/data/store.db (503808 bytes, current)
 - No stale/mismatched instances.
 
 B. Authentication: VERIFIED
-- POST /api/admin/login (admin/admin123) -> 200, session cookie set
+- POST /api/admin/login (admin/********) -> 200, session cookie set
 - /api/admin/me with cookie -> 200, isAdmin=true, role=super_admin
 - RBAC middleware (adminAuth, jwtAuth) functioning
 

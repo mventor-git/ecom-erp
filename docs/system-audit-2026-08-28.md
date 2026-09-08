@@ -1,7 +1,7 @@
-# Comfort Sign — System Audit Report
+# Ecom-ERP — System Audit Report
 
 Date: 2026-08-28
-Audit target: `D:/Projects/on-dev/comfort-sign-deploy`
+Audit target: `ecom-erp`
 Stack: Node v24.18.0 / Express + sql.js (backend), Vite / React / Tailwind (two SPAs), Expo React Native (mobile-app, worker-app).
 Method: read-only mapping, per-domain code audits, and adversarial verification against the live DB and running servers. No file mutations, no DB writes, no browser click-through.
 
@@ -17,7 +17,7 @@ Three-app monorepo plus two Expo apps:
 - **Backend** — `server/`. Express with helmet, CORS (strict allowlist 5173/5174 + env CLIENT_URL), compression, rate-limit (api 200/15min, admin 1000/15min, auth 20/15min, checkout 30/15min), express-session + session-file-store, passport Google OAuth, CSRF (protects `/api/admin` POST/PUT/PATCH/DELETE, exemptions `/api/admin/login` and `/api/health`). Entrypoint `server/index.js`; DB init via `db.initPromise` before listen. Mounts 40+ route modules under `/api`, `/api/admin`, `/api/v1`, `/auth`. Serves `/images` and `/uploads` statically. **In production only** serves `client/dist` as SPA fallback (index.js:311-318). PORT from `.env` = 5172.
 - **Customer frontend** — `client/`. Vite port 5173, proxies `/api`, `/images`, `/create-checkout-session`, `/auth` to 5172. BrowserRouter + CartProvider (localStorage `store-cart-v2`) + theme init. Lazy routes: WelcomePage, HomePage, ProductsPage, CartPage, LoginPage, AccountPage, OrderTrackerPage, OnboardingPage. **Isolated from admin** — no cross-imports into client-admin; a legacy admin subtree exists under `client/src/admin/` and is pulled into the bundle by `client/src/pages/AdminDashboard.jsx` and `client/src/pages/ProductForm.jsx`, but is NOT reachable from the customer router.
 - **Admin frontend** — `client-admin/`. Vite port 5174, identical proxy to 5172. BrowserRouter with NO basename — all admin routes are root-level or `/erp/*`; there is **no `/admin` URL prefix** for pages (`/api/admin/*` is only the backend API base). 41 Route declarations in `client-admin/src/App.jsx`. Active sidebar `client-admin/src/admin/components/Sidebar.jsx` (11 sections, 30 items + Overview). `client-admin/src/components/Sidebar.jsx` is a 0-byte stale file.
-- **Mobile** — `mobile-app/` (Expo RN, customer: Home/Cart/Wishlist/Orders/Account, ProductDetail, Checkout) and **worker-app/** (Expo RN, staff: Orders list, proof-of-delivery photo capture). Both JWT-auth, API base `http://192.168.1.50:5172/api/v1`. Documentation claims mobile apps complete (tickets 039, 040, 036v1); v2 worker + customer APK are backlog.
+- **Mobile** — `mobile-app/` (Expo RN, customer: Home/Cart/Wishlist/Orders/Account, ProductDetail, Checkout) and **worker-app/** (Expo RN, staff: Orders list, proof-of-delivery photo capture). Both JWT-auth, API base `http://<dev-lan-ip>:5172/api/v1`. Documentation claims mobile apps complete (tickets 039, 040, 036v1); v2 worker + customer APK are backlog.
 
 Services layer: 35 files in `server/services/`. All referenced services exist. Orphaned: `mockPaymentProvider.js` (0 imports anywhere — Phase 12 adapter, never integrated). Internal-only: `code39Service.js`, `inventoryCostLayers.js`.
 
@@ -362,7 +362,7 @@ Dead routes with no nav entry: `/products/new` (App.jsx:125 → InventoryMovemen
 - Middleware: `server/middleware/rbac.js`, `adminAuth.js`, `csrf.js`, `sanitizeProducts.js`
 - Services: `server/services/inventoryService.js`, `orderWorkflowService.js`, `warehouseOrderService.js`, `salesInventoryBridge.js`, `pickingPackingService.js`, `pricingService.js`, `priceListService.js`, `kashierService.js`, `kashierWebhookService.js`, `eventService.js`, `notificationService.js`, `permissionService.js`, `settingsService.js`
 - Routes: `server/routes/admin.js`, `orders.js`, `warehouseOrders.js`, `customers.js`, `vipInvitations.js`, `products.js`, `purchaseOrders.js`, `suppliers.js`, `inventory.js`, `warehouses.js`, `pickingPacking.js`, `pricingManager.js`, `priceLists.js`, `kashierCheckout.js`, `kashierWebhook.js`, `notifications.js`, `users.js`, `events.js`, `integrations.js`, `settings.js`, `views.js`, `reports.js`
-- Mobile: `mobile-app/`, `worker-app/` (Expo RN, JWT, base http://192.168.1.50:5172/api/v1)
+- Mobile: `mobile-app/`, `worker-app/` (Expo RN, JWT, base http://<dev-lan-ip>:5172/api/v1)
 
 ---
 

@@ -2,6 +2,7 @@
 const db = require('../db');
 const inventoryService = require('./inventoryService');
 const { consumeFifo, persistConsumption } = require('./inventoryCostLayers');
+const priceListService = require('./priceListService');
 
 function createAdminSale({ productId, variantId, warehouseId, qty, orderId, basePrice, finalPrice }) {
   // 1. Inventory validation
@@ -13,14 +14,19 @@ function createAdminSale({ productId, variantId, warehouseId, qty, orderId, base
   // 2. FIFO consume (uses actual cost layers)
   const fifoResult = consumeFifo(productId, qty, warehouseId);
 
-  // 3. Persist order_items (normalized)
+  // 3. Persist order_items (normalized) with the site-default list snapshot (066)
+  // + mirrors (069): qty/base/final mirror the inputs; cost_snapshot is the
+  // REAL FIFO unit cost consumed for this exact line (in hand — not fabricated)
   // Duplicate protection: reject if same order already has this item
   const existing=db.prepare("SELECT id FROM order_items WHERE order_id = ? AND product_id = ?").get(orderId, productId);
   if(existing){ throw new Error("Duplicate order item for this order/product"); }
+  const unitCost = qty > 0 ? Math.round((fifoResult.costSnapshot || 0) / qty) : 0;
   const itemResult = db.prepare(`
-    INSERT INTO order_items (order_id, product_id, product_name, quantity, price, variant_color, variant_size)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(orderId, productId, "Product " + productId, qty, finalPrice || 0, null, null);
+    INSERT INTO order_items (order_id, product_id, product_name, quantity, price, variant_color, variant_size, price_list_code,
+      qty, base_price, final_price, cost_snapshot)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(orderId, productId, "Product " + productId, qty, finalPrice || 0, null, null, priceListService.storefrontListCode(),
+    qty, Math.round(Number(basePrice) || 0), Math.round(Number(finalPrice) || 0), unitCost);
 
   // 4. Persist cost consumption
   for (const consumed of fifoResult.consumed) {

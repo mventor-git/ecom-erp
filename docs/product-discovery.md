@@ -1,10 +1,10 @@
-# Product Discovery Report — Comfort Sign
+# Product Discovery Report — Ecom-ERP
 
 ## 1. What this product appears to be
-A physical-therapy / sports-equipment e-commerce store ("Comfort Sign"). Customer-facing storefront + back-office admin + ERP/warehouse layer (ERP, inventory, pricing, orders, customers, finance). Brand theme: warm cream/gold (prestige/comfort), Arabic/English bilingual, dark mode supported.
+A vertical-neutral e-commerce store ("Ecom-ERP"). Customer-facing storefront + back-office admin + ERP/warehouse layer (ERP, inventory, pricing, orders, customers, finance). Neutral theme, Arabic/English bilingual, dark mode supported.
 
 ## 2. Who the Customer Website serves
-End customers buying therapy/sports products (categories, product variants by color/size, reviews, cart, checkout via Kashier/Stripe). Supports feature products, top-selling, announcements, trust badges, free-shipping thresholds.
+End customers buying everyday products (categories, product variants by color/size, reviews, cart, checkout via Kashier/Stripe). Supports featured products, top-selling, announcements, trust badges, free-shipping thresholds.
 
 ## 3. Who the Admin Panel serves
 Store operators / warehouse managers / finance / pricing / operations team. Manages catalog (products, categories, brands), inventory (stock, warehouses, movements), purchasing (suppliers, POs), operations (picking/packing, delivery), pricing engine (retail pricing, price lists, profits), sales (orders, customers, VIP invitations, receipts/issue orders), finance (accounting, reports, periods), website config, integrations (Kashier payments), users/roles, notifications, audit logs.

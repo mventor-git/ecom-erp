@@ -18,10 +18,10 @@ const crypto = require('crypto');
 /**
  * Generate a new TOTP secret for a user
  * @param {string} userEmail - User's email address
- * @param {string} issuer - App name (default: 'Comfort Sign')
+ * @param {string} issuer - App name (default: 'Ecom-ERP')
  * @returns {Object} { secret, otpauthUrl }
  */
-function generateSecret(userEmail, issuer = 'Comfort Sign') {
+function generateSecret(userEmail, issuer = 'Ecom-ERP') {
   const secret = speakeasy.generateSecret({
     name: `${issuer} (${userEmail})`,
     issuer: issuer,

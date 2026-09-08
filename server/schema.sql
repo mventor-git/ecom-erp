@@ -1,5 +1,5 @@
-﻿-- Comfort-Sign - Database Schema (v3.0.0 â€” ERP Platform)
--- Physical Therapy & Sports Equipment â€” Modular ERP Platform
+﻿-- Ecom-ERP - Database Schema (v3.0.0 — ERP Platform)
+-- Ecom-ERP — Modular ERP Platform
 
 -- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 -- CORE TABLES (E-commerce Foundation)

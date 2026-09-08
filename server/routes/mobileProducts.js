@@ -201,12 +201,11 @@ router.get('/categories', optionalAuth, (req, res) => {
     `).all();
 
     const categoryIcons = {
-      'Exercise & Fitness': '💪',
-      'Orthopedic Support': '🦴',
-      'Insoles & Foot Care': '🦶',
-      'Massage & Therapy': '💆',
-      'Mobility & Rehabilitation': '♿',
-      'Accessories': '🎒',
+      'Electronics': '🔌',
+      'Home & Kitchen': '🏠',
+      'Fashion': '👕',
+      'Grocery': '🛒',
+      'Beauty & Care': '🧴',
     };
 
     const formattedCategories = categories.map(c => ({

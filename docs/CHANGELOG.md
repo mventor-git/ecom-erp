@@ -1,5 +1,127 @@
 # Changelog
 
+## [4.15.20] - 2026-09-07 - mventor-ticket-077: Journal foundation (Completed)
+### Changed
+- NEW `journal_entries` + `journal_lines` (IF NOT EXISTS, cents, entry_no UNIQUE, draft-only — no post path until D); JE numbering via house sequences (`JE` type + seed); NEW `journalService` (balanced/no-D+C/no-negatives/≥2 lines/valid+active accounts, entry_no immutable, txn-wrapped); NEW `journalFoundation.test` 6/6 incl. 075-guard activation proof.
+### Verification
+- `npm test` 32/179 PASS; residue probe 0+0; admin build clean ~8-9s.
+### Changed
+- NEW `deps/` (SmartAccounting reference @e0ae8a4, launchers/notes/.git stripped, no-import policy + README); README structure aligned. Verified pre-existing: tickets gitignored, zero .bat, root/docs clean, archive kept (old refs intact).
+### Verification
+- File checks green; single copy; no code/DB/servers touched (no suite run needed).
+### Changed
+- NEW neutral `accounts` table (IF NOT EXISTS, reset-safe) + `accountService` (typed CRUD, dup-code + delete-if-referenced guards) + `chartOfAccounts.test` 5/5. No journals/UI/seeds/permissions.
+### Verification
+- `npm test` 31/173 PASS; residue probe 0; admin build clean 8.81s.
+### Changed
+- NEW `docs/accounting-gap-map.md` (concept map + 15 posting flows + money model + invariants + owner decisions + Ticket B recommendation); ADR-014 (posted-journal truth, cents kept, reference-use policy). Zero code/schema/behavior change.
+### Verification
+- Traceability spot-checks green (no journal/CoA/AR/AP/budget/recon tables; no reopen; periods unenforced; idempotency reusable). Suite baseline 30/168 untouched.
+### Changed
+- Same 072 pattern on COD creation, Kashier paid webhook (inside atomic txn), shipped transition, onbill-accept; NEW `webCostThreading.test` 2/2 (COD e2e + paid+snapshot). Reserve paths correctly untouched.
+### Verification
+- `npm test` 30/168 PASS; focus 4/15 PASS; admin build clean 9.03s.
+### Changed
+- Bridge returns per-line unit COGS (`costs`, additive); mobile checkout snapshots them into lines (unknown-only, best-effort, logged); NEW `bridgeLineCosts.test` 3/3 with layer-proof fixture.
+### Verification
+- `npm test` 29/166 PASS; admin build clean 9.45s.
+### Changed
+- NEW `orderLines` single builder (pure mapping + loud inserts); web checkout mirrors authoritative JSON into rows; backfilled 6/20 history orders (3 deleted-product + 11 empty-JSON honestly remain bare); NEW `orderLines.test` 4/4.
+### Verification
+- `npm test` 28/163 PASS; focus 5/25 incl. phase4_1 9/9; admin build clean.
+### Changed
+- Identity quartet → Site Config only (Settings General hides 3 keys + links out); storefront list → Pricing Engine only (PriceLists read-only + links out); stale pricing claim removed from SiteConfig docs. No value/behavior change.
+### Verification
+- Admin build clean; `npm test` 27/159 PASS; manual click-path checklist for owner.
+### Changed
+- Writers mirror qty/base_price/final_price (same facts, both names); admin lines carry real FIFO unit cost_snapshot; 14 live rows backfilled (backup bak-069, cost history honestly unknown); NEW `orderItemsContract.test` 2/2; design doc marked with reality status.
+### Verification
+- `npm test` 27/159 PASS (npm exit 1 = pre-existing async-log noise, all suites PASS); focus 5/24 incl. phase4_1 9/9; admin build clean 7.85s.
+### Changed
+- `adminAuth` on all `/api/admin/ai/*` (5) + `/api/admin/recommendations` (1, leaked costs); settings.read/manage + reports.read per convention; NEW `adminAuthGaps.test` 4/4 wiring locks. Public `/api/ai` untouched.
+### Verification
+- `npm test` 26/157 PASS; admin build clean ~8.7s.
+### Changed
+- Mobile `POST /api/v1/orders` reprices each cart line via `orderPricing.resolveItem` (web P0.4 parity); invalid lines 400 INVALID_ITEM. Stock/shipping/order-shape/bridge untouched. NEW `mobileCheckoutPricing.test` 5/5.
+### Verification
+- `npm test` 25/153 PASS; focus 4/20 PASS; admin build clean 8.27s.
+### Changed
+- All order-creation INSERTs (web, mobile orders + lines, admin tmp + lines) write validated `price_list_code`; NEW `orderSnapshot.test` 3/3. Zero behavior change at storefront=retail. Full-repo discovery: 5-surface atlas via subagents; findings filed in KNOWN_ISSUES (no unrelated fixes).
+### Verification
+- `npm test` 24/148 PASS; focus 6/32 PASS; admin build clean 22.71s.
+### Changed
+- `wholesale`/`semi_wholesale` legacy-inactive everywhere agreeing: seeds insert-if-missing inactive, `priceLists.test` seeded-contract (active = retail+offer; discount/override via offer, leak-proof finally), live DB deactivated (zero-use verified, backup `store.db.bak-065`), PriceLists subtitle + pricing-reality.md honest.
+### Verification
+- `npm test` 23/145 PASS; focus 7/51 PASS; admin build clean 9.41s.
+### Changed
+- NEW `GET /admin/price-lists/usage` (overrides/orders/lines/sale_refs/storefront per list); `deletePriceList` blocked when default/storefront/in-use with clear errors; PriceLists UI shows usage + guarded Delete + honest confirm; NEW `priceListsGuards.test` 5/5.
+- Deactivation ATTEMPTED then REVERTED same day (broke seeded-lists contract; would drift fresh-seed vs migrated DB) — lists ACTIVE, backup `store.db.bak-064` kept, follow-ups filed in ticket.
+### Verification
+- `npm test` 23/145 PASS; focus priceLists 7/7 + guards 5/5 + canonical 10/10; admin build clean 14.47s.
+
+## [4.15.6] - 2026-09-07 - mventor-ticket-057: Pricing Engine canonical (Completed)
+### Changed
+- Follow-up (owner-confirmed): layer-unified cost basis (layers else cost_price, explicit source) + VIP % off retail preview (display-only) + PricingEngine honest Cost→Retail→VIP table + missing-pricing guard. `npm test` 22/140, pricing 6/46, admin 13.94s clean.
+- Pricing preview/apply now drive single `pricingService.computeRetailPreview` (markup/margin/match/offer verbatim, no behavior change); dead broken `tierDiscount` removed; NEW `pricingEngineCanonical.test` 8/8; `npm test` fixed (`paymob.test` missing → canonical).
+### Verification
+- `npm test` 22/138 PASS; pricing focus 6/44 PASS; admin build clean 30.71s.
+### Deferred (needs owner rule, never invented)
+- VIP derivation, layer-basis unification, PricingEngine.jsx labels → follow-up.
+
+## [4.15.5] - 2026-09-02 - mventor-ticket-056: Fulfillment UI Consolidation
+
+### Added / Fixed
+- **StatusBadge unified (P1 3-way divergence resolved):** shared `StatusBadge.jsx` extended to **48 status keys** (order lifecycle + picking/packing + shipping). `PackingDashboard` (local `statusBadge` fn + `STATUS_STYLE`/`STATUS_DOTS`) and `ShippingDashboard` (own `STATUS_STYLE`) now BOTH render the shared `<StatusBadge>` — one vocabulary.
+- **`window.confirm` removed:** ShippingDashboard delete-provider → `ConfirmDialog`. **`console.error`-only swallow → user-facing `error` state** (both dashboards).
+- **Encoding/quality:** `PackingDashboard` mojibake (`��`/`�?"`/`Assign to�?�`) eliminated; ASCII `→` and `—`.
+- **Domain note:** WAREHOUSE ISSUE (`issue_orders`) kept separate from CUSTOMER FULFILLMENT (`picking/packing`) — not merged. Picking/packing remain zero-inventory (preserved).
+
+### Verification
+- `npm test` **21/130 PASS** (pickingPacking downstream + shipping + workflow in suite, 6 `ready_for_shipping` refs) · admin build **10.49s** · `window.confirm(` **0** · `console.error` **0** · mojibake **0** · `<StatusBadge` **1 each**.
+- Honest: pipeline (packed→ready_for_shipping→shipped) already wired — verified, not rebuilt. Packing-sheet print already existed (`views.js:156`). `en-GB` locale + icon-consistency (lucide vs AdminIcon) intentionally left as separate P1 — not scope-creeped.
+
+## [4.15.4] - 2026-09-02 - mventor-ticket-055: Financial Periods (Honest Timeline)
+
+### Added / Fixed
+- **Data-authority fix (real):** Opening-balance "Fill from stock" read the LEGACY `products.stock` via `getAdminProducts` (violates handoff P0/DATA — inventory = ledger). Now uses `getInventorySummary()` canonical `qty_on_hand`; OB row shows read-only `on-hand` per product.
+- **Design/UX:** `window.confirm('Close this period...')` → reuse `ConfirmDialog`; StatCards (Total/Open/Closed); status badges (`OPEN` green / `CLOSED` gray) + `closed_at` column; `loadAll` now surfaces `error` banner (not `console.error`-only); honest disclaimer (period management only — no GL/journal/lock).
+- **Backend proof (NEW):** `tests/financialPeriod.test.js` 4/4 — create=OPEN; `setOpeningBalance` posts a REAL `opening_balance` inventory movement + reconciles `qty_on_hand` to the count; close=CLOSED+`closed_at` + blocks OB on closed; empty items throws. Added to `npm test`.
+
+### Verification
+- `npm test` **21/130 PASS** (added financialPeriod) · admin build **9.32s** · dist grep FOUND "Fill from ledger stock"/"Period management"/"ConfirmDialog" · `window.confirm(` **0** · `products.stock` **0**.
+
+### Notes
+- Honest: opening balance is a stock-count ledger movement, NOT a journal entry. No GL / AR / AP / accounting lock — out of scope by design (handoff §14). No fake accounting.
+
+## [4.15.3] - 2026-09-02 - mventor-ticket-054: Report Center — Reports Architecture/UI Redesign
+
+### Added / Fixed
+- **RBAC gap closed (real):** `GET /api/admin/reports` (list) + `GET /:reportType` + `GET /:reportType/export` were `adminAuth`-only → now `requirePermission('reports.read')`, matching `sales-daily/files/pdf/md`.
+- **Frontend wrapper bug fixed (real):** `ReportsDashboard` stored the `{report_type,label,data}` wrapper from `getReport`; `Array.isArray` was false → always 0 results. Now unwraps `wrapper.data` (array fallback).
+- **Report Center redesign:** category sidebar (All/Inventory/Sales & Profit/Purchasing) + searchable report grid; unified filter bar with date presets (All/Today/7d/30d/This month/Custom) + From/To + category + warehouse; per-report header (label/description/generated_at); StatCards (Results/Total Value/Generated); DataTable sortable + sticky + maxHeight; honest empty/error/loading states; CSV/PDF/MD exports + generated-files download.
+
+### Verification
+- `npm test` **20/126 PASS** (profitReports 5/5 inside) · `node --check reports.js` OK · admin build 9.29s→9.75s (ReportsDashboard 19.58KB) · dist grep FOUND "Report Center"/"Preset"/"StatCard" · `bg-primary-600` 4 (not 76) · `window.confirm` 0.
+- Honest: `profit_report` still operational (revenue vs `products.cost_price`) — FIFO P&L gap documented, NOT faked. Live CDP screenshot deferred (CLI-safety: no long-running servers).
+
+### Notes
+- Out of scope (separate tickets): Financial Periods, Packing, Pricing Engine, Price Lists, Settings IA, GL/journal.
+
+## [4.15.2] - 2026-09-02 - mventor-ticket-053: PO UI Closure — Approval/Rejection with Reason + Audit
+
+### Added / Fixed
+- **Admin API:** `updatePurchaseOrderStatus(id, status, reject_reason)` now forwards `reject_reason` when present; backward-compatible (existing callers unaffected).
+- **PurchaseOrdersList UI:** `sent → cancelled` now opens a dedicated **RejectDialog** (textarea, required, 300 char limit, counter, inline error, disabled Confirm until non-empty). Generic `cancel` (e.g. `draft → cancelled`) still uses the single `ConfirmDialog` (no reason required) — state-aware branching.
+- **Detail audit box:** surfaces `created_by/created_at`, `ordered_at` (sent), `approved_by/approved_at` (confirmed), `received_at`, and a red `rejected_by/rejected_at + reject_reason` card when rejected.
+- **UX:** state-aware buttons via `getNextStatus` map + `isRejectFromSent` branching; `Approve` label (was `Confirm`); `actionLoading` disables all buttons + shows `...`; `successMsg` green toast (3s) + `error` red banner; 400 `rejection reason required` surfaces inline in the reject dialog (keeps open).
+
+### Verification
+- `tests/purchaseOrder.test.js` **3/3** (approve actor/no-stock; reject-reason required+stored; PO≠receiving) — inventory invariant holds.
+- `npm test` **20/126 PASS** (no regression) · `vite build` admin 9.51s + client 12.18s · `window.confirm` 0 in changed files · dist grep FOUND Rejection/approved_by.
+
+### Notes
+- Backend already correct (Batch 10): `approved_by/approved_at` on `sent→confirmed`, `reject_reason/rejected_by/rejected_at` on `sent→cancelled` + actor from session + `PO_*` events + `purchase_orders.update` RBAC + notifications. This ticket closes the remaining **reject-reason prompt UI** explicitly listed as OPEN in `PRODUCTION-HARDENING-CHANGELOG` Batch 10 Remaining.
+- Inventory guarantee: PO create / `sent` / `confirmed` / `cancelled` never touch `inventory`/`inventory_movements`; only `POST /receive` (supply workflow) does.
 
 ## [4.15.1] - 2026-08-25 - Hotfix: DB init crash + launcher replacement
 
@@ -13,7 +135,7 @@
 - Removed `start.py` / `start.exe` (PyQt6 control center). Replaced by
   `start.ps1` (idempotent: skips services whose port is already listening;
   same logs/ output files).
-- `server/.env`: ADMIN_PASSWORD set to `admin123` (local dev credential,
+- `server/.env`: ADMIN_PASSWORD set to `********` (local dev credential,
   username `admin`). Weak password — rotate before any public deployment.
 
 ## [4.15.0] - 2026-08-23 - Tickets 053-061: Kashier Gateway + VIP Program + Fulfillment Pipeline
@@ -162,7 +284,7 @@
 - `README.md` � 6 stale references (run instructions, curl examples) ? `5172`
 - `docs/SETUP.md` � 10 stale references (diagram, ngrok commands, troubleshooting) ? `5172`
 - `.mventor` � architecture block port ? `5172`
-- Mirrored all fixed files to `D:\Projects\stable\comfort-sign` (SHA-256 verified)
+- Mirrored all fixed files to the stable copy (SHA-256 verified)
 - Backend source untouched (already correct: `server/index.js` default + `.env` `PORT=5172`)
 
 ### Notes
@@ -174,7 +296,7 @@
 ## [4.9.1] - 2026-08-08 - mventor-ticket-042: Sync stable copy from on-dev
 
 ### Repository Maintenance
-- Synced `D:\Projects\stable\comfort-sign` from `D:\Projects\on-dev\comfort-sign`:
+- Synced the stable copy from the on-dev copy:
   copied `profile.md` (v2.0), `.muse` (v2.0), `VISION_NEXT.MD` (new), `docs/PROJECT_STATE.md`,
   and `tickets/mventor-ticket-042.md`
 - Verified byte-identical (SHA-256 match) and diff-clean in both directions
@@ -185,7 +307,7 @@
 ## [4.9.0] - 2026-08-02 — mventor-ticket-036 v1: Worker App (Staff Mobile)
 
 ### Added
-- **`worker-app/`** — Expo staff app (React Native + TypeScript), package `com.comfortsign.staff`
+- **`worker-app/`** — Expo staff app (React Native + TypeScript), package `com.ecomerp.staff`
   - Staff JWT login (existing `/api/v1/auth/mobile/*`), session restore, logout
   - Home: today's stats (active orders / delivered today / COD collected) + active order list with status filters + pull-refresh
   - Order detail: customer, shipping, items, totals, payment; workflow-validated action buttons from `allowed_transitions`
@@ -210,7 +332,7 @@
 - **App — push notifications**: token registration after login (and unregister on logout), Notifications screen (list / mark read / mark all read) from Account
 - **App — wishlist**: Wishlist tab, heart toggle on product detail (optimistic sync via WishlistContext)
 - **App — Google sign-in**: `expo-auth-session` PKCE flow → id_token → backend; client ID in `src/config.ts`
-- **APK build prep**: `eas.json` (preview→APK, production→AAB), app.json (package `com.comfortsign.customer`, scheme `comfortsign`, POST_NOTIFICATIONS, notifications plugin, splash), branded icons (`scripts/generate-icons.mjs`, sharp), `eas-cli` devDependency
+- **APK build prep**: `eas.json` (preview→APK, production→AAB), app.json (package `com.ecomerp.customer`, scheme `ecomerp`, POST_NOTIFICATIONS, notifications plugin, splash), branded icons (`scripts/generate-icons.mjs`, sharp), `eas-cli` devDependency
 
 ### Fixed
 - App session restore: `/auth/customer/me` returns `{ data }`, AuthContext now reads it correctly
@@ -282,9 +404,9 @@
 - `server/email.js` — SMTP config now read live from settings (env fallback); added SendGrid HTTP API provider; transporter recreated on config change
 - `server/services/aiService.js` — provider/base/model/key/timeout read live from settings; OpenAI-compatible chat completions support added (Ollama preserved)
 - `server/routes/stripe.js` — lazy Stripe client from settings (env fallback); 503 guard when not configured
-- `server/db.js` — admin email default → `mventor2010@gmail.com`
-- `server/.env` — `ADMIN_EMAIL = mventor2010@gmail.com`
-- `server/data/store.db` — super admin email updated to `mventor2010@gmail.com`
+- `server/db.js` — admin email default → `ADMIN_EMAIL`
+- `server/.env` — `ADMIN_EMAIL = <admin-email>`
+- `server/data/store.db` — super admin email updated to `ADMIN_EMAIL`
 - `server/tests/email.test.js` — hermetic via mocked settings service; `isConfigured()` now a function
 
 ### Files Created
@@ -617,21 +739,21 @@ New:
 - **Full image coverage** — All 51/51 products now have images
 
 ### Changed
-- **Complete Rebrand** — "Medical Equipment & Wellness" → "Physical Therapy & Sports Equipment"
+- **Complete Rebrand** — legacy vertical naming retired (see 061 neutral catalog)
 - **All 22 Arabic products translated to English**
 - **Categories streamlined** — 6 categories
 - **CartContext** updated to track size+color combination
 
 ## [2.0.0] - 2026-07-24
 ### Changed
-- **Complete Rebrand:** "My Store" → "Comfort Sign"
-- **Real Product Data:** 51 real Comfort Sign products from Excel data
+- **Complete Rebrand:** "My Store" → "Ecom-ERP"
+- **Real Product Data:** 51 real Ecom-ERP products from Excel data
 - **Categories:** 7 categories
 - **Product Prices:** All prices in EGP
-- **Brands:** Comfort-Sign + Generic
+- **Brands:** Ecom-ERP + Generic
 
 ### Added
-- **mventor-ticket-015:** `server/seed-comfort-sign.js` — Reads Excel data, seeds DB
+- **mventor-ticket-015:** `server/seed-ecom-erp.js` — Reads Excel data, seeds DB
 - **Product Images:** 34 products with photos
 
 ## [1.11.0] - 2026-07-24

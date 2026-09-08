@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── Clinical Teal — Comfort Sign ADMIN brand primary/action color ──
+        // ── Teal — ADMIN brand primary/action color ──
         // DECISION (locked): the Admin ERP primary = Clinical Teal #1f857a.
         // Dark mode already tints primary to #83d2c9/#b3e5de; this ramp makes
         // the light mode match. The Customer Storefront keeps its own terracotta

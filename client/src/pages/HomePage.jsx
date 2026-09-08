@@ -93,15 +93,14 @@ export default function HomePage() {
   };
   const categoriesHead = sectionHeading('categories', 'Shop by Category', 'Find exactly what you need');
   const featuredHead = sectionHeading('featured', 'Featured Products', 'Handpicked just for you');
-  const whyUsHead = sectionHeading('why_us', 'Why Shop With Us', 'Trusted by healthcare professionals');
+  const whyUsHead = sectionHeading('why_us', 'Why Shop With Us', 'Trusted by thousands of shoppers');
 
   const categoryIcons = {
-    'Exercise & Fitness': 'dumbbell',
-    'Orthopedic Support': 'cross',
-    'Insoles & Foot Care': 'shield',
-    'Massage & Therapy': 'heart',
-    'Mobility & Rehabilitation': 'bike',
-    'Accessories': 'box',
+    'Electronics': '🔌',
+    'Home & Kitchen': '🏠',
+    'Fashion': '👕',
+    'Grocery': '🛒',
+    'Beauty & Care': '🧴',
   };
 
   // Show the default "On orders over 500" style text in the active currency

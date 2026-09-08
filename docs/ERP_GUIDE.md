@@ -1,4 +1,4 @@
-# 📖 Comfort Sign — Owner's Guide to Your ERP & Warehouse System
+# 📖 Ecom-ERP — Owner's Guide to Your ERP & Warehouse System
 
 **Written for:** You, the business owner. No accounting knowledge needed. No coding knowledge needed.
 **Last updated:** August 2026 (after the Trash System was added)
@@ -361,4 +361,4 @@ Built into the walls of the system:
 
 ---
 
-*This guide describes Comfort Sign ERP v4.10 (tickets 044–046). Generated with care for a non-technical owner — if any section is unclear, ask and it will be rewritten.*
+*This guide describes Ecom-ERP ERP v4.10 (tickets 044–046). Generated with care for a non-technical owner — if any section is unclear, ask and it will be rewritten.*

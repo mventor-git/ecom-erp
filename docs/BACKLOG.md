@@ -1,47 +1,74 @@
 ﻿# Backlog
 
-## Active
-- **mventor-ticket-036 (v2):** Worker app follow-ups â€” order assignment to workers, picker/packer camera scanning, push for new assignments, offline queue, EAS APK (`eas build -p android --profile preview`)
-- **mventor-ticket-041 (Ready â€” needs user):** Customer APK via EAS cloud â€” prep done (eas.json, package, icons), requires `npx eas-cli login` + `eas build --platform android --profile preview`
+## Active (2026-09-07)
+- **Next (recommended):** Ticket D — Posting + invariants (post/unpost, balance gate, period hook read-only) — NOT started (one ticket at a time, STOP after 077).
+- **Deferred (pre-accounting queue, still valid):** test-isolation + backup-retention hygiene.
+- **mventor-ticket-057 (Next) [NEW DESIGN post-Claude]:** Pricing Engine rebuild (Cost->Retail->VIP) - one ticket after 056
+- **mventor-ticket-036 (v2):** Worker app follow-ups - assignment, picker/packer scanning, push, offline queue, EAS APK
+- **mventor-ticket-041 (Ready - needs user):** Customer APK via EAS - `npx eas-cli login && eas build --platform android --profile preview` (prep done)
+- **Deferred (separate track):** Mobile hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob gateway (keys configurable), Google Android OAuth, Price Lists consolidation, Settings IA
 
 ## Planned
-- **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) â€” Plan ready in `tickets/mventor-ticket-011.md`
+- **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
-- **mventor-ticket-036 (v1):** Worker App â€” `worker-app/` (Expo): staff JWT login, order list + stats, workflow-validated status updates, proof-of-delivery photo (COD auto-pay); backend `/api/v1/worker` staff-only endpoints; 12 integration tests (107/107 total)
-- **mventor-ticket-040:** Mobile App Enhancements â€” push notifications (register/unregister + Notifications screen, backend push channel), wishlist (mobile route + tab + hearts), Google sign-in (backend token exchange + expo-auth-session), APK build prep (eas.json, branded icons, app.json package/scheme), fixed /me session-restore bug
-- **mventor-ticket-039:** Customer Android App (Expo) â€” `mobile-app/`: JWT login/register, product browse/search/categories, variants, server cart, COD checkout, order history + cancel, account
-- **mventor-ticket-037:** Comprehensive System Debug & Variant Image Generation â€” Fixed 9 critical bugs (missing tables, schema mismatches), created cart_items/order_items/user_addresses tables, generated 119 variant images with Sharp, seeded 145 gallery images, hero slider now uses featured products
-- **mventor-ticket-034:** Admin ERP Frontend â€” Remaining Modules: Suppliers, Purchase Orders, Reports, Settings, Events, Users, Notifications pages, sidebar navigation, routes
-- **mventor-ticket-033:** Admin ERP Frontend â€” Inventory Dashboard, Stock Movements, Warehouses & Locations pages, sidebar navigation, API client functions
-- **mventor-ticket-032:** Reporting Engine â€” 10 report types (inventory value, stock aging, dead stock, low stock, out of stock, ABC analysis, turnover rate, sales, supplier performance, stockout frequency), CSV export
-- **mventor-ticket-031:** Settings & Configuration Engine â€” Centralized settings with categories, in-memory cache, public/private settings, batch update
-- **mventor-ticket-030:** QR Code System â€” Generate/resolve QR codes for products, locations, documents; permission-based resolution
-- **mventor-ticket-029:** Notification Engine â€” Rule-driven notifications (email, in-app, webhook), template interpolation, notification log
-- **mventor-ticket-028:** Document Numbering System â€” Auto-generate document numbers (PO-2026-0001 format), 8 document types, configurable sequences
-- **mventor-ticket-027:** Purchase Order System â€” Full PO lifecycle (draftâ†’sentâ†’confirmedâ†’received), goods receipt with inventory movements, partial receipts
-- **mventor-ticket-026:** Supplier Management â€” Supplier CRUD, product-supplier links, preferred supplier tracking
-- **mventor-ticket-025:** Warehouse & Location Management â€” Warehouse/location CRUD, atomic stock transfers between locations
-- **mventor-ticket-024:** Inventory Movement Engine â€” 11 movement types, stock calculation from movements, low stock alerts, audit replay
-- **mventor-ticket-019:** Variant Image Assignment â€” Link gallery images to specific color/size variants, variant-filtered gallery on customer frontend
-- **mventor-ticket-017:** Currency Display â€” Changed all price displays from USD ($) to EGP (Ø¬.Ù…) across 11 frontend files
-- **mventor-ticket-024-Beta-Test:** Comprehensive System Testing â€” All backend APIs, frontends, database integrity, and ERP features verified. System stable.
-- **mventor-ticket-023:** Role-Based Access Control (RBAC) â€” Users, roles, permissions tables, RBAC middleware, user management API, integrated with admin login
-- **mventor-ticket-022:** Event System & Audit Trail â€” Immutable events table, event service, API endpoints, integrated with orders/products/admin login
-- **mventor-ticket-021:** Database Schema Redesign â€” Products vs Inventory separation, warehouses, locations, inventory_movements, product_variants, inventory tables, migration of existing stock
-- **mventor-ticket-020:** Fix Local Admin Authentication â€” Verified login, CSRF, session persistence, and protected routes
-- **mventor-ticket-016:** Variant Indicator UI + Featured Products + Product Rebrand â€” SizeSelector, SizePicker, FeaturedList, full product rebrand, image completion (51/51 products)
-- **mventor-ticket-015:** Seed Comfort-Sign Database from Excel Data â€” 51 real products
-- **mventor-ticket-014:** Fork Project â€” Create "Comfort-Sign" Physical Therapy & Sports Site
-- **mventor-ticket-013:** Modular Admin Dashboard + Product Colors â€” Sidebar layout, color swatches per product
-- **mventor-ticket-012:** Stacked Photos CSS Effect â€” Polaroid photo stack on homepage hero
-- **mventor-ticket-010:** Switch to ngrok (zero-cost HTTPS) â€” no CC, no account, no domain needed
-- **mventor-ticket-009:** Google OAuth Customer Login â€” Google sign in, account page, order history
-- **mventor-ticket-008:** Custom Domain & DNS â€” Tunnel config, setup guide, startup scripts
-- **mventor-ticket-007:** Production Hardening â€” Helmet, CSRF, input validation, error handling
-- **mventor-ticket-006:** Performance & Caching â€” Compression, rate limiting, cache, Jest test suite
-- **mventor-ticket-005:** Email Notifications â€” Nodemailer order confirmation + admin notifications
-- **mventor-ticket-004:** Image Upload â€” Drag & drop with multer, preview, replace/delete, validation
-- **mventor-ticket-003:** Admin Order Management â€” Orders list, stats dashboard, status updates
-- **mventor-ticket-002:** Sample Products & Category Polish â€” 15 products, sorting, "New" badge, sort dropdown
-- **mventor-ticket-001:** Project Foundation â€” Server, frontend, admin panel, Stripe, docs
+- **mventor-ticket-077:** Journal foundation (tables + service + JE numbering + tests incl. guard-activation proof). Verified 32/179 + admin clean.
+- **mventor-ticket-076:** Repo sweep (deps/ reference + README align; pre-existing hygiene verified). File checks green.
+- **mventor-ticket-075:** Chart of Accounts foundation (table + service + guards + tests). Verified 31/173 + admin clean.
+- **mventor-ticket-074:** Accounting Domain Gap Map (gap-map doc + ADR-014, zero behavior change). Validated by traceability.
+- **mventor-ticket-073:** Web/vip cost threading (4 sites + path tests). Verified 30/168 + admin clean.
+- **mventor-ticket-072:** Mobile line-cost threading (bridge costs + unknown-only snapshots + test). Verified 29/166 + admin clean.
+- **mventor-ticket-071:** JSON↔rows duality closed (single builder + web lines + honest backfill + test). Verified 28/163 + admin clean.
+- **mventor-ticket-070:** Settings IA one-home (hide+link x2, docstring fix). Verified admin build + 27/159.
+- **mventor-ticket-069:** order_items mirror reconciliation (writer mirrors + real admin cost + backfill + contract test). Verified 27/159 + admin clean.
+- **mventor-ticket-068:** Admin auth gaps closed (adminAI + recommendations), NEW wiring test. Verified 26/157 + admin clean.
+- **mventor-ticket-067:** Mobile checkout repricing (web P0.4 parity), NEW pricing test. Verified 25/153 + admin clean.
+- **mventor-ticket-066:** Checkout list snapshot — all creation paths write validated code, NEW snapshot test. Verified 24/148 + admin clean.
+- **mventor-ticket-065:** Deactivation-with-contract — wholesale/semi legacy-inactive in seeds+tests+live DB+docs, override path intact. Verified 23/145 + admin clean.
+- **mventor-ticket-064:** Price Lists consolidation guards — usage endpoint + delete guards + UI honesty + guards tests. Verified 23/145 + admin clean.
+- **mventor-ticket-057:** Pricing Engine canonical — single preview engine, layer-unified basis + VIP % off retail preview (display-only) + honest Cost→Retail→VIP table. Verified 22/140 + admin clean.
+- **mventor-ticket-063:** Batch test sessions - 8 batches covering all 60 tickets, sessions run, reports in logs/, batch protocol added to opencode agent. All 8 PASS.
+- **mventor-ticket-061:** Neutral catalog + DB migration - 4 brands/5 categories/10 products/2 settings migrated in place (ids + history intact), seeds + code maps + UI keys neutralized, npm test flags fixed, stale PDFs removed. Verified 21/130 + both builds.
+- **mventor-ticket-060:** Code identifier rebrand - ecom-erp packages, Ecom-ERP UI titles, ecomerp mobile slugs/schemes/bundles, seed-catalog.js rename, neutral marketing copy/prompts; data-coupled keys deferred to 061. Verified 21/130 + both builds.
+- **mventor-ticket-062:** Scratch purge - 32 server probes/logs + 12 root scratch files deleted, 11 root notes to docs/archive/notes/, SKILL.md to docs/warehouse-accounting-guide.md. Root now 6 files.
+- **mventor-ticket-056 [NEW DESIGN post-Claude]:** Fulfillment UI consolidation - StatusBadge unified (48 status keys; Packing + Shipping render shared StatusBadge, kills 3-system P1); `window.confirm`->ConfirmDialog; `console.error`-only->error state; mojibake eliminated. Pipeline (packed->ready_for_shipping->shipped) verified wired (not rebuilt). WAREHOUSE ISSUE kept separate from CUSTOMER FULFILLMENT. Verified 21/130 + admin build.
+- **mventor-ticket-055 [NEW DESIGN post-Claude]:** Financial Periods (honest timeline) - data-authority fix (Opening-balance "Fill" was reading legacy `products.stock` -> now canonical `getInventorySummary()` `qty_on_hand`); `window.confirm`->`ConfirmDialog`; StatCards/status/`closed_at`; honest disclaimer (period mgmt, no GL/journal/lock). NEW `financialPeriod.test` 4/4 proves OB posts a REAL `opening_balance` ledger movement + reconciles on-hand. Verified 21/130 + admin build.
+- **mventor-ticket-054 [NEW DESIGN post-Claude]:** Report Center - Reports architecture/UI redesign (category sidebar + search grid, date-preset filters, Sortable/Sticky DataTable, StatCards, CSV/PDF/MD exports). Real fixes: RBAC `reports.read` on list/reportType/export (were adminAuth-only) + frontend wrapper-unwrap bug (always 0 results). Verified 20/126 + admin build. FIFO P&L gap documented, not faked.
+- **mventor-ticket-053 [NEW DESIGN post-Claude]:** PO UI Closure - Approval/Rejection with Reason + Audit - `sent->confirmed` (approved_by/at, state-aware Approve, audit box) + `sent->cancelled` (RejectDialog 300 char, required, inline error, rejected_by/at) + `draft->cancelled` (ConfirmDialog) - inventory invariant proven - 20/126 + builds
+- **mventor-ticket-036 (v1):** Worker App - `worker-app/` (Expo): staff JWT login, order list + stats, workflow-validated status updates, proof-of-delivery photo (COD auto-pay); backend `/api/v1/worker` staff-only endpoints; 12 integration tests (107/107 total)
+- **mventor-ticket-040:** Mobile App Enhancements - push notifications (register/unregister + Notifications screen, backend push channel), wishlist (mobile route + tab + hearts), Google sign-in (backend token exchange + expo-auth-session), APK build prep (eas.json, branded icons, app.json package/scheme), fixed /me session-restore bug
+- **mventor-ticket-039:** Customer Android App (Expo) - `mobile-app/`: JWT login/register, product browse/search/categories, variants, server cart, COD checkout, order history + cancel, account
+- **mventor-ticket-037:** Comprehensive System Debug & Variant Image Generation - Fixed 9 critical bugs (missing tables, schema mismatches), created cart_items/order_items/user_addresses tables, generated 119 variant images with Sharp, seeded 145 gallery images, hero slider now uses featured products
+- **mventor-ticket-034:** Admin ERP Frontend - Remaining Modules: Suppliers, Purchase Orders, Reports, Settings, Events, Users, Notifications pages, sidebar navigation, routes
+- **mventor-ticket-033:** Admin ERP Frontend - Inventory Dashboard, Stock Movements, Warehouses & Locations pages, sidebar navigation, API client functions
+- **mventor-ticket-032:** Reporting Engine - 10 report types (inventory value, stock aging, dead stock, low stock, out of stock, ABC analysis, turnover rate, sales, supplier performance, stockout frequency), CSV export
+- **mventor-ticket-031:** Settings & Configuration Engine - Centralized settings with categories, in-memory cache, public/private settings, batch update
+- **mventor-ticket-030:** QR Code System - Generate/resolve QR codes for products, locations, documents; permission-based resolution
+- **mventor-ticket-029:** Notification Engine - Rule-driven notifications (email, in-app, webhook), template interpolation, notification log
+- **mventor-ticket-028:** Document Numbering System - Auto-generate document numbers (PO-2026-0001 format), 8 document types, configurable sequences
+- **mventor-ticket-027:** Purchase Order System - Full PO lifecycle (draft->sent->confirmed->received), goods receipt with inventory movements, partial receipts
+- **mventor-ticket-026:** Supplier Management - Supplier CRUD, product-supplier links, preferred supplier tracking
+- **mventor-ticket-025:** Warehouse & Location Management - Warehouse/location CRUD, atomic stock transfers between locations
+- **mventor-ticket-024:** Inventory Movement Engine - 11 movement types, stock calculation from movements, low stock alerts, audit replay
+- **mventor-ticket-019:** Variant Image Assignment - Link gallery images to specific color/size variants, variant-filtered gallery on customer frontend
+- **mventor-ticket-017:** Currency Display - Changed all price displays from USD ($) to EGP (ج.م) across 11 frontend files
+- **mventor-ticket-024-Beta-Test:** Comprehensive System Testing - All backend APIs, frontends, database integrity, and ERP features verified. System stable.
+- **mventor-ticket-023:** Role-Based Access Control (RBAC) - Users, roles, permissions tables, RBAC middleware, user management API, integrated with admin login
+- **mventor-ticket-022:** Event System & Audit Trail - Immutable events table, event service, API endpoints, integrated with orders/products/admin login
+- **mventor-ticket-021:** Database Schema Redesign - Products vs Inventory separation, warehouses, locations, inventory_movements, product_variants, inventory tables, migration of existing stock
+- **mventor-ticket-020:** Fix Local Admin Authentication - Verified login, CSRF, session persistence, and protected routes
+- **mventor-ticket-016:** Variant Indicator UI + Featured Products + Product Rebrand - SizeSelector, SizePicker, FeaturedList, full product rebrand, image completion (51/51 products)
+- **mventor-ticket-015:** Seed Ecom-ERP Database from Excel Data - 51 real products
+- **mventor-ticket-014:** Fork Project - Create "Ecom-ERP" neutral demo store
+- **mventor-ticket-013:** Modular Admin Dashboard + Product Colors - Sidebar layout, color swatches per product
+- **mventor-ticket-012:** Stacked Photos CSS Effect - Polaroid photo stack on homepage hero
+- **mventor-ticket-010:** Switch to ngrok (zero-cost HTTPS) - no CC, no account, no domain needed
+- **mventor-ticket-009:** Google OAuth Customer Login - Google sign in, account page, order history
+- **mventor-ticket-008:** Custom Domain & DNS - Tunnel config, setup guide, startup scripts
+- **mventor-ticket-007:** Production Hardening - Helmet, CSRF, input validation, error handling
+- **mventor-ticket-006:** Performance & Caching - Compression, rate limiting, cache, Jest test suite
+- **mventor-ticket-005:** Email Notifications - Nodemailer order confirmation + admin notifications
+- **mventor-ticket-004:** Image Upload - Drag & drop with multer, preview, replace/delete, validation
+- **mventor-ticket-003:** Admin Order Management - Orders list, stats dashboard, status updates
+- **mventor-ticket-002:** Sample Products & Category Polish - 15 products, sorting, "New" badge, sort dropdown
+- **mventor-ticket-001:** Project Foundation - Server, frontend, admin panel, Stripe, docs

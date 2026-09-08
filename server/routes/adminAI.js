@@ -8,6 +8,8 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const config = require('../config/ollama.config');
+const adminAuth = require('../middleware/adminAuth');
+const { requirePermission } = require('../middleware/rbac');
 
 const OLLAMA_BASE_URL = config.baseUrl;
 
@@ -15,7 +17,7 @@ const OLLAMA_BASE_URL = config.baseUrl;
  * GET /api/admin/ai/models
  * Get list of available Ollama models
  */
-router.get('/models', async (req, res) => {
+router.get('/models', adminAuth, requirePermission('settings.read'), async (req, res) => {
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`);
     const data = await response.json();
@@ -44,7 +46,7 @@ router.get('/models', async (req, res) => {
  * POST /api/admin/ai/models/select
  * Select which model to use
  */
-router.post('/models/select', (req, res) => {
+router.post('/models/select', adminAuth, requirePermission('settings.manage'), (req, res) => {
   try {
     const { model } = req.body;
 
@@ -85,7 +87,7 @@ router.post('/models/select', (req, res) => {
  * GET /api/admin/ai/settings
  * Get AI personality and configuration settings
  */
-router.get('/settings', (req, res) => {
+router.get('/settings', adminAuth, requirePermission('settings.read'), (req, res) => {
   try {
     const settings = db.prepare('SELECT key, value FROM ai_config').all();
     const settingsMap = {};
@@ -119,7 +121,7 @@ router.get('/settings', (req, res) => {
  * PUT /api/admin/ai/settings
  * Update AI personality and configuration settings
  */
-router.put('/settings', (req, res) => {
+router.put('/settings', adminAuth, requirePermission('settings.manage'), (req, res) => {
   try {
     const { personality, temperature, maxTokens, timeout } = req.body;
 
@@ -169,7 +171,7 @@ router.put('/settings', (req, res) => {
  * GET /api/admin/ai/stats
  * Get AI usage statistics
  */
-router.get('/stats', (req, res) => {
+router.get('/stats', adminAuth, requirePermission('settings.read'), (req, res) => {
   try {
     const totalConversations = db.prepare('SELECT COUNT(*) as count FROM ai_conversations').get();
     const avgResponseTime = db.prepare('SELECT AVG(response_time_ms) as avg FROM ai_conversations').get();

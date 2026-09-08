@@ -13,7 +13,7 @@ const fs = require('fs');
 
 const PORT = 3099;
 
-const TEST_STAFF_EMAIL = 'integration.staff@comfortsign.local';
+const TEST_STAFF_EMAIL = 'integration.staff@ecom-erp.local';
 const TEST_STAFF_PASSWORD = 'IntegrationTest123!';
 
 // Pre-seed staff user for mobile JWT tests (before server starts)
@@ -28,10 +28,10 @@ function seedTestUser() {
     initSqlJs().then(SQL => {
       const db = new SQL.Database(fs.readFileSync(DB_PATH));
 
-      const roleRes = db.exec("SELECT id FROM roles WHERE name = 'super_admin'");
+      const roleRes = db.exec("SELECT id FROM roles WHERE name = 'admin'");
       const roleId = roleRes[0]?.values?.[0]?.[0];
       if (!roleId) {
-        console.warn('super_admin role not found — skipping staff user seed');
+        console.warn('admin role not found — skipping staff user seed');
         return resolve();
       }
 
@@ -56,7 +56,7 @@ function cleanupTestUser() {
   if (!fs.existsSync(DB_PATH)) return;
 
   const initSqlJs = require('sql.js');
-  initSqlJs().then(SQL => {
+  return initSqlJs().then(SQL => {
     const db = new SQL.Database(fs.readFileSync(DB_PATH));
     db.run('DELETE FROM users WHERE email = ?', [TEST_STAFF_EMAIL]);
     db.run("DELETE FROM customers WHERE email LIKE 'mobile.customer.%@test.com'");
@@ -97,16 +97,14 @@ seedTestUser().then(() => {
 
     try {
       const result = execSync(
-        `npx jest --testPathPatterns tests/api.test --testPathPatterns tests/mobileApi.test --verbose --forceExit`,
+        `npx jest tests/api.test tests/mobileApi.test --verbose --forceExit`,
         { cwd: __dirname, stdio: 'inherit', env: { ...process.env, PORT: String(PORT) }, shell: true }
       );
       server.kill();
-      cleanupTestUser();
-      process.exit(0);
+      cleanupTestUser().then(() => process.exit(0));
     } catch (err) {
       server.kill();
-      cleanupTestUser();
-      process.exit(err.status || 1);
+      cleanupTestUser().then(() => process.exit(err.status || 1));
     }
   }, 5000);
 }).catch(err => {

@@ -24,7 +24,12 @@ export default function PurchaseOrdersList() {
   const [products, setProducts] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [pendingCancel, setPendingCancel] = useState(null);
+  const [pendingReject, setPendingReject] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectError, setRejectError] = useState('');
+  const [actionLoading, setActionLoading] = useState('');
 
   // Create form state
   const [newPo, setNewPo] = useState({ supplier_id: '', notes: '', expected_at: '', items: [] });
@@ -80,10 +85,43 @@ export default function PurchaseOrdersList() {
       .catch(err => setError(err.response?.data?.error || 'Failed to create'));
   }
 
-  function handleStatusChange(po, newStatus) {
-    updatePurchaseOrderStatus(po.id, newStatus)
-      .then(() => { loadOrders(); if (showDetail?.id === po.id) setShowDetail(null); })
-      .catch(err => setError(err.response?.data?.error || 'Failed to update status'));
+  function handleStatusChange(po, newStatus, opts = {}) {
+    const key = `${po.id}:${newStatus}`;
+    setActionLoading(key);
+    setError('');
+    setSuccessMsg('');
+    updatePurchaseOrderStatus(po.id, newStatus, opts.reject_reason)
+      .then(() => {
+        const label = newStatus === 'sent' ? 'submitted' : newStatus === 'confirmed' ? 'approved' : newStatus === 'cancelled' ? 'cancelled' : newStatus;
+        setSuccessMsg(`PO ${po.po_number} ${label}`);
+        setTimeout(() => setSuccessMsg(''), 3000);
+        loadOrders();
+        if (showDetail?.id === po.id) {
+          // reload detail to show audit fields (approved_by/reject_reason)
+          getPurchaseOrder(po.id).then(res => setShowDetail(res.data)).catch(() => setShowDetail(null));
+        }
+      })
+      .catch(err => {
+        const msg = err.response?.data?.error || 'Failed to update status';
+        // if this was a reject-reason validation, surface inline
+        if (opts.reject_reason !== undefined && msg.toLowerCase().includes('rejection reason')) {
+          setRejectError(msg);
+        } else {
+          setError(msg);
+        }
+      })
+      .finally(() => setActionLoading(''));
+  }
+
+  function handleRejectConfirm() {
+    const reason = String(rejectReason).trim();
+    if (!reason) { setRejectError('A rejection reason is required'); return; }
+    if (reason.length > 300) { setRejectError('Reason must be ≤ 300 characters'); return; }
+    setRejectError('');
+    const po = pendingReject;
+    setPendingReject(null);
+    setRejectReason('');
+    handleStatusChange(po, 'cancelled', { reject_reason: reason });
   }
 
   function openDetail(po) {
@@ -148,6 +186,7 @@ export default function PurchaseOrdersList() {
         </button>
       </div>
 
+      {successMsg && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">{successMsg}</div>}
       {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>}
 
       <DataTable columns={columns} data={orders} loading={loading} emptyMessage="No purchase orders yet" />
@@ -248,13 +287,39 @@ export default function PurchaseOrdersList() {
                   ))}
                 </tbody>
               </table>
+              {/* Audit trail — who did what, when */}
+              {(showDetail.approved_by || showDetail.rejected_by || showDetail.ordered_at || showDetail.received_at || showDetail.created_by) && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
+                  {showDetail.created_by && <div><span className="text-gray-500">Created by:</span> {showDetail.created_by} · {new Date(showDetail.created_at).toLocaleString()}</div>}
+                  {showDetail.ordered_at && <div><span className="text-gray-500">Submitted:</span> {new Date(showDetail.ordered_at).toLocaleString()}</div>}
+                  {showDetail.approved_by && <div><span className="text-gray-500">Approved by:</span> {showDetail.approved_by} · {showDetail.approved_at ? new Date(showDetail.approved_at).toLocaleString() : '—'}</div>}
+                  {showDetail.received_at && <div><span className="text-gray-500">Received:</span> {new Date(showDetail.received_at).toLocaleString()}</div>}
+                  {showDetail.reject_reason && (
+                    <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700">
+                      <span className="font-medium">Rejected by {showDetail.rejected_by || '—'}</span>
+                      {showDetail.rejected_at ? ` · ${new Date(showDetail.rejected_at).toLocaleString()}` : ''}: {showDetail.reject_reason}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="mt-4 flex gap-2 justify-end">
-                {getNextStatus(showDetail.status).map(s => (
-                  <button key={s} onClick={() => s === 'cancelled' ? setPendingCancel(showDetail) : handleStatusChange(showDetail, s)}
-                    className={`text-xs px-3 py-1.5 rounded-lg font-medium ${s === 'cancelled' ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'}`}>
-                    {s === 'sent' ? 'Mark Sent' : s === 'confirmed' ? 'Confirm' : s === 'received' ? 'Mark Received' : s === 'received_partial' ? 'Partial Receive' : 'Cancel'}
-                  </button>
-                ))}
+                {getNextStatus(showDetail.status).map(s => {
+                  const loadingKey = `${showDetail.id}:${s}`;
+                  const isLoading = actionLoading === loadingKey;
+                  const isRejectFromSent = s === 'cancelled' && showDetail.status === 'sent';
+                  return (
+                    <button key={s}
+                      disabled={!!actionLoading}
+                      onClick={() => {
+                        if (isRejectFromSent) { setPendingReject(showDetail); setRejectReason(''); setRejectError(''); }
+                        else if (s === 'cancelled') setPendingCancel(showDetail);
+                        else handleStatusChange(showDetail, s);
+                      }}
+                      className={`text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed ${s === 'cancelled' ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-primary-50 text-primary-700 hover:bg-primary-100'}`}>
+                      {isLoading ? '...' : s === 'sent' ? 'Mark Sent' : s === 'confirmed' ? 'Approve' : s === 'received' ? 'Mark Received' : s === 'received_partial' ? 'Partial Receive' : 'Cancel'}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end">
@@ -264,7 +329,7 @@ export default function PurchaseOrdersList() {
         </div>
       )}
 
-      {/* Destructive-action confirmation: cancelling a PO is irreversible */}
+      {/* Destructive-action confirmation: cancelling a PO is irreversible (non-sent → no reason needed) */}
       <ConfirmDialog
         open={!!pendingCancel}
         title="Cancel purchase order?"
@@ -275,6 +340,36 @@ export default function PurchaseOrdersList() {
         onConfirm={() => { if (pendingCancel) handleStatusChange(pendingCancel, 'cancelled'); setPendingCancel(null); }}
         onCancel={() => setPendingCancel(null)}
       />
+
+      {/* Rejection with reason: sent → cancelled requires an audit reason */}
+      {pendingReject && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="reject-dialog-title">
+            <h3 id="reject-dialog-title" className="text-lg font-bold text-gray-900">Reject purchase order?</h3>
+            <p className="mt-2 text-sm text-gray-600">Rejecting <span className="font-mono font-medium">{pendingReject.po_number}</span> ({pendingReject.supplier_name}) requires a reason. The reason and your identity will be recorded and a notification will be sent.</p>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Rejection reason *</label>
+              <textarea value={rejectReason} onChange={e => { setRejectReason(e.target.value); if (rejectError) setRejectError(''); }}
+                rows={3} maxLength={300} placeholder="e.g., Supplier no longer available, price expired..."
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${rejectError ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-primary-500'}`}
+                autoFocus />
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-xs text-gray-400">{rejectReason.length}/300</span>
+                {rejectError && <span className="text-xs text-red-600">{rejectError}</span>}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setPendingReject(null); setRejectReason(''); setRejectError(''); }}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Keep order</button>
+              <button type="button" disabled={!String(rejectReason).trim() || !!actionLoading}
+                onClick={handleRejectConfirm}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {actionLoading ? '...' : 'Reject order'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Receive Modal */}
       {showReceive && (

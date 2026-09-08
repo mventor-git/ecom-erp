@@ -71,14 +71,18 @@ function emitFailure(orderId, userId, items) {
 
 /**
  * Create ISSUE movements for every order item (stock leaves the warehouse).
- * @returns {{issued: number, failed: Array}}
+ * @returns {{issued: number, failed: Array, costs: Array<{productId,qty,unitCost}>}}
+ * costs carries the per-line unit COGS for freshly-issued lines only
+ * (072: snapshot threading; repeat/skip calls return costs: [] — never
+ * overwrite real snapshots with empty data).
  */
 function issueForOrder(orderId, items, userId = '') {
   assertOrderExists(orderId);
-  if (orderAlreadyHas(orderId, 'issue')) return { issued: 0, failed: [], skipped: true };
+  if (orderAlreadyHas(orderId, 'issue')) return { issued: 0, failed: [], skipped: true, costs: [] };
   const norm = normalizeItems(items);
   let issued = 0;
   const failed = [];
+  const costs = [];
 
   for (const it of norm) {
     const warehouseId = resolveWarehouse(it.productId);
@@ -110,6 +114,7 @@ function issueForOrder(orderId, items, userId = '') {
         note: `Order #${orderId} shipment`,
         userId,
       });
+      costs.push({ productId: it.productId, qty: it.qty, unitCost: perUnit });
       issued++;
     } catch (err) {
       failed.push({ ...it, reason: err.message });
@@ -125,7 +130,7 @@ function issueForOrder(orderId, items, userId = '') {
   } catch (err) {
     console.error('Auto issue-order creation failed:', err.message);
   }
-  return { issued, failed };
+  return { issued, failed, costs };
 }
 
 /**

@@ -9,8 +9,10 @@ router.post('/', async (req, res) => {
   try {
     const { productId, variantId, warehouseId, qty, basePrice, finalPrice } = req.body;
     // Find or create a temporary/admin order for this sale
+    // (066: snapshot site-default list code like every other creation path)
     const db = require('../db');
-    const orderRes = db.prepare("INSERT INTO orders (customer_id, stripe_session_id, total, status, items) VALUES (?, ?, ?, ?, ?)").run(1, "tmp_" + Math.floor(Math.random()*1000000), 0, "pending", "[]");
+    const adminPriceListCode = require('../services/priceListService').storefrontListCode();
+    const orderRes = db.prepare("INSERT INTO orders (customer_id, stripe_session_id, total, status, items, price_list_code) VALUES (?, ?, ?, ?, ?, ?)").run(1, "tmp_" + Math.floor(Math.random()*1000000), 0, "pending", "[]", adminPriceListCode);
     const orderId = orderRes.lastInsertRowid;
     db.prepare("UPDATE orders SET stripe_session_id = ? WHERE id = ?").run("admin_" + orderId, orderId);
     const result = adminSaleService.createAdminSale({

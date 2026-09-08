@@ -1,4 +1,4 @@
-# Admin Panel Information Architecture — Comfort Sign
+# Admin Panel Information Architecture — Ecom-ERP
 
 Sidebar sections (collapsible, persisted):
 

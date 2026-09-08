@@ -51,15 +51,15 @@ async function initAndSeed() {
     const bcrypt = require('bcryptjs');
     const hash = bcrypt.hashSync('warehouse123', 10);
     db.prepare("INSERT INTO users (email, password_hash, name, role_id, is_active) VALUES (?, ?, ?, ?, 1)")
-      .run('warehouse_staff@comfort-sign.local', hash, 'Warehouse Staff', roleId);
-    console.log('+ user: warehouse_staff@comfort-sign.local / warehouse123');
+      .run('warehouse_staff@ecom-erp.local', hash, 'Warehouse Staff', roleId);
+    console.log('+ user: warehouse_staff@ecom-erp.local / warehouse123');
   } catch (e) {
     if (e.message.includes('UNIQUE') || e.message.includes('unique')) {
       console.log('= user already exists, skipping');
     } else throw e;
   }
 
-  userId = db.prepare("SELECT id FROM users WHERE email = 'warehouse_staff@comfort-sign.local'").get()?.id;
+  userId = db.prepare("SELECT id FROM users WHERE email = 'warehouse_staff@ecom-erp.local'").get()?.id;
   console.log('  user_id:', userId);
 
   // 5. Verify: usersWithPermission for inventory.packing

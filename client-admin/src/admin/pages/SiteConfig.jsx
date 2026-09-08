@@ -21,8 +21,8 @@ import FeaturedList from './FeaturedList';
  *   Welcome Slides
  *
  * The Homepage tab edits the public `frontend`/`general` settings the
- * customer site reads (identity, trust badges, features, toggles) plus the
- * storefront pricing defaults (default price list + default markup %).
+ * customer site reads (identity, trust badges, features, toggles).
+ * (Pricing defaults live in Pricing Engine — the one home per 057/070.)
  */
 
 const TABS = [

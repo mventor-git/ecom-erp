@@ -1,4 +1,4 @@
-# Comfort Sign API Documentation
+# Ecom-ERP API Documentation
 
 **Version:** 1.0.0  
 **Base URL:** `https://your-domain.com/api/v1`  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-The Comfort Sign API is a RESTful API designed for both web and mobile (Android/iOS) applications. This documentation provides comprehensive guidance for integrating with our e-commerce and ERP platform.
+The Ecom-ERP API is a RESTful API designed for both web and mobile (Android/iOS) applications. This documentation provides comprehensive guidance for integrating with our e-commerce and ERP platform.
 
 ### Key Features
 
@@ -195,7 +195,7 @@ GET /api/v1/products/:id
     "category_id": 1,
     "category_name": "Exercise & Fitness",
     "brand_id": 1,
-    "brand_name": "Comfort-Sign",
+    "brand_name": "Ecom-ERP",
     "stock": 50,
     "featured": true,
     "sizes": ["S", "M", "L", "XL"],
@@ -286,7 +286,7 @@ GET /api/v1/brands
   "data": [
     {
       "id": 1,
-      "name": "Comfort-Sign",
+      "name": "Ecom-ERP",
       "icon_url": "https://example.com/brand-icon.png",
       "product_count": 45
     }
@@ -421,7 +421,7 @@ Content-Type: application/json
     "status": "pending",
     "total": 64800,
     "total_formatted": "648.00 ج.م",
-    "payment_url": "https://checkout.stripe.com/pay/cs_test_..."
+    "payment_url": "https://<payment-host>/pay/..."
   }
 }
 ```
@@ -751,27 +751,27 @@ The API supports deep linking for mobile apps:
 
 ### Product Deep Link
 ```
-comfortsign://product/123
+ecomerp://product/123
 ```
 
 ### Category Deep Link
 ```
-comfortsign://category/1
+ecomerp://category/1
 ```
 
 ### Order Deep Link
 ```
-comfortsign://order/ORD-2026-0123
+ecomerp://order/ORD-2026-0123
 ```
 
 ### Cart Deep Link
 ```
-comfortsign://cart
+ecomerp://cart
 ```
 
 ### Profile Deep Link
 ```
-comfortsign://profile
+ecomerp://profile
 ```
 
 ---
@@ -816,7 +816,7 @@ The API can send webhooks for real-time updates:
 
 ```kotlin
 // Initialize API client
-val apiClient = ComfortSignApiClient(
+val apiClient = EcomerpApiClient(
     baseUrl = "https://your-domain.com/api/v1",
     apiKey = "your-api-key"
 )
@@ -846,7 +846,7 @@ apiClient.cart.addItem(
 
 ```swift
 // Initialize API client
-let apiClient = ComfortSignApiClient(
+let apiClient = EcomerpApiClient(
     baseUrl: "https://your-domain.com/api/v1",
     apiKey: "your-api-key"
 )
@@ -885,11 +885,11 @@ let products = try await apiClient.products.getAll(
 ## Support
 
 For API support, contact:
-- Email: api-support@comfortsign.com
-- Documentation: https://docs.comfortsign.com/api
+- Email: api-support@example.com
+- Documentation: <docs-url>
 
 ---
 
 ## License
 
-© 2026 Comfort Sign. All rights reserved.
+© 2026 Ecom-ERP. All rights reserved.

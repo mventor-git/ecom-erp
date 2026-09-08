@@ -78,9 +78,45 @@ function deletePriceList(id) {
   const existing = db.prepare('SELECT * FROM price_lists WHERE id = ?').get(id);
   if (!existing) throw new Error('Price list not found');
   if (existing.is_default) throw new Error('Cannot delete the default price list');
+  const usage = getPriceListUsage(id);
+  if (usage.is_storefront) throw new Error('Cannot delete the storefront price list — switch the storefront to another list first');
+  if (usage.overrides > 0) throw new Error(`Cannot delete: ${usage.overrides} per-product override(s) still reference this list`);
+  if (usage.orders > 0 || usage.order_items > 0) throw new Error(`Cannot delete: order history references this list (${usage.orders} orders, ${usage.order_items} lines)`);
+  if (usage.sale_refs > 0) throw new Error(`Cannot delete: ${usage.sale_refs} product(s) sell under this list (sale_price_list)`);
   db.prepare('DELETE FROM product_prices WHERE price_list_id = ?').run(id);
   db.prepare('DELETE FROM price_lists WHERE id = ?').run(id);
   return { success: true, deleted: existing.code };
+}
+
+/**
+ * Honest usage for one list — mventor-ticket-064.
+ * Missing columns/tables (legacy DBs) count as 0, never throw.
+ */
+function getPriceListUsage(id) {
+  const existing = db.prepare('SELECT * FROM price_lists WHERE id = ?').get(id);
+  if (!existing) throw new Error('Price list not found');
+  const count = (sql, ...params) => {
+    try { return Number(db.prepare(sql).get(...params)?.n || 0); }
+    catch { return 0; }
+  };
+  const overrides = count('SELECT COUNT(*) AS n FROM product_prices WHERE price_list_id = ?', id);
+  const orders = count('SELECT COUNT(*) AS n FROM orders WHERE price_list_code = ?', existing.code);
+  const orderItems = count('SELECT COUNT(*) AS n FROM order_items WHERE price_list_code = ?', existing.code);
+  const saleRefs = count("SELECT COUNT(*) AS n FROM products WHERE sale_price_list = ? AND deleted_at IS NULL", existing.code);
+  let storefront = 'retail';
+  try { storefront = settingsService.get('storefront_price_list', 'retail') || 'retail'; } catch { /* keep retail */ }
+  return {
+    id: existing.id, code: existing.code,
+    overrides, orders, order_items: orderItems, sale_refs: saleRefs,
+    is_default: !!existing.is_default,
+    is_storefront: storefront === existing.code,
+    in_use: overrides > 0 || orders > 0 || orderItems > 0 || saleRefs > 0 || storefront === existing.code,
+  };
+}
+
+/** Usage map for all lists (single call for the admin UI). */
+function getAllUsage() {
+  return listPriceLists(true).map(l => getPriceListUsage(l.id));
 }
 
 // â”€â”€ Per-product overrides â”€â”€
@@ -191,6 +227,8 @@ module.exports = {
   createPriceList,
   updatePriceList,
   deletePriceList,
+  getPriceListUsage,
+  getAllUsage,
   getProductPrices,
   setProductPrices,
   getEffectivePrice,

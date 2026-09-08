@@ -13,6 +13,15 @@ router.get('/', adminAuth, requirePermission('inventory.view'), (req, res) => {
   }
 });
 
+// GET /api/admin/price-lists/usage - per-list honesty counts (064, additive)
+router.get('/usage', adminAuth, requirePermission('inventory.view'), (req, res) => {
+  try {
+    res.json(priceListService.getAllUsage());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/admin/price-lists - Create a price list
 router.post('/', adminAuth, requirePermission('inventory.manage'), (req, res) => {
   try {

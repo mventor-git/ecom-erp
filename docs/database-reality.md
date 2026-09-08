@@ -1,4 +1,4 @@
-# Database Reality — Comfort Sign (Phase 2 Audit)
+# Database Reality — Ecom-ERP (Phase 2 Audit)
 
 ENGINE: SQLite via sql.js (db.js); file = server/data/store.db
 SCHEMA: server/schema.sql (263 lines) + db.js migrations (ALTER TABLE + new tables)

@@ -1,4 +1,4 @@
-# Comfort Sign launcher — replaces deleted start.py / start.exe control center.
+# Ecom-ERP launcher — replaces deleted start.py / start.exe control center.
 # Starts all 3 services detached (hidden windows), logs to logs/.
 # Usage: right-click > Run with PowerShell, or: powershell -NoProfile -ExecutionPolicy Bypass -File start.ps1
 
