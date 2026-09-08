@@ -6,7 +6,7 @@
 
 ## ⏸️ CHECKPOINT — WHERE WE STOPPED
 
-**State at stop:** 077 **COMPLETED** (journal tables + service + JE numbering + tests). No servers started; 32/179 green + admin clean. STOP — Ticket D NOT started.
+**State at stop:** 078 **COMPLETED** — https://github.com/mventor-git/ecom-erp at 813bcc9 (3 commits, secrets verified, tree clean). STOP — Ticket D NOT started.
 
 **Completed this handoff:**
 - 057 follow-up: layer-unified basis + VIP preview + honest Cost→Retail→VIP table + missing-pricing guard. Behavior preserved via fallback; VIP never applied/stored; overrides/history untouched.

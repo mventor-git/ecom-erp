@@ -1,6 +1,10 @@
 # Changelog
 
-## [4.15.20] - 2026-09-07 - mventor-ticket-077: Journal foundation (Completed)
+## [4.15.21] - 2026-09-07 - mventor-ticket-078: Publish to GitHub (Completed)
+### Changed
+- Remote was untouched all session — published now: `4922243` archive renames + stop-tracking tickets/scratch; `7e53caa` session work 057–077 (146 files); `813bcc9` root-purge completion (14 files, grep-verified unreferenced). Fast-forward only, secrets verified absent, tree clean.
+### Verification
+- `origin/master` 6ac0c01 → 813bcc9; `git status` empty; secret scan clean.
 ### Changed
 - NEW `journal_entries` + `journal_lines` (IF NOT EXISTS, cents, entry_no UNIQUE, draft-only — no post path until D); JE numbering via house sequences (`JE` type + seed); NEW `journalService` (balanced/no-D+C/no-negatives/≥2 lines/valid+active accounts, entry_no immutable, txn-wrapped); NEW `journalFoundation.test` 6/6 incl. 075-guard activation proof.
 ### Verification

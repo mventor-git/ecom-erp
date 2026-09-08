@@ -1,7 +1,7 @@
 ﻿# Backlog
 
 ## Active (2026-09-07)
-- **Next (recommended):** Ticket D — Posting + invariants (post/unpost, balance gate, period hook read-only) — NOT started (one ticket at a time, STOP after 077).
+- **Next (recommended):** Ticket D — Posting + invariants (post/unpost, balance gate, period hook read-only) — NOT started (one ticket at a time, STOP after 078).
 - **Deferred (pre-accounting queue, still valid):** test-isolation + backup-retention hygiene.
 - **mventor-ticket-057 (Next) [NEW DESIGN post-Claude]:** Pricing Engine rebuild (Cost->Retail->VIP) - one ticket after 056
 - **mventor-ticket-036 (v2):** Worker app follow-ups - assignment, picker/packer scanning, push, offline queue, EAS APK
@@ -12,6 +12,7 @@
 - **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
+- **mventor-ticket-078:** Publish to GitHub (3 commits, secrets verified, tree clean). Remote at 813bcc9.
 - **mventor-ticket-077:** Journal foundation (tables + service + JE numbering + tests incl. guard-activation proof). Verified 32/179 + admin clean.
 - **mventor-ticket-076:** Repo sweep (deps/ reference + README align; pre-existing hygiene verified). File checks green.
 - **mventor-ticket-075:** Chart of Accounts foundation (table + service + guards + tests). Verified 31/173 + admin clean.
