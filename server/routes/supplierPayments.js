@@ -17,11 +17,12 @@ function mapError(err) {
   return 500;
 }
 
-// GET /api/admin/supplier-payments?supplier_id=
+// GET /api/admin/supplier-payments?supplier_id= | ?purchase_order_id=
 router.get('/', adminAuth, requirePermission('supplier_payments.read'), (req, res) => {
   try {
     const payments = supplierPaymentService.listPayments({
       supplierId: req.query.supplier_id || null,
+      poId: req.query.purchase_order_id || null,
       limit: req.query.limit,
     });
     res.json(payments);

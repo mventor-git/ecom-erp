@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
+import StatusBadge from '../components/StatusBadge';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, updatePurchaseOrderStatus, receivePurchaseOrder, getSuppliers, getAdminProducts, getWarehouses } from '../../api/adminApi';
+import { getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, updatePurchaseOrderStatus, receivePurchaseOrder, getSuppliers, getAdminProducts, getWarehouses, getPoPayables, getPoPayments, recordSupplierPayment, reverseSupplierPayment } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
+import { egpToCents, centsToEGPInput, egpErrorText } from '../../utils/money';
 
 const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-700',
@@ -30,6 +32,14 @@ export default function PurchaseOrdersList() {
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState('');
   const [actionLoading, setActionLoading] = useState('');
+  // Supplier payments (mventor-ticket-089): PO detail panel state
+  const [payables, setPayables] = useState(null);   // { receivable_from_receipts, applied, outstanding }
+  const [payments, setPayments] = useState([]);     // payments applied to the open PO
+  const [payDialog, setPayDialog] = useState(null); // { amount, notes, key, error, busy }
+  const [pendingPayReverse, setPendingPayReverse] = useState(null);
+  const [revReason, setRevReason] = useState('');
+  const [revError, setRevError] = useState('');
+  const [revLoading, setRevLoading] = useState(false);
 
   // Create form state
   const [newPo, setNewPo] = useState({ supplier_id: '', notes: '', expected_at: '', items: [] });
@@ -125,9 +135,75 @@ export default function PurchaseOrdersList() {
   }
 
   function openDetail(po) {
+    setPayables(null); setPayments([]);
     getPurchaseOrder(po.id)
-      .then(res => setShowDetail(res.data))
+      .then(res => { setShowDetail(res.data); loadPayables(res.data); })
       .catch(() => setError('Failed to load details'));
+  }
+
+  function closeDetail() {
+    setShowDetail(null); setPayables(null); setPayments([]);
+    setPayDialog(null); setPendingPayReverse(null); setRevReason(''); setRevError('');
+  }
+
+  // Read-only payable panel from the server (no local math). Auxiliary fetch:
+  // on failure (e.g. missing supplier_payments.read) hide the panel quietly —
+  // the record/reverse buttons still 403-surface if actually used.
+  function loadPayables(po) {
+    Promise.all([getPoPayables(po.id), getPoPayments(po.id)])
+      .then(([outRes, payRes]) => { setPayables(outRes.data || null); setPayments(payRes.data || []); })
+      .catch(err => {
+        setPayables(null); setPayments([]);
+        console.error('payables panel:', err?.response?.status || err?.message || err);
+      });
+  }
+
+  function openPayDialog() {
+    // ONE stable idempotency key per dialog session; regenerated on every edit,
+    // so a failed submit retried unchanged replays safely, any edit = new txn.
+    setPayDialog({ amount: centsToEGPInput(payables?.outstanding || 0), notes: '', key: crypto.randomUUID(), error: '', busy: false });
+  }
+
+  function confirmPay() {
+    const cents = egpToCents(payDialog.amount);
+    if (!cents.ok) { setPayDialog(p => ({ ...p, error: egpErrorText(cents.reason) })); return; }
+    const po = showDetail;
+    setPayDialog(p => ({ ...p, busy: true, error: '' }));
+    recordSupplierPayment({
+      supplier_id: po.supplier_id,
+      amount: cents.cents,
+      applications: [{ purchaseOrderId: po.id, amount: cents.cents }],
+      method: 'cash',
+      notes: payDialog.notes,
+      idempotency_key: payDialog.key,
+    })
+      .then(() => {
+        setPayDialog(null);
+        setSuccessMsg(`Payment recorded for ${po.po_number}`);
+        setTimeout(() => setSuccessMsg(''), 3000);
+        loadPayables(po); // re-read server truth (outstanding, list)
+        loadOrders();
+      })
+      .catch(err => setPayDialog(p => ({ ...p, busy: false, error: err.response?.data?.error || 'Failed to record payment' })));
+  }
+
+  function handlePayReverseConfirm() {
+    const reason = String(revReason).trim();
+    if (!reason) { setRevError('A reversal reason is required'); return; }
+    if (reason.length > 300) { setRevError('Reason must be ≤ 300 characters'); return; }
+    setRevError('');
+    const payment = pendingPayReverse;
+    const po = showDetail;
+    setRevLoading(true);
+    reverseSupplierPayment(payment.id, reason)
+      .then(() => {
+        setPendingPayReverse(null); setRevReason('');
+        setSuccessMsg(`Payment ${payment.payment_no} reversed`);
+        setTimeout(() => setSuccessMsg(''), 3000);
+        loadPayables(po);
+      })
+      .catch(err => setRevError(err.response?.data?.error || 'Failed to reverse payment'))
+      .finally(() => setRevLoading(false));
   }
 
   function openReceive(po) {
@@ -302,6 +378,47 @@ export default function PurchaseOrdersList() {
                   )}
                 </div>
               )}
+              {/* Supplier payables — derived server-side from posted journals (088/089). Hidden until receipt posting creates a payable. */}
+              {payables && (payables.receivable_from_receipts > 0 || payables.applied > 0) && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Supplier Payments</h3>
+                    {payables.outstanding > 0 && (
+                      <button onClick={openPayDialog}
+                        className="text-xs px-3 py-1.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">
+                        Record Payment
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 text-xs text-gray-600">
+                    <div><span className="text-gray-500">Receipt value:</span> <span className="font-semibold text-gray-900">{format(payables.receivable_from_receipts || 0)}</span></div>
+                    <div><span className="text-gray-500">Paid:</span> <span className="font-semibold text-gray-900">{format(payables.applied || 0)}</span></div>
+                    <div><span className="text-gray-500">Outstanding:</span> <span className={`font-semibold ${payables.outstanding > 0 ? 'text-amber-600' : 'text-green-700'}`}>{format(payables.outstanding || 0)}</span></div>
+                  </div>
+                  {payments.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {payments.map(p => (
+                        <div key={p.id} className="text-xs border border-gray-200 bg-white rounded-lg p-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-mono font-medium text-gray-900">{p.payment_no}</span>
+                            <span>{format(p.applied_amount || 0)}</span>
+                            <StatusBadge status={p.status} />
+                            <span className="text-gray-500">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—'}</span>
+                            <span className="text-gray-500">· by {p.created_by || '—'}</span>
+                            {p.status === 'recorded' && (
+                              <button onClick={() => setPendingPayReverse(p)}
+                                className="ml-auto text-red-600 hover:text-red-800 font-medium">Reverse</button>
+                            )}
+                          </div>
+                          {p.status === 'reversed' && (
+                            <div className="mt-1 text-red-700">Reversed by {p.reversed_by || '—'}: {p.reversal_reason || '—'}</div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="mt-4 flex gap-2 justify-end">
                 {getNextStatus(showDetail.status).map(s => {
                   const loadingKey = `${showDetail.id}:${s}`;
@@ -323,7 +440,7 @@ export default function PurchaseOrdersList() {
               </div>
             </div>
             <div className="p-6 border-t border-gray-200 flex justify-end">
-              <button onClick={() => setShowDetail(null)} className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
+              <button onClick={closeDetail} className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
             </div>
           </div>
         </div>
@@ -395,6 +512,79 @@ export default function PurchaseOrdersList() {
             <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
               <button onClick={() => setShowReceive(null)} className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
               <button onClick={handleReceive} className="px-4 py-2 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700">Confirm Receipt</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Record Payment (089): posts via 088 API — Dr AP / Cr Cash. Amount in EGP, validated + authority-checked server-side. */}
+      {payDialog && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="pay-dialog-title">
+            <h3 id="pay-dialog-title" className="text-lg font-bold text-gray-900">Record supplier payment — {showDetail?.po_number}</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Paying <span className="font-medium">{showDetail?.supplier_name}</span> against this order.
+              Outstanding: <span className="font-semibold">{format(payables?.outstanding || 0)}</span>. Posts a balanced journal entry (Dr Accounts Payable / Cr Cash).
+            </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment method</label>
+                <input value="Cash" readOnly className="w-full border border-gray-200 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-500 cursor-default" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (EGP) *</label>
+                <input type="text" value={payDialog.amount} autoFocus maxLength={14}
+                  onChange={e => { setPayDialog({ ...payDialog, amount: e.target.value, key: crypto.randomUUID(), error: '' }); }}
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${payDialog.error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-primary-500'}`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <input type="text" value={payDialog.notes} maxLength={500}
+                  onChange={e => setPayDialog({ ...payDialog, notes: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              </div>
+              <div className="mt-1 min-h-[1rem]">
+                {payDialog.error && <span className="text-xs text-red-600">{payDialog.error}</span>}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setPayDialog(null)} disabled={payDialog.busy}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={payDialog.busy || !String(payDialog.amount).trim()}
+                onClick={confirmPay}
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {payDialog.busy ? '...' : 'Record payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reverse payment (089): mandatory reason, immutable reversal via 088 — mirrors PO reject UX. */}
+      {pendingPayReverse && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="rev-dialog-title">
+            <h3 id="rev-dialog-title" className="text-lg font-bold text-gray-900">Reverse payment {pendingPayReverse.payment_no}?</h3>
+            <p className="mt-2 text-sm text-gray-600">Reversing <span className="font-mono font-medium">{pendingPayReverse.payment_no}</span> ({format(pendingPayReverse.applied_amount || 0)}) posts the opposite journal entry and restores the payable. The original payment stays in history. A reason is required and recorded.</p>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Reversal reason *</label>
+              <textarea value={revReason} onChange={e => { setRevReason(e.target.value); if (revError) setRevError(''); }}
+                rows={3} maxLength={300} placeholder="e.g., Wrong amount, duplicate payment..."
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${revError ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-primary-500'}`}
+                autoFocus />
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-xs text-gray-400">{revReason.length}/300</span>
+                {revError && <span className="text-xs text-red-600">{revError}</span>}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => { setPendingPayReverse(null); setRevReason(''); setRevError(''); }}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">Keep payment</button>
+              <button type="button" disabled={!String(revReason).trim() || revLoading}
+                onClick={handlePayReverseConfirm}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {revLoading ? '...' : 'Reverse payment'}
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.17.0] - 2026-09-12 - mventor-ticket-089: Supplier payment UI (Completed)
+### Added
+- PO detail panel: derived payables (Receipt value / Paid / Outstanding) + this-PO payment list with `StatusBadge` (`recorded`/`reversed`); Record-Payment dialog (EGP→cents via `utils/money`, stable-per-edit idempotency key); Reverse dialog mirroring PO-reject (required reason, counter, inline errors).
+- API client: `getPoPayables/getPoPayments/recordSupplierPayment/reverseSupplierPayment` (adminApi.js).
+### Changed
+- 088 API seam extended one query param: `GET /api/admin/supplier-payments?purchase_order_id=` via `listPayments({poId})` application join (single fetch, no N+1); server remains money authority (overpayment surfaced verbatim). No client permission gating (house style: 403 surfaces inline).
+### Verification
+- `npm test` 41/218 PASS (NEW list-filter assertions); admin build clean 11.20s. **Owner browser pass 2026-09-12: ALL STEPS PASS** (panel derivation, partial, settle, reversal w/ restore + immutable history line, overpayment inline guard verbatim); smoke fixture purged after, residue 0.
+
 ## [4.16.0] - 2026-09-12 - mventor-ticket-088: Supplier payment postings (Completed)
 ### Added
 - NEW `supplier_payments` (PAY-YYYY-NNNN, immutable, idempotency_key UNIQUE) + `supplier_payment_applications`; NEW `supplierPaymentService` (record/reverse/outstanding) + thin `routes/supplierPayments.js` (`/api/admin/supplier-payments`) + `supplier_payments.read|manage` permissions; `PAY` doc type + sequence; payment event types.

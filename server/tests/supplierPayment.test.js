@@ -171,6 +171,27 @@ describe('supplier payment postings (088)', () => {
     expect(db.prepare("SELECT COUNT(*) AS n FROM journal_entries WHERE source_type = 'supplier_payment' AND source_id = ?").get(first.payment.id).n).toBe(1);
   });
 
+  test('listPayments filters by PO and echoes applied_amount (089 panel seam)', () => {
+    const poA = makePayable(supplierId, 2, 1000); // 2000
+    const poB = makePayable(supplierId, 3, 1000); // 3000
+    const r = supplierPaymentService.recordPayment({
+      supplierId, amount: 5000,
+      applications: [{ purchaseOrderId: poA, amount: 2000 }, { purchaseOrderId: poB, amount: 3000 }],
+      userId: TAG, idempotencyKey: TAG + '-list',
+    });
+    paymentIds.push(r.payment.id);
+    const listA = supplierPaymentService.listPayments({ poId: poA });
+    expect(listA.length).toBe(1);
+    expect(listA[0].id).toBe(r.payment.id);
+    expect(listA[0].applied_amount).toBe(2000);
+    expect(listA[0].payment_no).toMatch(/^PAY-/);
+    const listB = supplierPaymentService.listPayments({ poId: poB });
+    expect(listB.length).toBe(1);
+    expect(listB[0].applied_amount).toBe(3000);
+    const listUnrelated = supplierPaymentService.listPayments({ poId: 999999 });
+    expect(listUnrelated.length).toBe(0);
+  });
+
   test('reversal posts the opposite entry and restores outstanding; original stays', () => {
     const poId = makePayable(supplierId, 2, 1000); // 2000
     const r = supplierPaymentService.recordPayment({

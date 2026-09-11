@@ -1,8 +1,9 @@
 ﻿# Backlog
 
 ## Active (2026-09-12)
-- **Next (recommended):** Supplier payment UI (record/reverse panel on PO detail) OR AP aging report — not started (one ticket at a time, STOP after 088).
-- **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, AP aging + cash-flow reports (gap-map Ticket M).
+- **Next (recommended):** AP aging report (supplier-level outstanding + per-PO, uses 088 outstanding derive) — not started (one ticket at a time, STOP after 089).
+- ~~**Owner manual pass (089):**~~ ✅ DONE 2026-09-12 — all steps pass in real browser (evidence in ticket-089 Validation Notes).
+- **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, cash-flow / financial statements (gap-map Ticket M).
 - **Deferred (pre-accounting queue, still valid):** test-isolation + backup-retention hygiene (period litter cleared in 082; phase6 repaired+gated in 083 rider; suite-shared-DB + backups retention remain).
 - **mventor-ticket-036 (v2):** Worker app follow-ups - assignment, picker/packer scanning, push, offline queue, EAS APK
 - **mventor-ticket-041 (Ready - needs user):** Customer APK via EAS - `npx eas-cli login && eas build --platform android --profile preview` (prep done)
@@ -12,6 +13,7 @@
 - **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
+- **mventor-ticket-089:** Supplier payment UI — PO detail payables panel (derived totals + this-PO payments), record/reverse dialogs (EGP→cents, server-authority errors inline), `?purchase_order_id=` list seam. Verified 41/218 + admin clean.
 - **mventor-ticket-088:** Supplier payment postings — persisted PAY record + applications, `Dr 2100 AP / Cr 1000 Cash`, full/partial/multi-PO, replay-safe, reversal, atomic. Verified 41/217 + admin clean.
 - **mventor-ticket-087:** Purchase receipt posting (movement grain + shared chart + tests). Verified 40/208 + admin clean.
 - **mventor-ticket-086:** First posting bridge (verified-payment journals + skeleton + idempotency + hygiene). Verified 39/205 twice + admin clean.

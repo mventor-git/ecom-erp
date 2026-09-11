@@ -82,11 +82,11 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-12 — 088 supplier payments)
+## Build Verification (baseline 2026-09-12 — 089 supplier payment UI)
 - Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify
 - Frontend: admin build clean 12.72s (no UI change)
-- **Test suite: 41 suites / 217 tests PASS** (40/208 + NEW supplierPayment 9/9)
-- Payables live: receipts write Dr Inventory / Cr Payables per movement; supplier payments now relieve AP (Dr 2100 / Cr 1000), full/partial/multi-PO, replay-safe + reversal
+- **Test suite: 41 suites / 218 tests PASS** (+supplierPayments list-filter test)
+- Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
 
@@ -94,7 +94,8 @@
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
 ## Next Steps (updated 2026-09-12)
-- **mventor-ticket-088 COMPLETED:** supplier payment postings. Verified 41/217 + admin clean. STOP — no supplier-payment UI/AP-aging started.
+- **mventor-ticket-088 COMPLETED:** supplier payment postings. Verified 41/217 + admin clean.
+- **mventor-ticket-089 COMPLETED:** supplier payment UI (PO detail payables panel + record/reverse dialogs). Verified 41/218 + admin clean + owner browser pass ALL STEPS 2026-09-12; smoke fixture purged, residue 0. 089 diff not yet committed.
 - **Next (recommended):** Supplier payment UI (record/reverse on PO detail) OR AP aging report — one ticket at a time.
 - Deferred (separate stabilization): mobile/worker hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob (keys configurable, gateway not live), Google Android OAuth, AI Copilot, API docs refresh
 - Accounting track (086→088 proven): verified-payment journals → ledger/trial-balance → period gate → sales & purchase posting → supplier payments. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.

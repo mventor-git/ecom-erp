@@ -22,6 +22,9 @@ const STATUS_STYLES = {
   delivered:       'bg-green-50 text-green-700 border-green-200',
   completed:       'bg-emerald-50 text-emerald-700 border-emerald-200',
   refunded:        'bg-purple-50 text-purple-700 border-purple-200',
+  // supplier payments (mventor-ticket-088/089)
+  recorded:        'bg-emerald-50 text-emerald-700 border-emerald-200',
+  reversed:        'bg-rose-50 text-rose-700 border-rose-200',
   // picking / packing task
   in_progress:  'bg-blue-50 text-blue-700 border-blue-200',
   picked:       'bg-green-50 text-green-700 border-green-200',
@@ -53,6 +56,8 @@ const STATUS_DOTS = {
   delivered:       'bg-green-500',
   completed:       'bg-emerald-500',
   refunded:        'bg-purple-500',
+  recorded:        'bg-emerald-500',
+  reversed:        'bg-rose-500',
   in_progress:  'bg-blue-500',
   picked:       'bg-green-500',
   packed:       'bg-green-500',

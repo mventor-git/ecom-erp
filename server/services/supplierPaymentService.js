@@ -282,8 +282,20 @@ function reversePayment(paymentId, { reason = '', userId = '' } = {}) {
   return { reversed: true, payment: getPayment(pid), entry };
 }
 
-function listPayments({ supplierId = null, limit = 100 } = {}) {
+function listPayments({ supplierId = null, poId = null, limit = 100 } = {}) {
   const n = Math.min(Math.max(parseInt(limit) || 100, 1), 500);
+  // PO filter (089): join applications so the panel is ONE fetch (no N+1);
+  // applied_amount = what that payment put against this PO.
+  if (poId) {
+    return db.prepare(`
+      SELECT p.*, s.name AS supplier_name, a.amount AS applied_amount
+      FROM supplier_payment_applications a
+      JOIN supplier_payments p ON p.id = a.payment_id
+      JOIN suppliers s ON s.id = p.supplier_id
+      WHERE a.purchase_order_id = ?
+      ORDER BY p.id DESC LIMIT ?
+    `).all(parseInt(poId, 10) || 0, n);
+  }
   if (supplierId) {
     return db.prepare(`
       SELECT p.*, s.name AS supplier_name FROM supplier_payments p

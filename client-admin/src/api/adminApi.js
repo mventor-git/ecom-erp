@@ -204,6 +204,16 @@ export const updatePurchaseOrderStatus = (id, status, reject_reason) => api.put(
 
 export const receivePurchaseOrder = (id, items) => api.post(`/admin/purchase-orders/${id}/receive`, { items });
 
+// ── ERP: Supplier Payments (mventor-ticket-088 API / 089 UI) ──
+
+export const getPoPayables = (poId) => api.get(`/admin/supplier-payments/outstanding/${poId}`);
+
+export const getPoPayments = (poId) => api.get('/admin/supplier-payments', { params: { purchase_order_id: poId } });
+
+export const recordSupplierPayment = (data) => api.post('/admin/supplier-payments', data);
+
+export const reverseSupplierPayment = (id, reason) => api.post(`/admin/supplier-payments/${id}/reverse`, { reason });
+
 // ── ERP: Events API ──
 export const getEvents = (params = {}) => api.get('/admin/events', { params });
 
