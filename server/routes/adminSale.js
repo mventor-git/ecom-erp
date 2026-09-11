@@ -22,7 +22,8 @@ router.post('/', async (req, res) => {
       qty: parseInt(qty) || 1,
       orderId,
       basePrice: basePrice || 1000,
-      finalPrice: finalPrice || 1000
+      finalPrice: finalPrice || 1000,
+      userId: req.session.username || 'admin'
     });
     // Return full result
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);

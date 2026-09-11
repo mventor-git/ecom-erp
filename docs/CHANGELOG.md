@@ -1,6 +1,55 @@
 # Changelog
 
-## [4.15.21] - 2026-09-07 - mventor-ticket-078: Publish to GitHub (Completed)
+## [4.16.0] - 2026-09-12 - mventor-ticket-088: Supplier payment postings (Completed)
+### Added
+- NEW `supplier_payments` (PAY-YYYY-NNNN, immutable, idempotency_key UNIQUE) + `supplier_payment_applications`; NEW `supplierPaymentService` (record/reverse/outstanding) + thin `routes/supplierPayments.js` (`/api/admin/supplier-payments`) + `supplier_payments.read|manage` permissions; `PAY` doc type + sequence; payment event types.
+- Payments post `Dr 2100 Accounts Payable / Cr 1000 Cash` (method→account seam, extensible to bank). Full/partial/multi-PO; outstanding DERIVED from posted 087 journals (ADR-014), never a mutable counter.
+### Changed
+- Reuses 086/087 primitives only (journalService post, `ux_journal_source`, documentNumberService, eventService, `db.transaction`); reversal posts opposite entry + flips status, original kept. Reset order + permissions list updated.
+### Verification
+- `npm test` 41/217 PASS (NEW `supplierPayment.test` 9/9: full, partial, multi-PO, overpay reject, apps≠amount reject, foreign-supplier reject, replay, reversal, atomic rollback + Dr/Cr); admin build clean 12.72s; residue probe 0.
+
+## [4.15.30] - 2026-09-07 - mventor-ticket-087: Purchase receipt posting (Completed)
+### Changed
+- Receipts post Dr Inventory / Cr Payables at unit cost (movement grain, replay-safe); shared `accountChart` (sales bridge refactored onto it, identical behavior); NEW `purchasePosting.test` 3/3.
+### Verification
+- `npm test` 40/208 PASS; admin build clean 24.68s.
+### Changed
+- Verified Kashier payments auto-post balanced entries (cash/revenue + COGS/inventory from bridge costs); neutral 6-account skeleton auto-provisions; source cols + UNIQUE (replay-safe); posting post-commit (paid flow can never strand). NEW `salesPosting.test` 4/4.
+- Hygiene: paymentDomain + webCostThreading clean sourced postings; accounts provision-persist (never test-deleted).
+### Verification
+- `npm test` 39/205 PASS twice identical; orphan probe 0; admin build clean 9.13s.
+### Changed
+- `reopenFinancialPeriod` (CLOSED→OPEN only, clears stale closed_at) + `POST /financial-periods/:id/reopen` (close-route mirror auth); NEW `periodReopen.test` 2/2 incl. blocked→reopened→allowed full loop.
+### Verification
+- `npm test` 38/201 PASS; admin build clean 10.05s.
+### Changed
+- `createMovement` refuses any type when today ∈ CLOSED period (names it; fail-fast before reads/writes; twin of journal gate, no cross-import). NEW `periodGate.test` 3/3 (allow/refuse-3-types/re-allow, tagged-event cleanup).
+### Verification
+- `npm test` 37/199 PASS — zero existing suites broken (no ambient closed cover); admin build clean 10.60s.
+
+## [4.15.26] - 2026-09-07 - mventor-ticket-083: adminSale via movement engine (Completed)
+### Changed
+- `createAdminSale` writes its ISSUE via `createMovement` (guards, qty books, sync, alerts, events; FIFO/errors/return-shape preserved) + `userId` passthrough from admin session. Single movement writer proven by grep.
+- Rider (owner-ordered): rebuilt broken `phase6_fifo_integration` as self-contained fixtures (was sql.js misuse + live-data asserts); gated phase6+phase7.
+### Verification
+- `npm test` 36/196 PASS; admin build clean 9.50s.
+### Changed
+- `financialPeriod.test` tracks + deletes ALL created periods (was last-id-only leaker); purged 58 verified-litter rows (backup bak-082, zero OB references, 0 skipped).
+### Verification
+- `npm test` 34/190 PASS; post-suite residue 0; admin build clean 11.42s.
+### Changed
+- NEW `docs/period-enforcement-dryrun.md` (freeze proof, would-block map, phased plan, boundary recommendation). Verdict: enforcing now FREEZES the system (29 leaked CLOSED cover today) — gate only after litter purge + adminSale bypass fix. Zero behavior change.
+### Verification
+- 3-track read-only audits triangulated; no code/DB/servers touched (baseline 34/190 stands).
+### Changed
+- NEW `ledgerService` (posted-only ledger + trial balance, reference-shaped splits, opening derives from history — no fabricated opening balances); NEW `ledgerTrialBalance.test` 4/4 (running-math, D==C proof, date windows, draft invisibility).
+### Verification
+- `npm test` 34/190 PASS; admin build clean 9.45s.
+### Changed
+- `postEntry`/`unpostEntry` (re-validate at post, closed-period refusal, atomic + audited events, markers cleared on unpost); `posted_by/at` cols (probed ALTER); `JOURNAL_*` event types; NEW `journalPosting.test` 7/7 incl. tamper/dead-account/closed-period gate proofs.
+### Verification
+- `npm test` 33/186 PASS; admin build clean 21.36s.
 ### Changed
 - Remote was untouched all session — published now: `4922243` archive renames + stop-tracking tickets/scratch; `7e53caa` session work 057–077 (146 files); `813bcc9` root-purge completion (14 files, grep-verified unreferenced). Fast-forward only, secrets verified absent, tree clean.
 ### Verification

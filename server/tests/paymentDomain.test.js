@@ -45,6 +45,9 @@ afterEach(() => {
   // FK order: order children → orders → products → customers
   for (const oid of created.splice(0)) {
     try {
+      // 086 postings first: verified payments now write journals (same try/catch style)
+      db.prepare(`DELETE FROM journal_lines WHERE entry_id IN (SELECT id FROM journal_entries WHERE source_type = 'order' AND source_id = ?)`).run(oid);
+      db.prepare(`DELETE FROM journal_entries WHERE source_type = 'order' AND source_id = ?`).run(oid);
       db.prepare('DELETE FROM issue_order_items WHERE issue_order_id IN (SELECT id FROM issue_orders WHERE order_id = ?)').run(oid);
       db.prepare('DELETE FROM issue_orders WHERE order_id = ?').run(oid);
       db.prepare('DELETE FROM order_items WHERE order_id = ?').run(oid);

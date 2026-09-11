@@ -266,6 +266,7 @@ app.use('/api/admin/document-numbers', require('./routes/documentNumbers'));
 app.use('/api/admin/suppliers', require('./routes/suppliers'));
 app.use('/api/admin', require('./routes/warehouses'));
 app.use('/api/admin/purchase-orders', require('./routes/purchaseOrders'));
+app.use('/api/admin/supplier-payments', require('./routes/supplierPayments'));
 app.use('/api/admin/reports', require('./routes/reports'));
 app.use('/api/admin/integrations', require('./routes/integrations'));
 app.use('/api/admin/invoices', require('./routes/invoices'));

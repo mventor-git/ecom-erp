@@ -104,24 +104,34 @@ function handleTransactionSuccess(payload) {
   // evidence (payment_status='verified', paid_at, payment_method='kashier') so
   // "paid" is never a client- or slider-fabricated state — it only ever comes
   // from a verified provider confirmation.
+  // Truth-telling AFTER commit (086): snapshots + journals are best-effort and
+  // logged — a rolled-back handler would be recorded as processed upstream
+  // (recordEvent runs first), stranding money-taken orders as pending forever.
+  // Paid-without-yet-books is detectable (TB vs orders) and re-postable;
+  // stuck-pending is neither. Never the reverse.
+  let issuedCosts = [];
   db.transaction(() => {
     const bridge = require('./salesInventoryBridge');
     const items = parseItems(order);
     bridge.releaseForOrder(orderId, items, 'kashier-webhook');
     const issued = bridge.issueForOrder(orderId, items, 'kashier-webhook');
-    // Cost threading (073): snapshot unit COGS into the lines INSIDE the
-    // atomic unit — rolls back with the paid state. Best-effort, logged.
-    try {
-      require('./orderLines').applyLineCosts(orderId, (issued && issued.costs) || []);
-    } catch (costErr) {
-      console.error('[kashier-webhook] line cost snapshot error:', costErr.message);
-    }
+    issuedCosts = (issued && issued.costs) || [];
     db.prepare(`
       UPDATE orders SET status = 'paid', payment_status = 'verified', payment_method = 'kashier',
         paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(orderId);
   });
+  try {
+    require('./orderLines').applyLineCosts(orderId, issuedCosts);
+  } catch (costErr) {
+    console.error('[kashier-webhook] line cost snapshot error:', costErr.message);
+  }
+  try {
+    require('./salesPosting').postOrderSale(orderId, { costs: issuedCosts, userId: 'kashier-webhook' });
+  } catch (postErr) {
+    console.error('[kashier-webhook] sales posting error:', postErr.message);
+  }
 }
 
 function handleTransactionCapture(payload) {

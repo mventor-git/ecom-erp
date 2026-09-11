@@ -1,9 +1,9 @@
 ﻿# Backlog
 
-## Active (2026-09-07)
-- **Next (recommended):** Ticket D — Posting + invariants (post/unpost, balance gate, period hook read-only) — NOT started (one ticket at a time, STOP after 078).
-- **Deferred (pre-accounting queue, still valid):** test-isolation + backup-retention hygiene.
-- **mventor-ticket-057 (Next) [NEW DESIGN post-Claude]:** Pricing Engine rebuild (Cost->Retail->VIP) - one ticket after 056
+## Active (2026-09-12)
+- **Next (recommended):** Supplier payment UI (record/reverse panel on PO detail) OR AP aging report — not started (one ticket at a time, STOP after 088).
+- **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, AP aging + cash-flow reports (gap-map Ticket M).
+- **Deferred (pre-accounting queue, still valid):** test-isolation + backup-retention hygiene (period litter cleared in 082; phase6 repaired+gated in 083 rider; suite-shared-DB + backups retention remain).
 - **mventor-ticket-036 (v2):** Worker app follow-ups - assignment, picker/packer scanning, push, offline queue, EAS APK
 - **mventor-ticket-041 (Ready - needs user):** Customer APK via EAS - `npx eas-cli login && eas build --platform android --profile preview` (prep done)
 - **Deferred (separate track):** Mobile hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob gateway (keys configurable), Google Android OAuth, Price Lists consolidation, Settings IA
@@ -12,6 +12,16 @@
 - **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
+- **mventor-ticket-088:** Supplier payment postings — persisted PAY record + applications, `Dr 2100 AP / Cr 1000 Cash`, full/partial/multi-PO, replay-safe, reversal, atomic. Verified 41/217 + admin clean.
+- **mventor-ticket-087:** Purchase receipt posting (movement grain + shared chart + tests). Verified 40/208 + admin clean.
+- **mventor-ticket-086:** First posting bridge (verified-payment journals + skeleton + idempotency + hygiene). Verified 39/205 twice + admin clean.
+- **mventor-ticket-085:** Period reopen companion (service + route + loop test). Verified 38/201 + admin clean.
+- **mventor-ticket-084:** Choke-point period gate (fail-fast, all types, tests). Verified 37/199 with zero collateral + admin clean.
+- **mventor-ticket-083:** adminSale via movement engine + phase6 repair rider (gated 36). Verified 36/196 + admin clean.
+- **mventor-ticket-082:** Period litter purge (cleanup fix + 58-row guarded purge). Verified 34/190 + residue 0 + admin clean.
+- **mventor-ticket-081:** Period enforcement dry-run (freeze proof + would-block map + phased plan). Zero behavior change.
+- **mventor-ticket-080:** Ledger / Trial Balance (posted-only reads + proofs). Verified 34/190 + admin clean.
+- **mventor-ticket-079:** Posting machine (post/unpost + gates + audit + tests). Verified 33/186 + admin clean.
 - **mventor-ticket-078:** Publish to GitHub (3 commits, secrets verified, tree clean). Remote at 813bcc9.
 - **mventor-ticket-077:** Journal foundation (tables + service + JE numbering + tests incl. guard-activation proof). Verified 32/179 + admin clean.
 - **mventor-ticket-076:** Repo sweep (deps/ reference + README align; pre-existing hygiene verified). File checks green.

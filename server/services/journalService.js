@@ -71,16 +71,20 @@ function listEntries({ limit = 100 } = {}) {
   return db.prepare('SELECT * FROM journal_entries ORDER BY id DESC LIMIT ?').all(n);
 }
 
-function createEntry({ entry_date, description = '', lines }) {
+function createEntry({ entry_date, description = '', lines, source = null }) {
   const date = assertEntryDate(entry_date);
   const clean = normalizeLines(lines);
+  const src = source || {};
   let entryId = null;
   db.transaction(() => {
     const { document_number } = documentNumberService.generate('JE');
     const res = db.prepare(`
-      INSERT INTO journal_entries (entry_no, entry_date, description, status)
-      VALUES (?, ?, ?, 'draft')
-    `).run(document_number, date, String(description || ''));
+      INSERT INTO journal_entries (entry_no, entry_date, description, status, source_type, source_id, source_event)
+      VALUES (?, ?, ?, 'draft', ?, ?, ?)
+    `).run(document_number, date, String(description || ''),
+      src.type != null ? String(src.type) : null,
+      src.id != null ? parseInt(src.id) || null : null,
+      src.event != null ? String(src.event) : null);
     entryId = res.lastInsertRowid;
     const ins = db.prepare(`
       INSERT INTO journal_lines (entry_id, account_id, debit, credit, description)
@@ -125,10 +129,75 @@ function deleteDraftEntry(id) {
   return { success: true, deleted: header.entry_no };
 }
 
+/**
+ * Period gate, read-only (079 — Ticket F owns period policy).
+ * Refuses posting when a CLOSED financial period contains the entry date.
+ * No covering period (or none closed) = allowed, documented default.
+ */
+function closedPeriodContaining(entryDate) {
+  try {
+    return db.prepare(`
+      SELECT id, name FROM financial_periods
+      WHERE status = 'CLOSED' AND date(?) BETWEEN date(start_date) AND date(end_date)
+      ORDER BY id DESC LIMIT 1
+    `).get(entryDate) || null;
+  } catch {
+    return null; // periods table unavailable — never block posting on infra failure
+  }
+}
+
+/** Re-validate STORED lines (same shape as input) — the post-time gate. */
+function revalidateStored(id) {
+  const rows = db.prepare('SELECT account_id, debit, credit, description FROM journal_lines WHERE entry_id = ? ORDER BY id').all(id);
+  return normalizeLines(rows);
+}
+
+function postEntry(id, userId = '') {
+  const header = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(id);
+  if (!header) throw new Error('Journal entry not found');
+  if (header.status === 'posted') throw new Error('Journal entry is already posted');
+  if (header.status !== 'draft') throw new Error(`Journal entry cannot be posted from status "${header.status}"`);
+  const clean = revalidateStored(id); // accounts still live+active? still balanced?
+  const blocker = closedPeriodContaining(header.entry_date);
+  if (blocker) {
+    throw new Error(`Cannot post into closed financial period "${blocker.name}"`);
+  }
+  const total = clean.reduce((s, l) => s + l.debit, 0);
+  const eventService = require('./eventService');
+  db.transaction(() => {
+    db.prepare(`UPDATE journal_entries SET status = 'posted', posted_by = ?, posted_at = CURRENT_TIMESTAMP,
+      updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(userId || null, id);
+    eventService.emit(eventService.EVENT_TYPES.JOURNAL_POSTED, eventService.ENTITY_TYPES.JOURNAL, id, {
+      userId: userId || '',
+      payload: { entry_no: header.entry_no, entry_date: header.entry_date, total_cents: total, lines: clean.length },
+    });
+  });
+  return getEntry(id);
+}
+
+function unpostEntry(id, userId = '') {
+  const header = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(id);
+  if (!header) throw new Error('Journal entry not found');
+  if (header.status !== 'posted') throw new Error('Only posted entries can be unposted');
+  const eventService = require('./eventService');
+  db.transaction(() => {
+    db.prepare(`UPDATE journal_entries SET status = 'draft', posted_by = NULL, posted_at = NULL,
+      updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(id);
+    eventService.emit(eventService.EVENT_TYPES.JOURNAL_UNPOSTED, eventService.ENTITY_TYPES.JOURNAL, id, {
+      userId: userId || '',
+      payload: { entry_no: header.entry_no, entry_date: header.entry_date },
+    });
+  });
+  return getEntry(id);
+}
+
 module.exports = {
   getEntry,
   listEntries,
   createEntry,
   updateDraftEntry,
   deleteDraftEntry,
+  postEntry,
+  unpostEntry,
+  closedPeriodContaining, // exported for gate unit tests (read-only)
 };

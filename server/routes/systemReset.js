@@ -45,6 +45,8 @@ const WIPE_TABLES = [
   'locations',
   'warehouses',
   // Purchasing
+  'supplier_payment_applications',
+  'supplier_payments',
   'purchase_order_items',
   'purchase_orders',
   'product_suppliers',

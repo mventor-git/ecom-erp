@@ -12,6 +12,7 @@ const inventoryService = require('../services/inventoryService');
 
 let catId, whId;
 let periodId = null;
+const periodIds = []; // 082: EVERY created period tracked (single var used to overwrite)
 const madeProducts = [];
 
 function makeProduct(name) {
@@ -47,12 +48,16 @@ afterAll(() => {
     db.prepare('DELETE FROM financial_periods WHERE id = ? AND name LIKE ?').run(periodId, 'Jest FP %');
     periodId = null;
   }
+  for (const pid of periodIds.splice(0)) {
+    db.prepare('DELETE FROM financial_periods WHERE id = ? AND name LIKE ?').run(pid, 'Jest FP %');
+  }
   db.saveDb();
 });
 
 test('createFinancialPeriod → OPEN with inclusive start/end', () => {
   const p = warehouseOrderService.createFinancialPeriod({ name: 'Jest FP ' + Date.now(), months: 12 });
   periodId = p.id;
+  periodIds.push(p.id);
   expect(p.status).toBe('OPEN');
   expect(p.start_date).toBeTruthy();
   expect(p.end_date).toBeTruthy();
@@ -62,7 +67,11 @@ test('createFinancialPeriod → OPEN with inclusive start/end', () => {
 test('setOpeningBalance posts a REAL opening_balance movement and reconciles on-hand', () => {
   const pid = makeProduct('jest-fp-product');
   const counted = 8;
-  const period = warehouseOrderService.listFinancialPeriods().find(x => x.id === periodId) || warehouseOrderService.createFinancialPeriod({ name: 'Jest FP OB', months: 6 });
+  const period = warehouseOrderService.listFinancialPeriods().find(x => x.id === periodId) || (() => {
+    const fallback = warehouseOrderService.createFinancialPeriod({ name: 'Jest FP OB', months: 6 });
+    periodIds.push(fallback.id);
+    return fallback;
+  })();
 
   const res = warehouseOrderService.setOpeningBalance(period.id, whId, [{ product_id: pid, qty: counted }], 'jest');
 
@@ -79,6 +88,7 @@ test('setOpeningBalance posts a REAL opening_balance movement and reconciles on-
 test('closeFinancialPeriod → CLOSED + closed_at; OB on closed throws', () => {
   const pid = makeProduct('jest-fp-close');
   const period = warehouseOrderService.createFinancialPeriod({ name: 'Jest FP Close ' + Date.now(), months: 3 });
+  periodIds.push(period.id);
 
   const closed = warehouseOrderService.closeFinancialPeriod(period.id);
   expect(closed.status).toBe('CLOSED');
@@ -93,5 +103,6 @@ test('closeFinancialPeriod → CLOSED + closed_at; OB on closed throws', () => {
 
 test('setOpeningBalance with no items throws', () => {
   const period = warehouseOrderService.createFinancialPeriod({ name: 'Jest FP Empty ' + Date.now(), months: 1 });
+  periodIds.push(period.id);
   expect(() => warehouseOrderService.setOpeningBalance(period.id, whId, [], 'jest')).toThrow(/No opening balance items/);
 });

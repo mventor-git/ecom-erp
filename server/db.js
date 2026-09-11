@@ -323,7 +323,33 @@ async function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  // mventor-ticket-047: Paymob payment links (bulk upload + per-order intentions)
+  // mventor-ticket-079: posting audit columns (idempotent probe — the catch
+  // performs the migration, so only a failed ALTER can throw, never silence)
+  for (const col of ['posted_by TEXT', 'posted_at DATETIME']) {
+    const name = col.split(' ')[0];
+    let missing = false;
+    try {
+      db.prepare(`SELECT ${name} FROM journal_entries LIMIT 1`).get();
+    } catch {
+      missing = true;
+    }
+    if (missing) db.run(`ALTER TABLE journal_entries ADD COLUMN ${col}`);
+  }
+  // mventor-ticket-086: posting source columns (nullable = non-sourced rows
+  // never collide; UNIQUE enforces one posting per operational event).
+  // Same idempotent-probe idiom as 079 (catch performs, never silences).
+  for (const col of ['source_type TEXT', 'source_id INTEGER', 'source_event TEXT']) {
+    const name = col.split(' ')[0];
+    let missing = false;
+    try {
+      db.prepare(`SELECT ${name} FROM journal_entries LIMIT 1`).get();
+    } catch {
+      missing = true;
+    }
+    if (missing) db.run(`ALTER TABLE journal_entries ADD COLUMN ${col}`);
+  }
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS ux_journal_source
+    ON journal_entries(source_type, source_id, source_event)`);
   db.run(`
     CREATE TABLE IF NOT EXISTS paymob_links (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -972,6 +998,47 @@ async function initDb() {
   `);
 
   // ═══════════════════════════════════════════════════════════════
+  // SUPPLIER PAYMENTS (mventor-ticket-088)
+  // ═══════════════════════════════════════════════════════════════
+  // Owner: a payment is its own persisted transaction (full/partial), applied
+  // explicitly to purchase orders (payables). Posting Dr AP / Cr Cash lives in
+  // supplierPaymentService, never here. status: recorded | reversed (immutable —
+  // corrections are reversals, never edits). idempotency_key UNIQUE = retry-safe.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS supplier_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      payment_no TEXT NOT NULL UNIQUE,        -- PAY-YYYY-NNNN via document_sequences
+      supplier_id INTEGER NOT NULL,
+      method TEXT DEFAULT 'cash',              -- cash today; bank/transfer later
+      amount INTEGER NOT NULL,                 -- cents, > 0
+      status TEXT NOT NULL DEFAULT 'recorded', -- recorded | reversed
+      paid_at TEXT NOT NULL,                   -- YYYY-MM-DD
+      notes TEXT DEFAULT '',
+      idempotency_key TEXT,
+      reversed_by TEXT DEFAULT '',
+      reversed_at DATETIME,
+      reversal_reason TEXT DEFAULT '',
+      created_by TEXT DEFAULT '',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
+    )
+  `);
+  db.run(`CREATE UNIQUE INDEX IF NOT EXISTS ux_supplier_payment_idem
+    ON supplier_payments(idempotency_key) WHERE idempotency_key IS NOT NULL`);
+
+  db.run(`
+    CREATE TABLE IF NOT EXISTS supplier_payment_applications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      payment_id INTEGER NOT NULL REFERENCES supplier_payments(id) ON DELETE CASCADE,
+      purchase_order_id INTEGER NOT NULL REFERENCES purchase_orders(id),
+      amount INTEGER NOT NULL,                 -- cents, > 0
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(payment_id, purchase_order_id)
+    )
+  `);
+
+  // ═══════════════════════════════════════════════════════════════
   // MOBILE APP TABLES (mventor-ticket-035)
   // ═══════════════════════════════════════════════════════════════
 
@@ -1210,6 +1277,10 @@ async function initDb() {
     db.run("INSERT INTO permissions (name, description) VALUES ('purchase_orders.update', 'Update purchase orders')");
     db.run("INSERT INTO permissions (name, description) VALUES ('purchase_orders.approve', 'Approve purchase orders')");
 
+    // Supplier payment permissions (mventor-ticket-088)
+    db.run("INSERT INTO permissions (name, description) VALUES ('supplier_payments.read', 'View supplier payments')");
+    db.run("INSERT INTO permissions (name, description) VALUES ('supplier_payments.manage', 'Record and reverse supplier payments')");
+
     // User management permissions
     db.run("INSERT INTO permissions (name, description) VALUES ('users.create', 'Create users')");
     db.run("INSERT INTO permissions (name, description) VALUES ('users.read', 'View users')");
@@ -1249,6 +1320,8 @@ async function initDb() {
     ['reports.view', 'View and export reports'],
     ['orders.manage', 'Manage sales orders'],
     ['users.manage', 'Manage users and roles'],
+    ['supplier_payments.read', 'View supplier payments'],
+    ['supplier_payments.manage', 'Record and reverse supplier payments'],
   ];
   ticket43Permissions.forEach(([name, description]) => {
     db.run(`
@@ -1307,7 +1380,7 @@ async function initDb() {
   // once SUP/ISS existed, so PO/SO/GR/GI/TO/RT/CM/ADJ were never created → PO
   // creation threw "No sequence configured for document type: PO". Add each
   // missing type with WHERE NOT EXISTS (existing numbers are preserved).
-  for (const dt of ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ', 'JE']) {
+  for (const dt of ['PO', 'SO', 'GR', 'GI', 'TO', 'RT', 'CM', 'ADJ', 'JE', 'PAY']) {
     try {
       db.run(`INSERT INTO document_sequences (doc_type, prefix, separator, year_format, current_number, padding)
         SELECT '${dt}', '${dt}', '-', 'YYYY', 0, 4

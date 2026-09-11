@@ -54,6 +54,25 @@ function createMovement({ productId, warehouseId, locationId, type, reason, refe
     throw new Error(`Invalid movement type: ${type}. Must be one of: ${validTypes.join(', ')}`);
   }
 
+  // Period gate (mventor-ticket-084): no new stock truth inside a CLOSED
+  // financial period — every type, no side doors. Twin of the journal post
+  // gate (kept local: no cross-domain import in either direction).
+  // Movements timestamp at creation, so "today" always governs.
+  const closedPeriod = (() => {
+    try {
+      return db.prepare(`
+        SELECT id, name FROM financial_periods
+        WHERE status = 'CLOSED' AND date('now') BETWEEN date(start_date) AND date(end_date)
+        ORDER BY id DESC LIMIT 1
+      `).get() || null;
+    } catch {
+      return null; // periods unavailable — never block stock on infra failure
+    }
+  })();
+  if (closedPeriod) {
+    throw new Error(`Movement blocked: today falls in closed financial period "${closedPeriod.name}" (reopen required)`);
+  }
+
   // Trash guard (mventor-ticket-044/045): trashed products must not receive
   // inventory movements until restored.
   const prod = db.prepare('SELECT deleted_at FROM products WHERE id = ?').get(productId);

@@ -4,7 +4,7 @@ const inventoryService = require('./inventoryService');
 const { consumeFifo, persistConsumption } = require('./inventoryCostLayers');
 const priceListService = require('./priceListService');
 
-function createAdminSale({ productId, variantId, warehouseId, qty, orderId, basePrice, finalPrice }) {
+function createAdminSale({ productId, variantId, warehouseId, qty, orderId, basePrice, finalPrice, userId = '' }) {
   // 1. Inventory validation
   const stock = inventoryService.getStock(productId, warehouseId);
   if (!stock || stock.qty_on_hand < qty) {
@@ -33,11 +33,22 @@ function createAdminSale({ productId, variantId, warehouseId, qty, orderId, base
     persistConsumption(orderId, itemResult.lastInsertRowid, consumed.layerId, consumed.qty, consumed.unitCost);
   }
 
-  // 5. Inventory movement (ISSUE / SALE type)
-  const movementResult = db.prepare(`
-    INSERT INTO inventory_movements (product_id, warehouse_id, type, qty_change, reason, reference_type, reference_id, note)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(productId, warehouseId, 'issue', -qty, 'Admin sale / FIFO', 'order', orderId, 'FIFO consumption via admin sale');
+  // 5. Inventory movement (ISSUE / SALE type) — through the engine (083),
+  // gaining trash/negative/stock guards, qty books, sync, alerts, events.
+  // FIFO unit passed explicitly (wholesale default never triggers here).
+  const fifoUnit = qty > 0 ? Math.round((fifoResult.costSnapshot || 0) / qty) : 0;
+  const movementResult = inventoryService.createMovement({
+    productId,
+    warehouseId,
+    type: 'issue',
+    reason: 'Admin sale / FIFO',
+    referenceType: 'order',
+    referenceId: orderId,
+    qtyChange: -qty,
+    unitCost: fifoUnit,
+    note: 'FIFO consumption via admin sale',
+    userId,
+  });
 
   // 6. Update cost layer remaining quantities (manual — in real DB should update layer rows)
   // Note: consumeFifo logic reduces remaining; for persistence we must update DB
@@ -49,7 +60,7 @@ function createAdminSale({ productId, variantId, warehouseId, qty, orderId, base
   return {
     orderItemId: itemResult.lastInsertRowid,
     cogs: fifoResult.costSnapshot,
-    movementId: movementResult.lastInsertRowid,
+    movementId: movementResult.id,
     consumedLayers: fifoResult.consumed,
     remainingQty: fifoResult.remainingQty
   };

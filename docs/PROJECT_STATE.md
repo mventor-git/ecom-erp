@@ -82,33 +82,22 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-07 — 075 CoA foundation)
+## Build Verification (baseline 2026-09-12 — 088 supplier payments)
 - Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify
-- Frontend: admin build clean 8.81s (no UI change)
-- **Test suite: 31 suites / 173 tests PASS** (30/168 + NEW chartOfAccounts 5/5; residue probe 0)
-- Finance: neutral `accounts` table + service live but inert (zero callers until Ticket C); no journals yet
+- Frontend: admin build clean 12.72s (no UI change)
+- **Test suite: 41 suites / 217 tests PASS** (40/208 + NEW supplierPayment 9/9)
+- Payables live: receipts write Dr Inventory / Cr Payables per movement; supplier payments now relieve AP (Dr 2100 / Cr 1000), full/partial/multi-PO, replay-safe + reversal
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
 
 ## Blockers
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
-## Next Steps (updated 2026-09-07)
-- **mventor-ticket-078 COMPLETED:** remote published (813bcc9) + tree clean. STOP — Ticket D NOT started.
-- **mventor-ticket-053 COMPLETED (this session):** PO UI Closure — `sent→confirmed` (approve actor/timestamp, state-aware Approve button, audit box, success toast) + `sent→cancelled` (reject-reason dialog 300 char, required, inline error, rejected_by/at audit) + `draft→cancelled` (ConfirmDialog, no reason) — all verified 20/126 + builds.
-- **mventor-ticket-054 COMPLETED (this session):** Report Center — `/erp/reports` redesigned: category sidebar + search grid, date-preset filter bar (All/Today/7d/30d/This month/Custom) + From/To + category/warehouse, Sortable/Sticky/Responsive DataTable, StatCards summary, CSV/PDF/MD exports, honest empty/error/loading states. Real fixes: RBAC `reports.read` added to list + `/:reportType` + `/export` (were adminAuth-only), and frontend wrapper-unwrap bug (was always 0 results). Verified 20/126 + admin build. FIFO P&L gap documented, not faked.
-- **mventor-ticket-055 COMPLETED (this session):** Financial Periods (honest timeline) — data-authority fix (Opening-balance "Fill" read legacy `products.stock` → now canonical `getInventorySummary()` `qty_on_hand`); `window.confirm`→`ConfirmDialog`; StatCards/status/`closed_at`; honest disclaimer (period management, no GL/journal/lock). NEW `tests/financialPeriod.test.js` 4/4 proves OB posts a REAL `opening_balance` ledger movement + reconciles on-hand. Verified 21/130 + admin build.
-- **mventor-ticket-056 COMPLETED (this session):** Fulfillment UI consolidation — StatusBadge unified (48 status keys; Packing + Shipping dashboards now render shared `<StatusBadge>` → kills 3-system P1); `window.confirm`→`ConfirmDialog` (delete-provider); `console.error`-only → user-facing error; PackingDashboard mojibake eliminated. Pipeline already wired (packed→ready_for_shipping→shipped, tested 6 refs) — verified not rebuilt. WAREHOUSE ISSUE kept separate from CUSTOMER FULFILLMENT. Verified 21/130 + admin build.
-- **Next — Roadmap per execution handoff (do NOT bundle):**
-  1. ~~Reports architecture/UI redesign~~ ✅ 054
-  2. ~~Financial Periods architecture/UI (honest timeline)~~ ✅ 055
-  3. ~~Packing workflow closure (fulfillment UI consolidation)~~ ✅ 056
-  4. Pricing Engine rebuild (Cost→Retail→VIP) ← **next → mventor-ticket-057**
-  5. Price Lists consolidation (keep per-product override)
-  6. Settings IA
-  7. Incident/reporting system + PDF semantic redesign (Invoice≠Receipt≠Shipping≠Issue) + signature→PDF
-  8. Domain consolidation: canonical `order_items`, canonical state machine, variant inventory authority, canonical fulfillment authority, canonical pricing authority
-- Deferred (separate stabilization): mobile/worker hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob (keys configurable, gateway not live), Google Android OAuth client, AI Copilot, API docs refresh
+## Next Steps (updated 2026-09-12)
+- **mventor-ticket-088 COMPLETED:** supplier payment postings. Verified 41/217 + admin clean. STOP — no supplier-payment UI/AP-aging started.
+- **Next (recommended):** Supplier payment UI (record/reverse on PO detail) OR AP aging report — one ticket at a time.
+- Deferred (separate stabilization): mobile/worker hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob (keys configurable, gateway not live), Google Android OAuth, AI Copilot, API docs refresh
+- Accounting track (086→088 proven): verified-payment journals → ledger/trial-balance → period gate → sales & purchase posting → supplier payments. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
 
 ## Mobile App Architecture
 **Decision:** Single unified admin app (PWA) for all employees with role-based access control

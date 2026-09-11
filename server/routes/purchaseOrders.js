@@ -387,6 +387,18 @@ router.post('/:id/receive', adminAuth, requirePermission('purchase_orders.update
       db.prepare(`UPDATE purchase_orders SET ${updateFields.join(', ')} WHERE id = ?`).run(...updateParams);
     });
 
+    // Purchase postings (087, owner: recognition at receipt): one balanced
+    // entry per receipt movement, post-commit best-effort — a posting failure
+    // must never roll back received goods (detectable + re-postable instead).
+    try {
+      const purchasePosting = require('../services/purchasePosting');
+      for (const movement of movements) {
+        purchasePosting.postReceiptMovement(movement.id, { userId: req.session.username || 'admin' });
+      }
+    } catch (postErr) {
+      console.error('[purchase-receive] posting error:', postErr.message);
+    }
+
     if (newStatus === 'received') {
       eventService.emit(eventService.EVENT_TYPES.PO_RECEIVED, eventService.ENTITY_TYPES.PURCHASE_ORDER, po.id, {
         userId: req.session.username || 'admin',

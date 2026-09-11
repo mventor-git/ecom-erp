@@ -629,6 +629,21 @@ function closeFinancialPeriod(id) {
 }
 
 /**
+ * Reopen a closed period (mventor-ticket-085 — the 084 gate's companion).
+ * Without this, the closed-period lock is one-way and corrections in closed
+ * periods have no path. Coarse by design (whole period); fine-grained
+ * controlled-adjust stays a future ticket. closed_at cleared so an OPEN
+ * period never carries a stale closed stamp.
+ */
+function reopenFinancialPeriod(id) {
+  const period = db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
+  if (!period) throw new Error('Financial period not found');
+  if (period.status !== 'CLOSED') throw new Error('Only closed periods can be reopened');
+  db.prepare("UPDATE financial_periods SET status = 'OPEN', closed_at = NULL WHERE id = ?").run(id);
+  return db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
+}
+
+/**
  * Set the opening balance for a period.
  * @param {number} periodId
  * @param {number} warehouseId
@@ -684,6 +699,7 @@ module.exports = {
   createFinancialPeriod,
   listFinancialPeriods,
   closeFinancialPeriod,
+  reopenFinancialPeriod,
   setOpeningBalance,
   // fulfillment pipeline (mventor-ticket-057)
   createIssueForOrder,

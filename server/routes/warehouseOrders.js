@@ -175,6 +175,14 @@ router.post('/financial-periods/:id/close', adminAuth, requirePermission('invent
   }
 });
 
+router.post('/financial-periods/:id/reopen', adminAuth, requirePermission('inventory.manage'), (req, res) => {
+  try {
+    res.json(warehouseOrderService.reopenFinancialPeriod(parseInt(req.params.id)));
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Set opening balance: body { warehouse_id, items: [{product_id, qty}] }
 router.post('/financial-periods/:id/opening-balance', adminAuth, requirePermission('inventory.manage'), (req, res) => {
   try {

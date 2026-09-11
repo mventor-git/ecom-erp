@@ -74,6 +74,14 @@ const EVENT_TYPES = {
   PRICING_APPLIED: 'pricing_applied',
   PRICING_REVERTED: 'pricing_reverted',
   SYSTEM_RESET: 'system_reset',
+
+  // Finance / accounting (079 — audited post/unpost transitions)
+  JOURNAL_POSTED: 'journal_posted',
+  JOURNAL_UNPOSTED: 'journal_unposted',
+
+  // Supplier payments (088 — AP relief, immutable + reversal)
+  SUPPLIER_PAYMENT_RECORDED: 'supplier_payment_recorded',
+  SUPPLIER_PAYMENT_REVERSED: 'supplier_payment_reversed',
 };
 
 // Entity types
@@ -87,6 +95,8 @@ const ENTITY_TYPES = {
   SUPPLIER: 'supplier',
   USER: 'user',
   SYSTEM: 'system',
+  JOURNAL: 'journal',
+  SUPPLIER_PAYMENT: 'supplier_payment',
 };
 
 /**
