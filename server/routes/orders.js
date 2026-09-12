@@ -27,21 +27,45 @@ router.post('/', (req, res) => {
     const items = priced.items;
     const total = priced.total; // authoritative INTEGER cents
 
-    // Idempotent order creation: retries with the same key return the existing order.
-    // This prevents duplicate orders from double-click / page refresh / network retry.
-    if (idempotency_key) {
-      const existing = db.prepare('SELECT * FROM orders WHERE idempotency_key = ? LIMIT 1').get(idempotency_key);
-      if (existing) return res.status(200).json(existing);
-    }
-
-    // Find or create customer
+    // Find or create customer — BEFORE the key lookup, because the order's
+    // OWNER is what scopes an idempotency key (N2 fix: an unscoped lookup
+    // returned any matching order to any caller — cross-customer PII leak).
+    // Guest flow unchanged: no auth requirement is invented.
     let customer = db.prepare('SELECT id, vip, name, phone, address, city, governorate FROM customers WHERE email = ?').get(customer_email);
     if (!customer) {
-      // google_id is UNIQUE â€” guests need a unique placeholder (empty string collides)
+      // google_id is UNIQUE — guests need a unique placeholder (empty string collides)
       const guestGoogleId = 'guest_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       const result = db.prepare('INSERT INTO customers (email, name, google_id) VALUES (?, ?, ?)')
         .run(customer_email, customer_name || '', guestGoogleId);
       customer = { id: result.lastInsertRowid, vip: 0 };
+    }
+
+    // ── Idempotent order creation (N2) ──
+    // identity  : (customer_id, idempotency_key) — DB-enforced via UNIQUE
+    //             partial index ux_orders_idem_owner (db.js). No global key
+    //             rule: different customers own different orders with the
+    //             same key, so legitimate guest use is never broken.
+    // fingerprint: sha256 of canonical {email, payment_method, items:[p,q]}.
+    //             same owner+key+fp  => replay the ORIGINAL order (identical
+    //             response shape/200, no re-executed effects); same owner+key,
+    //             different fp        => 409 conflict (never silently another
+    //             order). Legacy rows carrying no fp replay (backward-compat).
+    const idemKey = idempotency_key ? String(idempotency_key).trim() : null;
+    const idemFp = idemKey
+      ? require('../services/idempotencyService').requestFingerprint({
+          email: customer_email,
+          payment_method: payment_method || 'cod',
+          items: items.map(i => ({ p: i.product_id ?? i.id ?? null, q: i.qty ?? i.quantity ?? 0 })),
+        })
+      : null;
+    const existingOrder = idemKey
+      ? db.prepare('SELECT * FROM orders WHERE idempotency_key = ? AND customer_id = ? LIMIT 1').get(idemKey, customer.id)
+      : null;
+    if (existingOrder) {
+      if (!existingOrder.idem_fp || existingOrder.idem_fp === idemFp) {
+        return res.status(200).json(existingOrder);
+      }
+      return res.status(409).json({ error: 'idempotency-conflict: this key already created a different order for this customer' });
     }
 
     // ── VIP On-Bill checkout (mventor-ticket-060) ──
@@ -68,22 +92,37 @@ router.post('/', (req, res) => {
     // Create order (066: snapshot the validated storefront list code so
     // reports always know which list priced this order — equals DEFAULT
     // 'retail' while the storefront sells at retail, zero behavior change)
+    //
+    // TRANSACTION + ORDER OF OPERATIONS (N2): idempotency identity → ownership
+    // (above) → ORDER + canonical order_items rows commit as ONE unit (071:
+    // JSON and rows can no longer diverge, and a rolled-back insert consumes
+    // no key). Inventory bridge effects + events run AFTER that unit commits.
+    // The (customer_id, idempotency_key) UNIQUE index is the FINAL authority:
+    // losing a same-key race resolves as replay or conflict, never a 500.
     const priceListCode = require('../services/priceListService').storefrontListCode();
-    const result = db.prepare(`
-      INSERT INTO orders (customer_id, stripe_session_id, total, status, items, temp_issue, payment_method, idempotency_key,
-        shipping_name, shipping_phone, shipping_address, shipping_city, shipping_governorate, shipping_postal_code, price_list_code)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(customer.id, stripe_session_id || null, total, initialStatus, JSON.stringify(items), vipOnBill ? 1 : 0, payment_method || 'cod', idempotency_key || null,
-      snapName, snapPhone, snapAddr, snapCity, snapGov, snapPost, priceListCode);
-
-    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
-
-    // Line-item truth (071, rows-canonical): mirror the authoritative JSON
-    // items into order_items through the single builder. Throws loudly on
-    // failure — a checkout must never silently diverge JSON vs rows.
-    // No stock effects here (bridge below is untouched).
-    const { buildLineRows, insertLineRows } = require('../services/orderLines');
-    insertLineRows(buildLineRows(order.id, items, priceListCode).rows);
+    let order = null;
+    try {
+      db.transaction(() => {
+        const result = db.prepare(`
+          INSERT INTO orders (customer_id, stripe_session_id, total, status, items, temp_issue, payment_method, idempotency_key, idem_fp,
+            shipping_name, shipping_phone, shipping_address, shipping_city, shipping_governorate, shipping_postal_code, price_list_code)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(customer.id, stripe_session_id || null, total, initialStatus, JSON.stringify(items), vipOnBill ? 1 : 0, payment_method || 'cod', idemKey, idemFp,
+          snapName, snapPhone, snapAddr, snapCity, snapGov, snapPost, priceListCode);
+        order = db.prepare('SELECT * FROM orders WHERE id = ?').get(result.lastInsertRowid);
+        // Line-item truth (071, rows-canonical) in the SAME unit as the order.
+        const { buildLineRows, insertLineRows } = require('../services/orderLines');
+        insertLineRows(buildLineRows(order.id, items, priceListCode).rows);
+      });
+    } catch (conErr) {
+      const dup = /UNIQUE constraint failed: orders\.customer_id, orders\.idempotency_key/i;
+      if (!idemKey || !dup.test(String(conErr && conErr.message))) throw conErr;
+      // concurrent same-key duplicate: the committed row decides — replay or conflict
+      const race = db.prepare('SELECT * FROM orders WHERE idempotency_key = ? AND customer_id = ? LIMIT 1').get(idemKey, customer.id);
+      if (!race) throw conErr;
+      if (!race.idem_fp || race.idem_fp === idemFp) return res.status(200).json(race);
+      return res.status(409).json({ error: 'idempotency-conflict: this key already created a different order for this customer' });
+    }
 
     // Sales → Inventory bridge.
     // Online (card/Kashier) orders: RESERVE stock at creation so two customers
@@ -127,7 +166,7 @@ router.post('/', (req, res) => {
     }
 
     // Emit order_created event
-    eventService.emit(eventService.EVENT_TYPES.ORDER_CREATED, eventService.ENTITY_TYPES.ORDER, result.lastInsertRowid, {
+    eventService.emit(eventService.EVENT_TYPES.ORDER_CREATED, eventService.ENTITY_TYPES.ORDER, order.id, {
       payload: {
         customer_email: customer_email,
         total: total,

@@ -82,11 +82,11 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-12 — stabilization F1–F13)
-- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify
-- Frontend: admin build clean 25.26s (no UI change in this pass)
-- **Unit suite: 42 suites / 235 tests PASS, process exit 0** (root-fixed: keep-alive socket release in 4 suites, two `console.log` removed from `db.js` init, signature fixture idempotent — no jest config weakened)
-- **Integration: 107/107 PASS, exit 0** (was 7 failed / exit 1 at 4d2420d via `po-item` litter leaking `sort=newest`). `npm run test:isolated` → 235/235 **exit 0** on a snapshot copy (live DB untouched, proven deterministic)
+## Build Verification (baseline 2026-09-12 — N1/N2 remediation)
+- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. `categories.icon` + durable idempotency schema**
+- Frontend: admin build clean (no FE change in this pass)
+- **Unit suite: 44 suites / 249 tests PASS, process exit 0** (+N1 claims suite 8, +N2 checkout-isolation suite 6; earlier root-fixes unchanged)
+- **Integration: 107/107 PASS, exit 0** (was 7 failed / exit 1 at 4d2420d via `po-item` litter leaking `sort=newest`). `npm run test:isolated` → 249/249 **exit 0** on a snapshot copy (live DB untouched, proven deterministic)
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -96,9 +96,10 @@
 
 ## Next Steps (updated 2026-09-12)
 - **mventor-ticket-088/089 COMPLETED and committed** (push `42c300d`→`4d2420d`); **stabilization F1–F13 committed `0f57522`** (pushed).
-- **Readiness checkpoint 4.18.1:** F11 data SAFE; unit exit 0 honest; **N1 (idempotencyService) + N2 (orders idempotency_key) reported → 090 BLOCKED** pending owner decision.
-- **Accounting stabilization F1–F13 COMPLETED** (forensic review + fixes + 18 new regression tests). No feature ticket, separate from 090. `docs/accounting-stabilization-findings.md` has details; CHANGELOG [4.18.0] + [4.18.1].
-- **Next (await owner decision):** ticket 090 AP aging report — **not** implemented; held behind N1/N2 owner ruling. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
+- **Readiness checkpoint 4.18.1:** F11 data SAFE; unit exit 0 honest; N1 (idempotencyService) + N2 (orders idempotency_key) reported.
+- **N1+N2 REMEDIATED 4.19.0 (owner directive):** durable actor+endpoint+key+request-fingerprint claims (`idempotency_records`); owner-scoped guest-order idempotency with `(customer_id,idempotency_key)` UNIQUE + `idem_fp`; fresh-start `categories.icon` boot blocker also fixed; 14 new regression tests.
+- **Accounting stabilization F1–F13 + readiness checkpoint 4.18.1:** forensic review + fixes + 18 regression tests; details `docs/accounting-stabilization-findings.md`; CHANGELOG [4.18.0] + [4.18.1] + [4.19.0].
+- **Next (await owner decision):** ticket 090 AP aging report — the prior N1/N2 blockers are resolved; still **not** implemented per directive; owner go pending. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
 - Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 
 ## Mobile App Architecture

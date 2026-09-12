@@ -117,6 +117,16 @@ describe('Refunds (STEP 4 completion)', () => {
 });
 
 describe('Idempotency (STEP 15)', () => {
+  const mockEndpoints = "'POST /test :: key-1','POST /test :: key-2'";
+  beforeAll(() => {
+    // N1 fix made claims DURABLE (db-backed, not process memory) — start each
+    // run from a clean slate for these deterministic mock keys so the test
+    // never inherits a previous run's committed claim.
+    db.prepare(`DELETE FROM idempotency_records WHERE endpoint IN (${mockEndpoints})`).run();
+  });
+  afterAll(() => {
+    try { db.prepare(`DELETE FROM idempotency_records WHERE endpoint IN (${mockEndpoints})`).run(); db.saveDb(); } catch {}
+  });
   test('same key returns cached response without re-running handler', () => {
     const store = idempotency;
     let runs = 0;

@@ -1,16 +1,20 @@
 ﻿# Handover Note
 
-**Date:** 2026-09-12 (fifth stop — pre-090 readiness checkpoint + N1/N2)
+**Date:** 2026-09-12 (sixth stop — N1 + N2 remediated per owner directive)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session
 
-## ✅ READINESS CHECKPOINT (pre-090): unit exit now honest 0; F11 data SAFE; 090 = BLOCKED on N1/N2
+## ✅ READINESS CHECKPOINT (fifth stop) + N1/N2 REMEDIATED (sixth stop) — 090 no longer blocked
 
 - **CHECK 1 F11:** live-DB data audit — every mirror family agrees on materialized rows (`qty=quantity`, `base_price=final_price=price` on all 67 rows; `price_list_code` never empty; `cost_snapshot`=0 only for never-issued/cancelled/fixture rows; 0 real orders missing rows) → **SAFE, no backfill**.
-- **CHECK 2:** `npm test` = 42/42, 235/235, **process exit 0** (root-fixed: `server.closeAllConnections()` in 4 suites; 2 library `console.log` banners deleted from `db.js`; signature fixture idempotent). `npm run test:isolated` exit 0. `test:integration` exit 0 (107/107).
+- **CHECK 2:** at checkpoint time `npm test` = 42/42, 235/235, **process exit 0** (root-fixed: `server.closeAllConnections()` in 4 suites; 2 library `console.log` banners deleted from `db.js`; signature fixture idempotent) — after the N1/N2 suites landed: 44/249 exit 0. `test:isolated` 0, integration 107/107 0.
 - **CHECK 3:** 086→089 accounting invariants re-verified on code: sourced journals immutable, no AP counter anywhere, outstanding derived from posted journals, idem_fp + ux + partial UNIQUE, fail-closed period controls both sides, integer cents + calendar dates + strict methods.
-- **CHECK 4 NEW — 090 BLOCKED:** N1 `services/idempotencyService.js` (in-memory, no actor/request fingerprint → movements replay collision); N2 `POST /api/orders` `idempotency_key` unscoped lookup (PII cross-read + silent order drop). Details + recommended fixes in `docs/accounting-stabilization-findings.md` ADDENDUM + CHANGELOG [4.18.1].
-- **State on `master`:** `0f57522` (F1-F13) pushed; checkpoint commit follows this note.
+- **CHECK 4 NEW resolved (sixth stop, owner directive "fix N1+N2 before 090"):**
+  **N1:** claims now durable in `idempotency_records` keyed `(actor, endpoint, idem_key)` with sha256 request fingerprint — same⇒replay, different⇒409, in-flight⇒409, failed⇒claim deleted (safe retry), 24h expiry; memory Map optimization only; restart-safe (claims share the DB snapshot). `tests/idempotencyN1.test.js` 8/8.
+  **N2:** `POST /api/orders` idempotency is owner-scoped (`idempotency_key+customer_id` lookup, `orders.idem_fp` fingerprint, race resolves via DB UNIQUE → replay/conflict); another customer with the same key can NEVER receive A's order — proven by `tests/checkoutIdempotencyN2.test.js` (6, incl. cross-customer isolation security test, concurrent single-order, legacy NULL-fp back-compat). Order+`order_items` commit in ONE transaction (idempotency→owner→order+lines→effects chain made explicit).
+  **Bonus:** fresh-start blocker (pre-existing) fixed — `categories.icon` ALTER-before-create crashed brand-new DBs; CREATE now holds the column + idempotent probe re-adds for legacy. New-file boot verified end-to-end.
+  Litter from earlier crashed runs purged (orders 0, customers 0, claims 0). Full matrix: 44/44 suites 249/249 **npm test exit 0**; integration **exit 0**; isolated **exit 0**; admin build exit 0; secret scan clean.
+- **State on `master`:** checkpoint commits on top of `0f57522` per CHANGELOG [4.18.1] + this remediation entry [4.19.0].
 
 ---
 

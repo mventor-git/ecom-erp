@@ -13,9 +13,17 @@ const testEmail = `jest.multi-${SUFFIX}@test.com`;
 beforeAll(async () => {
   await db.initPromise;
   // Clean children BEFORE the parent (FK ON). A leftover user from a prior run
-  // has user_roles rows that block DELETE FROM users.
-  db.prepare('SELECT id FROM users WHERE email = ?').get(testEmail) &&
+  // has user_roles/in_app/notification-preference rows that block DELETE FROM users.
+  const staleRow = db.prepare('SELECT id FROM users WHERE email = ?').get(testEmail);
+  if (staleRow) {
+    for (const [tbl, col] of [
+      ['user_roles', 'user_id'],
+      ['in_app_notifications', 'user_id'],
+      ['notification_preferences', 'user_id'],
+      ['device_tokens', 'user_id'],
+    ]) { try { db.prepare(`DELETE FROM ${tbl} WHERE ${col} = ?`).run(staleRow.id); } catch {} }
     db.prepare('DELETE FROM users WHERE email = ?').run(testEmail);
+  }
   db.prepare("DELETE FROM roles WHERE name IN ('jest_packer', 'jest_manager')").run();
 
   // create two test roles with distinct permissions (roles table has NO `description` column)
@@ -38,8 +46,23 @@ beforeAll(async () => {
   db.prepare('INSERT OR IGNORE INTO user_roles (user_id, role_id) VALUES (?, ?)').run(userId, packerRoleId);
 });
 
+function clearUserChildren(uid) {
+  // FK-ordered: children of `users` first (same defect pattern as the N2
+  // purge found — a notification emitted by another suite during the same
+  // run can reference this suite's user by id; DELETE users would then throw).
+  if (!uid) return;
+  for (const [tbl, col] of [
+    ['user_roles', 'user_id'],
+    ['in_app_notifications', 'user_id'],
+    ['notification_preferences', 'user_id'],
+    ['device_tokens', 'user_id'],
+  ]) { try { db.prepare(`DELETE FROM ${tbl} WHERE ${col} = ?`).run(uid); } catch {} }
+}
+
 afterAll(() => {
-  db.prepare('DELETE FROM user_roles WHERE user_id = ?').run(userId);
+  clearUserChildren(userId);
+  const stale = db.prepare('SELECT id FROM users WHERE email = ?').get(testEmail);
+  if (stale) clearUserChildren(stale.id);
   db.prepare('DELETE FROM users WHERE id = ?').run(userId);
   db.prepare('DELETE FROM role_permissions WHERE role_id IN (?, ?)').run(packerRoleId, managerRoleId);
   db.prepare("DELETE FROM permissions WHERE name IN ('jest.packing', 'jest.orders')").run();

@@ -130,9 +130,17 @@ async function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       slug TEXT NOT NULL UNIQUE,
+      icon TEXT DEFAULT '',
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // F11-class fix (N validation): the early ALTER at the top of initDb ran
+  // BEFORE this table existed and its catch swallowed the error — fresh DBs
+  // had NO categories.icon and the icon seed below crashed them. Re-run the
+  // add here (idempotent probe) so every boot state ends up with the column.
+  let catIconMissing = false;
+  try { db.prepare("SELECT icon FROM categories LIMIT 1").get(); } catch { catIconMissing = true; }
+  if (catIconMissing) db.run("ALTER TABLE categories ADD COLUMN icon TEXT DEFAULT ''");
   db.run(`
     CREATE TABLE IF NOT EXISTS products (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -611,6 +619,20 @@ async function initDb() {
   try { db.run("ALTER TABLE orders ADD COLUMN refund_amount INTEGER DEFAULT 0"); } catch {}
   try { db.run("ALTER TABLE orders ADD COLUMN refunded_at DATETIME"); } catch {}
   try { db.run("ALTER TABLE orders ADD COLUMN idempotency_key TEXT"); } catch {}
+  // N2 remediation: orders carry the canonical request fingerprint (owner-
+  // scoped idempotency identity) + the DB-level invariant: a key can never
+  // collide within the SAME customer (concurrent duplicate protection).
+  // Cross-customer same-key stays independent by design (guest checkout has
+  // no global identity to share).
+  try { db.run("ALTER TABLE orders ADD COLUMN idem_fp TEXT"); } catch {}
+  try {
+    db.run(`CREATE UNIQUE INDEX IF NOT EXISTS ux_orders_idem_owner
+      ON orders(customer_id, idempotency_key) WHERE idempotency_key IS NOT NULL`);
+  } catch (err) {
+    // Legacy duplicate (customer_id + key) rows would block the index — that
+    // is a data problem to surface, never to swallow quietly.
+    console.error(`[db] ux_orders_idem_owner NOT created (${err.message}) — duplicate owner+key order rows exist and must be reconciled manually`);
+  }
 
   // mventor-ticket-037: Add phone column to users table
   try { db.run("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch {}
@@ -1062,6 +1084,31 @@ async function initDb() {
   `);
   db.run(`CREATE UNIQUE INDEX IF NOT EXISTS ux_supplier_payment_idem
     ON supplier_payments(idempotency_key) WHERE idempotency_key IS NOT NULL`);
+
+  // ==============================================
+  // IDEMPOTENCY CLAIM RECORDS — N1 remediation
+  // ==============================================
+  // Durable claim/commit store for the idempotency middleware:
+  //   PRIMARY KEY (actor, endpoint, idem_key) — the cross-user safety the
+  //   old in-memory Map never had, and correctness that survives restart
+  //   because claims commit in the SAME db snapshot as the mutations they
+  //   protect (saveDb covers the whole file).
+  //   state: in_flight -> committed (response cached) or deleted on failure.
+  // NOT a second inventory/order truth — pure request bookkeeping.
+  db.run(`
+    CREATE TABLE IF NOT EXISTS idempotency_records (
+      actor TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      idem_key TEXT NOT NULL,
+      request_fp TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'in_flight',
+      response_status INTEGER,
+      response_body TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (actor, endpoint, idem_key)
+    )
+  `);
 
   // Stabilization #5: canonical REQUEST FINGERPRINT (sha256 of normalized
   // request: supplier/amount/method/date/sorted-applications). Replay is only

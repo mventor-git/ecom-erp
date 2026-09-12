@@ -67,6 +67,8 @@ const WIPE_TABLES = [
   'events',
   // Numbering restarts from zero with everything else
   'document_sequences',
+  // N1: request bookkeeping (not ledger truth) — stale claims are wiped too
+  'idempotency_records',
 ];
 
 router.post('/fresh-start', adminAuth, requirePermission('settings.manage'), async (req, res) => {

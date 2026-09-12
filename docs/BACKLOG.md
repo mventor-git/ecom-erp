@@ -1,11 +1,11 @@
 ﻿# Backlog
 
 ## Active (2026-09-12)
-- **Next (await owner decision):** AP aging report (ticket 090) — **not** started (stabilization F1–F13 done, owner STOP directive honored).
+- **Next (await owner decision):** AP aging report (ticket 090) — **not** started. Prerequisite work: stabilization F1–F13 ✅, readiness checkpoint ✅, **N1 + N2 remediation ✅ (owner directive)** — 090 is no longer blocked by known accounting defects, only by the owner's explicit go.
 - ~~**Stabilization F1–F13 (086–089 integrity review):**~~ ✅ DONE 2026-09-12 — 13 confirmed bugs fixed (draft-replay, silent rounding, bad-date regex, reasonless reversal, fingerprint idempotency, posted-journal immutability, fail-open period gates, silent method fallback, out-of-txn overpayment, `order_items` fresh-DB schema fork, test-isolation). `docs/accounting-stabilization-findings.md`.
 - **Owner browser verification 089:** ✅ Passed (panel, partial, settle, reason-gated reversal, overpayment guard, posted-source-journal refusal).
 - **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, cash-flow / financial statements (gap-map Ticket M).
-- **Deferred (pre-accounting queue, mostly resolved):** test-isolation: unit suites still mutate the live DB on `npm test` but self-clean; **stabilization F12** adds `ECOM_DB_PATH` + `run-isolated-tests.js` (`npm run test:isolated`) — integration 107/107 exit 0, two consecutive isolated unit runs 235/235. Backup retention remains; shared-DB on the default direct `npm test` path is a known trade-off documented in findings. Period litter cleared in 082; `po-item` leak fixed in F12; phase6 repaired+gated 083.
+- **Deferred (pre-accounting queue, mostly resolved):** test-isolation: unit suites still mutate the live DB on `npm test` but self-clean; **F12/N-suite hardening** adds `ECOM_DB_PATH` + `run-isolated-tests.js` (`npm run test:isolated`) — integration 107/107 exit 0 and isolated runs 249/249 exit 0 twice. Backup retention remains; shared-DB on default `npm test` stays a documented trade-off. Period litter cleared 082; `po-item` leak fixed F12; N2 fixture litter purged after a crashed run; phase6 repaired+gated 083.
 - **mventor-ticket-036 (v2):** Worker app follow-ups - assignment, picker/packer scanning, push, offline queue, EAS APK
 - **mventor-ticket-041 (Ready - needs user):** Customer APK via EAS - `npx eas-cli login && eas build --platform android --profile preview` (prep done)
 - **Deferred (separate track):** Mobile hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob gateway (keys configurable), Google Android OAuth, Price Lists consolidation, Settings IA

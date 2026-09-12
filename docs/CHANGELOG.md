@@ -1,5 +1,18 @@
 # Changelog
 
+## [4.19.0] - 2026-09-12 - N1 + N2 remediation (owner decision: fix before 090)
+### Fixed
+- **N1** `idempotencyService` now durable: claims table `idempotency_records` PK `(actor, endpoint, idem_key)` + sha256 request fingerprint — same identity ⇒ replay committed response; key reused with different request ⇒ 409 `idempotency-conflict`; in-flight ⇒ 409 (never double-execute); any non-2xx ⇒ claim deleted so the same key safely retries; 24h expiry sweep. Restart-safe because claims share the sql.js snapshot with the ledger they protect. In-memory Map demoted to pure optimization. Headerless requests & existing consumers behavior unchanged (single consumer: inventory movements; checkout/gateway flows keep their own key designs).
+- **N2** `POST /api/orders` guest checkout idempotency is OWNER-scoped (P0 security): lookup `WHERE idempotency_key = ? AND customer_id = ?` (order row carries `idem_fp`), replay returns the owner's own order only; another customer presenting the same key gets their OWN order (no PII exposure — regression test proves it); same owner + different material request ⇒ 409; `(customer_id, idempotency_key)` partial UNIQUE + race-safe conflict/replay resolution; order + canonical `order_items` now commit in ONE transaction (idempotency identity → ownership → order+lines → bridge effects/events).
+- **Fresh-start blocker (pre-existing)**: `categories.icon` ALTER ran before the table existed (error swallowed) → fresh DBs crashed in the icon seed. CREATE now includes `icon`; idempotent probe adds it for legacy DBs; proven by booting a brand-new DB file and exercising the N1/N2 invariants (duplicate owner+key blocked, cross-customer same key allowed, claims table + order idem_fp + UNIQUE index exist).
+### Tests
+- `tests/idempotencyN1.test.js` (8): replay, conflict 409, cross-actor independence, persisted-restart replay, failed-mutation safe retry, concurrent exactly-one, headerless pass-through, in-flight refuse.
+- `tests/checkoutIdempotencyN2.test.js` (6): owner-scoped replay incl. same-key/different-customer isolation proof, different-request 409, concurrent single order, DB-level (customer,key) unique invariant, legacy NULL-fingerprint back-compat replay.
+- `notificationsRefunds.test.js` STEP-15: pre-cleans its mock claim rows (claims are durable now).
+- suites 44/44 · tests 249/249 **npm test exit 0** · integration **2 suites/107 exit 0** · `test:isolated` (snapshot copy) 249/249 exit 0 live DB untouched · admin build exit 0 · no orphan orders/items/movements after failed/retried ops (FK check clean for touched tables) · secret scan clean · early-crash-run fixture litter purged (N2 leftovers: orders 0, customers 0, claims 0).
+### Note
+- No FE changes (backend only); no second inventory/order truth introduced; 090 AP-aging remains NOT started per directive — it is now UNBLOCKED pending owner authorization.
+
 ## [4.18.1] - 2026-09-12 - readiness checkpoint: honest test-exit fix + F11 data proof + NEW findings N1/N2 (CHECK 4)
 ### Fixed
 - `npm test` process exit code now **0**: root causes fixed, no jest config weakening — (a) released keep-alive sockets in 4 HTTP-fixture suites (`server.closeAllConnections()` in purchaseOrder/signature/addressSnapshot/mobileApi afterAll) that forced jest worker exits; (b) removed two library `console.log` banners in `db.js` (violated the "no console.log in prod; entry-point logs" rule AND fired after Jest teardown = "Cannot log after tests are done"); (c) signature fixture idempotent get-or-create (was self-poisoning: leftover fixed-email row → UNIQUE insert failure forever after the first aborted run).
