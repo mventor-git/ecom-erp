@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.20.1] - 2026-09-12 - 090 hardening: back-dated payment causality in AP aging
+### Fixed
+- **Historical invariant:** a payment application now ONLY reduces recognition lines that existed BY THE PAYMENT'S OWN POSTED JOURNAL DATE (`applied_at` vs line `entry_date`). Previously a back-dated payment (journal dated BEFORE the payable existed — e.g. payment Jan-10 vs receipt Jan-20) could subtract from a future recognition line, silently deflating aging at later as-of dates. Such payments are now carried as `unapplied_advance_cents` (per PO) and never affect the aging totals. Causally-valid sequences keep IDENTICAL FIFO behavior (payment dated after the lines it settles), including the exact reconciliation invariant `raw applications(X) = applied-within-lines(X) + unapplied_advance(X)` and `Σ item remaining == buckets == report_total`. Addendum recorded in ADR-016.
+### Changed
+- `apAgingService`: per-(PO,payment) set-based query carrying each payment's posted journal date replaces the PO-aggregate query (still exactly 2 queries, no N+1); deterministic two-level causal FIFO documented and asserted in the service.
+- Items expose `applied_within_lines_cents` + `unapplied_advance_cents`; `applied_to_po_cents` kept as RAW as-of applications; `payment_refs` now = payments that actually settled lines (causal traceability) while `payments_on_po` counts all active-as-of X.
+### Tests
+- `tests/apAging.test.js` +6: ticket scenarios A/B/C/D/E (+ partly-applicable back-dated split: pre-existing line reduced, excess unapplied) proving payment-before-payable NEVER reduces later lines at any as-of date while normal partial/settled behavior is unchanged; all 29 green.
+### Verification
+- `npm test` / `test:isolated` / `test:integration` (see below) — all suites green; smoke + admin build + secret scan + zero-residue/zero-orphan re-run at commit time.
+
 ## [4.20.0] - 2026-09-12 - mventor-ticket-090: AP Aging report (recognition-date basis)
 ### Added
 - `server/services/apAgingService.js` — pure derivation over posted truth (ADR-016): open items = posted 087 AP-credit lines up to an explicit `as_of`; a payment application counts exactly when its POSTED payment-recorded journal is ≤ as_of and no POSTED payment-reversed journal is ≤ as_of; FIFO allocation per PO; non-overlapping buckets 0 / 1–30 / 31–60 / 61–90 / 91+; cents exact; 2 set-based queries (no N+1); control totals (buckets == items == summary) always computed over the FULL filtered set even when items paginate.

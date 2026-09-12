@@ -418,6 +418,88 @@ describe('090 invariants', () => {
   });
 });
 
+describe('090 hardening: back-dated payment causality (ADR-016 invariant)', () => {
+  // Ticket scenarios: recognition Jan 20 / payment Jan 10 must NOT reduce a
+  // payable that did not exist when the payment happened — at ANY as-of date.
+  const payAt = (poId, amount, paidAt) => pay(poId, amount, { paidAt });
+
+  test('A: receipt Jan-20, payment Jan-10: payment never reduces the line (2026-01-15 AND 2026-01-31)', () => {
+    const poId = makePo(supplierA);
+    recognizeDated(poId, 9000, '2026-01-20');
+    payAt(poId, 9000, '2026-01-10'); // back-dated — unapplied at every date
+    const filt = (r) => r.items.filter((i0) => i0.po_id === poId);
+    const j15 = filt(apAging.getAgingReport({ asOf: '2026-01-15' }));
+    expect(j15.length).toBe(0); // payable not yet recognized -> nothing to reduce, no phantom effect
+    const j31 = filt(apAging.getAgingReport({ asOf: '2026-01-31' }));
+    expect(j31.length).toBe(1);
+    const it = j31[0];
+    expect(it.remaining_cents).toBe(9000);            // payment MUST NOT have reduced it
+    expect(it.allocated_applied_cents).toBe(0);
+    expect(it.applied_to_po_cents).toBe(9000);       // raw application exists...
+    expect(it.applied_within_lines_cents).toBe(0);   // ...but applies to zero lines
+    expect(it.unapplied_advance_cents).toBe(9000);   // ...carried as unapplied
+    expect(it.payment_refs).toEqual([]);             // not traceable as settlement of the line
+    expect(it.payments_on_po).toBe(1);
+  });
+
+  test('A+: partially-applicable back-dated payment: pre-existing line reduced, excess unapplied', () => {
+    const poId = makePo(supplierA);
+    recognizeDated(poId, 4000, '2026-01-05'); // existed BEFORE the payment
+    recognizeDated(poId, 6000, '2026-01-20'); // created after the payment
+    payAt(poId, 5000, '2026-01-10');
+    const it = apAging.getAgingReport({ asOf: '2026-01-31' }).items.find((i0) => i0.po_id === poId);
+    expect(it).toBeTruthy(); // second line still open
+    expect(it.remaining_cents).toBe(6000); // 6000 - 0 (cannot touch the post-payment line)
+    expect(it.unapplied_advance_cents).toBe(1000); // 5000 - 4000 applied to the older line
+    expect(it.applied_within_lines_cents).toBe(4000);
+    // line @Jan-05 fully applied -> excluded from open items
+    expect(it.payment_refs.length).toBe(1);
+  });
+
+  test('B: receipt Jan-20, payment Jan-25, aging Jan-30: payment reduces AP (normal order intact)', () => {
+    const poId = makePo(supplierA);
+    recognizeDated(poId, 9000, '2026-01-20');
+    payAt(poId, 9000, '2026-01-25');
+    expect(apAging.getAgingReport({ asOf: '2026-01-30' }).items.find((i0) => i0.po_id === poId)).toBeUndefined();
+  });
+
+  test('C: receipt Jan-20, payment Jan-25, aging Jan-15: pre-payable AP untouched by a payment dated later (not counted yet)', () => {
+    const poId = makePo(supplierA);
+    recognizeDated(poId, 9000, '2026-01-20');
+    payAt(poId, 9000, '2026-01-25');
+    // as-of Jan-15: NEITHER payable exists yet; payment is also in the future -> open must be 0/absent
+    const r = apAging.getAgingReport({ asOf: '2026-01-15' });
+    expect(r.items.find((i0) => i0.po_id === poId)).toBeUndefined();
+  });
+
+  test('D: normal partial payment behavior unchanged', () => {
+    const poId = makePo(supplierA);
+    recognizeDated(poId, 5000, '2026-01-01');
+    payAt(poId, 2000, '2026-01-20');
+    const it = apAging.getAgingReport({ asOf: '2026-01-31' }).items.find((i0) => i0.po_id === poId);
+    expect(it.remaining_cents).toBe(3000);
+    expect(it.allocated_applied_cents).toBe(2000);
+    expect(it.unapplied_advance_cents).toBe(0);
+    expect(it.payment_refs.length).toBe(1);
+  });
+
+  test('E: reconciliation invariant holds with unapplied advances (Σitems == buckets == report_total)', () => {
+    const pa = makePo(supplierA); const pb = makePo(supplierB);
+    recognizeDated(pa, 7000, '2026-01-20');
+    payAt(pa, 7000, '2026-01-01'); // unapplied (back-dated vs pa line)
+    recognizeDated(pb, 3300, '2026-01-10'); // supplier B normal
+    const r = apAging.getAgingReport({ asOf: '2026-02-28' });
+    expect(r.reconciliation.buckets_minus_total).toBe(0);
+    expect(r.reconciliation.summary_minus_total).toBe(0);
+    expect(r.reconciliation.buckets_sum_cents).toBe(r.total_outstanding_cents);
+    const sumItems = r.items.reduce((s, i0) => s + i0.remaining_cents, 0);
+    expect(sumItems).toBe(r.total_outstanding_cents);
+    const rowA = r.items.find((i0) => i0.po_id === pa);
+    expect(rowA.remaining_cents).toBe(7000);
+    expect(rowA.unapplied_advance_cents).toBe(7000);
+  });
+});
+
 describe('090 API surface', () => {
   const http = require('http');
   const express = require('express');

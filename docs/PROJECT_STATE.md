@@ -100,7 +100,7 @@
 - **Readiness checkpoint 4.18.1:** F11 data SAFE; unit exit 0 honest; N1 (idempotencyService) + N2 (orders idempotency_key) reported.
 - **N1+N2 REMEDIATED 4.19.0 (owner directive):** durable actor+endpoint+key+request-fingerprint claims (`idempotency_records`); owner-scoped guest-order idempotency with `(customer_id,idempotency_key)` UNIQUE + `idem_fp`; fresh-start `categories.icon` boot blocker also fixed; 14 new regression tests.
 - **Accounting stabilization F1–F13 + readiness checkpoint 4.18.1:** forensic review + fixes + 18 regression tests; details `docs/accounting-stabilization-findings.md`; CHANGELOG [4.18.0] + [4.18.1] + [4.19.0].
-- **mventor-ticket-090 — AP AGING REPORT COMPLETED** (this commit; CHANGELOG [4.20.0]; ADR-016): 45/272 exit 0, isolated 272 exit 0, integration 107 exit 0, HTTP smoke 8/8, fresh-boot consistent, admin build 0, zero residue/orphans. **STOP — awaiting owner review before any 091.**
+- **mventor-ticket-090 — AP AGING REPORT COMPLETED + HARDENED** (commit + follow-up 4.20.1 back-dated-payment causality; see ADR-016 ADDENDUM): 45 suites/278 tests exit 0, isolated 278 exit 0, integration 107 exit 0, HTTP smoke 6/6, fresh-boot consistent, admin build 0, zero residue/orphans. **STOP — awaiting owner review; no 091.**
 - **Next candidates (after 090 review):** supplier invoices/payment-terms (true due-date aging), bank/transfer methods, advances/prepayments, cash-flow + statements (gap-map M), settings IA follow-ups. Not implemented without owner direction.
 - Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 

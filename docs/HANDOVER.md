@@ -1,5 +1,18 @@
 ﻿# Handover Note
 
+**Date:** 2026-09-12 (ninth stop — 090 hardening: back-dated payment causality)
+**From:** Mventor (Execution Owner)
+**To:** Project Owner / Next Session
+
+## ✅ 090 HARDENING — HISTORICAL BACKDATED PAYMENT INVARIANT (ADR-016 ADDENDUM)
+
+- Fixed: a payment application may reduce a payable recognition line ONLY if that line existed BY THE PAYMENT'S OWN POSTED JOURNAL DATE. Back-dated payments (receipt Jan-20, payment Jan-10) are carried as `unapplied_advance_cents`, never subtract anything (rule: "no reduction of a payable that did not yet exist"), while causally-valid payment flows keep EXACT FIFO behavior (tests untouched green) — verified at every as-of date (scenario C: payment dated after cutoff is also correctly invisible at the cutoff).
+- Deterministic: payments consumed oldest-first, lines open-elsewhere-oldest-first; per-PO identity `raw applications(X) = applied-within-lines(X) + unapplied(X)`; global Σ item remaining == buckets == report_total asserted.
+- Items now expose `applied_within_lines_cents`/`unapplied_advance_cents`; `payment_refs` = causally-applied payments.
+- Suite 23 → 29 (+6: the ticket's A/B/C/D/E + partially-applicable back-dated split). Verification re-run: npm test 45/278 exit 0; isolated 278 exit 0; integration 107/107 exit 0; HTTP smoke on booted app 6/6; admin build 0; zero residue/orphans/claims.
+
+---
+
 **Date:** 2026-09-12 (eighth stop — ticket 090 AP Aging completed; STOP for owner review)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session
