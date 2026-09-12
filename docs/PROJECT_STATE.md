@@ -82,11 +82,12 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-12 — N1/N2 remediation)
-- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. `categories.icon` + durable idempotency schema**
-- Frontend: admin build clean (no FE change in this pass)
-- **Unit suite: 44 suites / 249 tests PASS, process exit 0** (+N1 claims suite 8, +N2 checkout-isolation suite 6; earlier root-fixes unchanged)
-- **Integration: 107/107 PASS, exit 0** (was 7 failed / exit 1 at 4d2420d via `po-item` litter leaking `sort=newest`). `npm run test:isolated` → 249/249 **exit 0** on a snapshot copy (live DB untouched, proven deterministic)
+## Build Verification (baseline 2026-09-12 — ticket 090 AP Aging report delivered)
+- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. `categories.icon` + durable idempotency + 090 service consistent on a brand-new DB**
+- Frontend: admin build clean (090 surface added)
+- **Unit suite: 45 suites / 272 tests PASS, process exit 0** (history in CHANGELOG; apAging.test 23 new)
+- **Integration: 107/107 PASS, exit 0** · `npm run test:isolated` 272/272 **exit 0** on a snapshot copy (live DB untouched, deterministic)
+- **AP Aging (090): first production aging report live** — recognition-date basis (ADR-016), as-of historical correctness, FIFO allocation, control totals machine-reconciled; admin `/erp/ap-aging` + `GET /api/admin/supplier-payments/aging`
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -99,7 +100,8 @@
 - **Readiness checkpoint 4.18.1:** F11 data SAFE; unit exit 0 honest; N1 (idempotencyService) + N2 (orders idempotency_key) reported.
 - **N1+N2 REMEDIATED 4.19.0 (owner directive):** durable actor+endpoint+key+request-fingerprint claims (`idempotency_records`); owner-scoped guest-order idempotency with `(customer_id,idempotency_key)` UNIQUE + `idem_fp`; fresh-start `categories.icon` boot blocker also fixed; 14 new regression tests.
 - **Accounting stabilization F1–F13 + readiness checkpoint 4.18.1:** forensic review + fixes + 18 regression tests; details `docs/accounting-stabilization-findings.md`; CHANGELOG [4.18.0] + [4.18.1] + [4.19.0].
-- **Next (await owner decision):** ticket 090 AP aging report — the prior N1/N2 blockers are resolved; still **not** implemented per directive; owner go pending. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
+- **mventor-ticket-090 — AP AGING REPORT COMPLETED** (this commit; CHANGELOG [4.20.0]; ADR-016): 45/272 exit 0, isolated 272 exit 0, integration 107 exit 0, HTTP smoke 8/8, fresh-boot consistent, admin build 0, zero residue/orphans. **STOP — awaiting owner review before any 091.**
+- **Next candidates (after 090 review):** supplier invoices/payment-terms (true due-date aging), bank/transfer methods, advances/prepayments, cash-flow + statements (gap-map M), settings IA follow-ups. Not implemented without owner direction.
 - Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 
 ## Mobile App Architecture

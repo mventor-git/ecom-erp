@@ -18,7 +18,7 @@ const supplierPaymentService = require('../services/supplierPaymentService');
 function mapError(err) {
   const m = String(err.message || '');
   if (/idempotency-conflict|reused with/i.test(m)) return 409;
-  if (/not found|inactive|Overpayment|must equal|positive amount|integer number of cents|must be required|requires|at least one|duplicate application|does not belong|Unsupported|Invalid paid_at|reversal/i.test(m)) {
+  if (/not found|inactive|Overpayment|must equal|positive amount|integer number of cents|must be required|requires|at least one|duplicate application|does not belong|Unsupported|Invalid (as_of|supplier_id|paid_at)|reversal/i.test(m)) {
     return 400;
   }
   return 500;
@@ -51,6 +51,25 @@ router.get('/outstanding/:poId', adminAuth, requirePermission('supplier_payments
     });
   } catch (err) {
     console.error('Error computing outstanding payable:', err);
+    res.status(mapError(err)).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/supplier-payments/aging (ticket 090) — AP AGING REPORT.
+// Thin seam: validation + service call only. All aging semantics, buckets,
+// FIFO allocation and reconciliation live in apAgingService (domain layer).
+router.get('/aging', adminAuth, requirePermission('supplier_payments.read'), (req, res) => {
+  try {
+    const apAging = require('../services/apAgingService');
+    const report = apAging.getAgingReport({
+      asOf: req.query.as_of,
+      supplierId: req.query.supplier_id || null,
+      limit: req.query.limit,
+      offset: req.query.offset,
+    });
+    res.json(report);
+  } catch (err) {
+    console.error('AP aging report error:', err);
     res.status(mapError(err)).json({ error: err.message });
   }
 });

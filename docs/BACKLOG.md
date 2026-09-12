@@ -1,7 +1,7 @@
 ﻿# Backlog
 
 ## Active (2026-09-12)
-- **Next (await owner decision):** AP aging report (ticket 090) — **not** started. Prerequisite work: stabilization F1–F13 ✅, readiness checkpoint ✅, **N1 + N2 remediation ✅ (owner directive)** — 090 is no longer blocked by known accounting defects, only by the owner's explicit go.
+- **mventor-ticket-090 COMPLETE — STOP for owner review gate.** Next candidates once authorized: supplier invoices + payment terms (true due-date aging layer), bank/transfer methods, advances/prepayments, cash-flow + financial statements, settings IA follow-ups.
 - ~~**Stabilization F1–F13 (086–089 integrity review):**~~ ✅ DONE 2026-09-12 — 13 confirmed bugs fixed (draft-replay, silent rounding, bad-date regex, reasonless reversal, fingerprint idempotency, posted-journal immutability, fail-open period gates, silent method fallback, out-of-txn overpayment, `order_items` fresh-DB schema fork, test-isolation). `docs/accounting-stabilization-findings.md`.
 - **Owner browser verification 089:** ✅ Passed (panel, partial, settle, reason-gated reversal, overpayment guard, posted-source-journal refusal).
 - **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, cash-flow / financial statements (gap-map Ticket M).
@@ -14,6 +14,7 @@
 - **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
+- **mventor-ticket-090:** AP Aging report (recognition-date basis, ADR-016) — posted-journal-derived open payable lines, explicit as-of w/ historical receipt/payment/reversal cutoffs, per-PO FIFO application allocation, 5 non-overlapping buckets, supplier summary + drill-down detail, machine control totals, admin page + thin aging route. Verified 45/272 exit 0 · isolated 272 exit 0 · integration 107 exit 0 · smoke 8/8 · fresh-boot OK.
 - **mventor-ticket-089:** Supplier payment UI — PO detail payables panel (derived totals + this-PO payments), record/reverse dialogs (EGP→cents, server-authority errors inline), `?purchase_order_id=` list seam. Verified 41/218 + admin clean.
 - **mventor-ticket-088:** Supplier payment postings — persisted PAY record + applications, `Dr 2100 AP / Cr 1000 Cash`, full/partial/multi-PO, replay-safe, reversal, atomic. Verified 41/217 + admin clean.
 - **mventor-ticket-087:** Purchase receipt posting (movement grain + shared chart + tests). Verified 40/208 + admin clean.

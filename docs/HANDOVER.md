@@ -1,5 +1,20 @@
 ﻿# Handover Note
 
+**Date:** 2026-09-12 (eighth stop — ticket 090 AP Aging completed; STOP for owner review)
+**From:** Mventor (Execution Owner)
+**To:** Project Owner / Next Session
+
+## ✅ TICKET 090 — AP AGING REPORT COMPLETE (recognition-date basis)
+
+- `apAgingService`: open payable items = POSTED 087 AP-credit lines ≤ as_of; payment applications active as-of X iff posted `payment-recorded` journal ≤ X and NO posted `payment-reversed` journal ≤ X; FIFO per-PO allocation; buckets 0/1–30/31–60/61–90/91+ (non-overlapping); cents-only; 2 queries (no N+1); control totals over FULL filtered set even when items paginate.
+- Route `GET /api/admin/supplier-payments/aging` (explicit as_of required, supplier filter, limit/offset; no aging logic in route; `supplier_payments.read`).
+- Admin `/erp/ap-aging` (Purchasing nav "AP Aging"): date + supplier filter, StatCards, supplier summary w/ expandable open-lines detail w/ journal-entry traceability, reconciliation banner.
+- Basis limitation (honest, surfaced in API + UI): recognition-date, NOT contractual due-date aging (no invoice entity; po.expected_at unused) — see ADR-016; due-date aging is the natural next slice WITH supplier invoices.
+- Verification: unit 45/272 exit 0; isolated 272 exit 0 (live untouched); integration 107/107 exit 0; real-app HTTP smoke 8/8; fresh-DB boot probe consistent; admin build 0; residue+orphans=0.
+- **STOPPED** awaiting owner review. Next owner decision: authorize 091 candidates (invoice/payment-terms slice to enable true due-date aging / bank methods / advances).
+
+---
+
 **Date:** 2026-09-12 (sixth stop — N1 + N2 remediated per owner directive)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session

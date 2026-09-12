@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.20.0] - 2026-09-12 - mventor-ticket-090: AP Aging report (recognition-date basis)
+### Added
+- `server/services/apAgingService.js` — pure derivation over posted truth (ADR-016): open items = posted 087 AP-credit lines up to an explicit `as_of`; a payment application counts exactly when its POSTED payment-recorded journal is ≤ as_of and no POSTED payment-reversed journal is ≤ as_of; FIFO allocation per PO; non-overlapping buckets 0 / 1–30 / 31–60 / 61–90 / 91+; cents exact; 2 set-based queries (no N+1); control totals (buckets == items == summary) always computed over the FULL filtered set even when items paginate.
+- Thin route `GET /api/admin/supplier-payments/aging?as_of=&supplier_id=&limit=&offset=` (`supplier_payments.read`; explicit calendar-valid as_of required → 400 otherwise; route holds zero aging semantics).
+- Admin UI: `/erp/ap-aging` page — "AP Aging" nav in Purchasing; As-of date (native input) + supplier filter; bucket StatCards; per-supplier summary table with expandable open-line detail (PO / journal entry no / recognized / original / paid / remaining / days / bucket / payment refs); green/red reconciliation banner with raw differences; basis surfaced in view.
+- ADR-016 (recognition-date basis; why due-date aging is NOT faked).
+- `server/tests/apAging.test.js` — 23 tests: A unpaid, B partial, C settled-excluded, D reversed-restores-exactly-once, E multi-payment FIFO, F one payment / two POs, G multi-supplier + filter, H boundaries 0/1/30/31/60/61/90/91, I as-of cutoffs incl. HISTORICAL PROOF (today ≠ date-X balance), J empty, K reconcile vs independent 088 `outstandingForPo` model, L drafts-only excluded, M forged (journal-less) payment application ignored (behavior), N integer-cent assertions, O fixed 2-query (spy), P real-router 401/403/400 + env-admin 200 contract, pagination/global-total preservation, fresh-boot (probe).
+### Verification
+- `npm test` 45 suites / 272 tests **exit 0** · `npm run test:isolated` 272/272 **exit 0** (live DB untouched) · `npm run test:integration` 107/107 **exit 0** · real-app HTTP smoke on isolated copy 8/8 (login, aging 200, reconciliation control, basis, missing/impossible as_of → 400, no-auth → 401, supplier filter) · fresh-DB boot probe consistent · admin build **exit 0** · zero 090 residue + zero orphans + zero leaked claims · `tickets/` untouched in git (local-only policy).
+### Known limitation
+- Aging basis is the RECOGNITION date of posted 087 journals (documented, surfaced in every response via `aging_basis`); contractual due-date aging awaits a future supplier-invoice/payment-terms slice; `po.expected_at` deliberately unused; FIFO allocation convention documented.
+
 ## [4.19.0] - 2026-09-12 - N1 + N2 remediation (owner decision: fix before 090)
 ### Fixed
 - **N1** `idempotencyService` now durable: claims table `idempotency_records` PK `(actor, endpoint, idem_key)` + sha256 request fingerprint — same identity ⇒ replay committed response; key reused with different request ⇒ 409 `idempotency-conflict`; in-flight ⇒ 409 (never double-execute); any non-2xx ⇒ claim deleted so the same key safely retries; 24h expiry sweep. Restart-safe because claims share the sql.js snapshot with the ledger they protect. In-memory Map demoted to pure optimization. Headerless requests & existing consumers behavior unchanged (single consumer: inventory movements; checkout/gateway flows keep their own key designs).

@@ -37,6 +37,7 @@ const SECTIONS = [
     items: [
       { to: '/erp/suppliers', label: 'Suppliers', icon: 'user' },
       { to: '/erp/purchase-orders', label: 'Purchase Orders', icon: 'clipboard' },
+      { to: '/erp/ap-aging', label: 'AP Aging', icon: 'chart' },
     ],
   },
   {

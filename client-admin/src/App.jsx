@@ -33,6 +33,7 @@ const CategoryView = lazy(() => import('./admin/pages/CategoryView'));
 const SuppliersList = lazy(() => import('./admin/pages/SuppliersList'));
 const SupplierDetail = lazy(() => import('./admin/pages/SupplierDetail'));
 const PurchaseOrdersList = lazy(() => import('./admin/pages/PurchaseOrdersList'));
+const APAgingReport = lazy(() => import('./admin/pages/APAgingReport'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -296,6 +297,15 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <PurchaseOrdersList />
+              </Suspense>
+            }
+          />
+          {/* AP Aging report (mventor-ticket-090) */}
+          <Route
+            path="/erp/ap-aging"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <APAgingReport />
               </Suspense>
             }
           />

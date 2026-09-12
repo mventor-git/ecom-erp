@@ -214,6 +214,10 @@ export const recordSupplierPayment = (data) => api.post('/admin/supplier-payment
 
 export const reverseSupplierPayment = (id, reason) => api.post(`/admin/supplier-payments/${id}/reverse`, { reason });
 
+// ── ERP: AP Aging report (mventor-ticket-090) ──
+
+export const getApAging = (params = {}) => api.get('/admin/supplier-payments/aging', { params });
+
 // ── ERP: Events API ──
 export const getEvents = (params = {}) => api.get('/admin/events', { params });
 
