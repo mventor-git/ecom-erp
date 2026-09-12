@@ -58,6 +58,8 @@ function createMovement({ productId, warehouseId, locationId, type, reason, refe
   // financial period — every type, no side doors. Twin of the journal post
   // gate (kept local: no cross-domain import in either direction).
   // Movements timestamp at creation, so "today" always governs.
+  // Stabilization P0#7: accounting controls FAIL CLOSED — a failed lookup is
+  // NOT "no closed period"; it means the control is unavailable → refuse.
   const closedPeriod = (() => {
     try {
       return db.prepare(`
@@ -65,8 +67,8 @@ function createMovement({ productId, warehouseId, locationId, type, reason, refe
         WHERE status = 'CLOSED' AND date('now') BETWEEN date(start_date) AND date(end_date)
         ORDER BY id DESC LIMIT 1
       `).get() || null;
-    } catch {
-      return null; // periods unavailable — never block stock on infra failure
+    } catch (err) {
+      throw new Error(`Movement blocked: financial period control unavailable — refusing to record: ${err.message}`);
     }
   })();
   if (closedPeriod) {

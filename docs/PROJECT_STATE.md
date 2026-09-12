@@ -82,10 +82,11 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-12 — 089 supplier payment UI)
+## Build Verification (baseline 2026-09-12 — stabilization F1–F13)
 - Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify
-- Frontend: admin build clean 12.72s (no UI change)
-- **Test suite: 41 suites / 218 tests PASS** (+supplierPayments list-filter test)
+- Frontend: admin build clean 25.26s (no UI change in this pass)
+- **Unit suite: 42 suites / 235 tests PASS** (41/218 + NEW `accountingHardening` 18/18; both HEAD and stable exit 1 = pre-existing jest worker-handle, not a test fail)
+- **Integration: 107/107 PASS, exit 0** (was 7 failed / exit 1 at 4d2420d via `po-item` litter leaking `sort=newest`). `run-isolated-tests.js` snapshots + proves determinism (235/235 twice consecutively)
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -94,11 +95,10 @@
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
 ## Next Steps (updated 2026-09-12)
-- **mventor-ticket-088 COMPLETED:** supplier payment postings. Verified 41/217 + admin clean.
-- **mventor-ticket-089 COMPLETED:** supplier payment UI (PO detail payables panel + record/reverse dialogs). Verified 41/218 + admin clean + owner browser pass ALL STEPS 2026-09-12; smoke fixture purged, residue 0. 089 diff not yet committed.
-- **Next (recommended):** Supplier payment UI (record/reverse on PO detail) OR AP aging report — one ticket at a time.
-- Deferred (separate stabilization): mobile/worker hardcoded LAN `192.168.1.50` + missing `projectId`/`eas.json`, Paymob (keys configurable, gateway not live), Google Android OAuth, AI Copilot, API docs refresh
-- Accounting track (086→088 proven): verified-payment journals → ledger/trial-balance → period gate → sales & purchase posting → supplier payments. Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
+- **mventor-ticket-088/089 COMPLETED and committed** (push `42c300d`→`4d2420d`).
+- **Accounting stabilization F1–F13 COMPLETED** (this pass, forensic review + fixes + 18 new regression tests). No feature ticket, separate from 090. `docs/accounting-stabilization-findings.md` has details; CHANGELOG [4.18.0].
+- **Next (await owner decision):** ticket 090 AP aging report — **not** implemented (per explicit owner stop). Remaining per gap-map: bank method, advances, supplier invoices (invoice-grain application), AP aging, financial statements.
+- Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 
 ## Mobile App Architecture
 **Decision:** Single unified admin app (PWA) for all employees with role-based access control

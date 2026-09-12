@@ -1,10 +1,31 @@
 ﻿# Handover Note
 
-**Date:** 2026-09-12 (third stop of session — 089 owner-verified)
+**Date:** 2026-09-12 (fourth stop of session — accounting stabilization F1–F13)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session
 
-## ⏸️ CHECKPOINT — mventor-ticket-089 COMPLETED + OWNER BROWSER PASS PASSED
+## 🔬 FORENSIC STABILIZATION F1–F13 (086–089) COMPLETED — ALL VERIFICATION GREEN
+
+Owner directive: review/fix integrity **before** AP aging (090). **No 090 code written.**
+
+Findings: `docs/accounting-stabilization-findings.md` (13 confirmed, fixed):
+- **F1** Payment posting replay treats a stranded DRAFT as already posted (both bridges); status=posted gates replay, retry posts stranded draft
+- **F2** `Math.round` silently truncates fractional cents at 6 boundaries; `assertIntegerCents` now rejects them
+- **F3** regex accepts impossible dates `2026-02-31`; calendar-validated + UTC-default documented
+- **F4** reversal reason enforced only in the 089 React panel; `reversePayment` now requires non-blank+≤300 server-side
+- **F5** same idempotency key + different request silently replays the first payment; request `idem_fp` fingerprint column, key-reuse+different-request → 409 `idempotency-conflict`
+- **F6** `unpostEntry` silently converts a posted sourced journal back to draft; refused when `source_type` present (manual 079 cycle unchanged)
+- **F7** period-lookup failure = allowed both journal gate + 084 movement twin; now **fail closed**
+- **F8** unknown/stored method `||'1000'` fallback; absent → throw "no chart mapping"
+- **F9** AP authority pre-txn only; validateApplications runs pre-txn (UX) + post-txn (authority under write lock)
+- **F10** `findPosted*` functions named posted but query any status; renamed honestly
+- **F11** fresh-DB `order_items` CREATE lacks the mirror cols 4 writers insert; db.js reconciles + indexes; fresh-DB probe passes full schema (`npm run test:isolated` twice proves)
+- **F12** tests mutate/leak live store.db: purchaseOrder self-cleans products; mobile+api fixtures pick in-stock product/warehouse state so ambient litter can't cascade; `run-isolated-tests.js` + `ECOM_DB_PATH` snapshot runs → **7-fail→107/107 PASS, exit 0**
+- **F13** docs lag at 4d2420d (baseline stale, "not committed")
+
+**Verification:** 42/42 unit suites 235/235 tests; integration 107/107 exit 0 (was 7 failed + exit 1); HTTP smoke 14/14 (replay/409/integer/date/immutability/fail-closed/reason/orphan); admin build 25.26s; secret scan clean.
+
+---
 
 **State:** 41 / 218 PASS + admin build 11.20s + **owner browser pass 2026-09-12: ALL STEPS PASSED** (panel 50.00 derivation, partial 20, settle 30, reverse with reason/restore/immutable history, overpayment inline "applying X but only Y outstanding"). Remote `origin/master` = `42c300d` (079–088); the validated 089 diff is NOT yet committed (awaiting owner checkpoint go, same as before). Backend :5172 currently stopped after smoke-fixture purge (residue 0) — relaunch with `start.ps1`. STOP — AP aging NOT started.
 

@@ -18,13 +18,39 @@ const db = require('../db');
 const documentNumberService = require('./documentNumberService');
 
 function todayISO() {
+  // Canonical business-date rule (stabilization): "today" = UTC calendar date.
+  // No timezone was ever configured in this project (settings has none) — this
+  // keeps entry/paid dates deterministic and matching SQLite's UTC `date('now')`
+  // gates. If per-country dates are ever a requirement, it becomes its own
+  // settings-backed slice — not an implicit local-machine behavior.
   return new Date().toISOString().slice(0, 10);
+}
+
+/** Money in cents must arrive as INTEGERS — no silent rounding (stabilization). */
+function assertIntegerCents(value, label) {
+  if (value === null || value === undefined || value === '') {
+    throw new Error(`${label} is required (integer cents)`);
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n) || !Number.isInteger(n)) {
+    throw new Error(`${label} must be an integer number of cents (got ${value})`);
+  }
+  return n;
+}
+
+/** Real-calendar YYYY-MM-DD (rejects 2026-02-31 et al.); canonical persisted shape. */
+function isValidCalendarDate(s) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  const t = Date.UTC(y, m - 1, d);
+  const chk = new Date(t);
+  return chk.getUTCFullYear() === y && chk.getUTCMonth() === m - 1 && chk.getUTCDate() === d;
 }
 
 function assertEntryDate(v) {
   const s = String(v || '').trim() || todayISO();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    throw new Error(`Invalid entry_date "${v}" — expected YYYY-MM-DD`);
+  if (!isValidCalendarDate(s)) {
+    throw new Error(`Invalid entry_date "${v}" — expected real calendar date in YYYY-MM-DD`);
   }
   return s;
 }
@@ -39,8 +65,8 @@ function normalizeLines(rawLines) {
     const account = db.prepare('SELECT id, is_active FROM accounts WHERE id = ?').get(accountId);
     if (!account) throw new Error(`Unknown account id ${accountId}`);
     if (!account.is_active) throw new Error(`Account id ${accountId} is inactive`);
-    const debit = Math.round(Number(raw.debit) || 0);
-    const credit = Math.round(Number(raw.credit) || 0);
+    const debit = raw.debit == null ? 0 : assertIntegerCents(raw.debit, 'Journal debit');
+    const credit = raw.credit == null ? 0 : assertIntegerCents(raw.credit, 'Journal credit');
     if (debit < 0 || credit < 0) throw new Error('Journal amounts cannot be negative');
     if (debit > 0 && credit > 0) throw new Error('Journal line cannot carry both debit and credit');
     if (debit === 0 && credit === 0) continue; // all-zero lines carry no meaning — skipped
@@ -133,17 +159,22 @@ function deleteDraftEntry(id) {
  * Period gate, read-only (079 — Ticket F owns period policy).
  * Refuses posting when a CLOSED financial period contains the entry date.
  * No covering period (or none closed) = allowed, documented default.
+ * Stabilization: the period CONTROL itself failing is NOT "no closed
+ * period" — a lookup failure means the control is unavailable, and accounting
+ * controls fail CLOSED: we throw, callers must treat as refusal.
  */
 function closedPeriodContaining(entryDate) {
+  let row;
   try {
-    return db.prepare(`
+    row = db.prepare(`
       SELECT id, name FROM financial_periods
       WHERE status = 'CLOSED' AND date(?) BETWEEN date(start_date) AND date(end_date)
       ORDER BY id DESC LIMIT 1
-    `).get(entryDate) || null;
-  } catch {
-    return null; // periods table unavailable — never block posting on infra failure
+    `).get(entryDate);
+  } catch (err) {
+    throw new Error(`Financial period control unavailable — refusing to post: ${err.message}`);
   }
+  return row || null;
 }
 
 /** Re-validate STORED lines (same shape as input) — the post-time gate. */
@@ -175,10 +206,23 @@ function postEntry(id, userId = '') {
   return getEntry(id);
 }
 
+/**
+ * Posted financial journals are IMMUTABLE (stabilization P0#6):
+ * a journal created by an accounting posting bridge carries a source
+ * (source_type/source_id/source_event) — those can NEVER be unposted.
+ * Corrections go through the source's own reversal flow (e.g.
+ * supplierPaymentService.reversePayment posts the opposite entry), so the
+ * ledger keeps both sides of the story.
+ * Manual journals (no source) are bookkeeper-authored and keep the 079
+ * posted->draft cycle.
+ */
 function unpostEntry(id, userId = '') {
   const header = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(id);
   if (!header) throw new Error('Journal entry not found');
   if (header.status !== 'posted') throw new Error('Only posted entries can be unposted');
+  if (header.source_type) {
+    throw new Error(`Posted sourced journals are immutable ${header.source_type}/${header.source_id} — use the posting service's reversal flow, not unpost`);
+  }
   const eventService = require('./eventService');
   db.transaction(() => {
     db.prepare(`UPDATE journal_entries SET status = 'draft', posted_by = NULL, posted_at = NULL,
@@ -192,6 +236,9 @@ function unpostEntry(id, userId = '') {
 }
 
 module.exports = {
+  todayISO,
+  isValidCalendarDate,
+  assertIntegerCents,
   getEntry,
   listEntries,
   createEntry,

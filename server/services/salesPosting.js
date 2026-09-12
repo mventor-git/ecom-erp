@@ -17,7 +17,11 @@ const { SKELETON, resolveAccount } = require('./accountChart');
 
 const SOURCE_EVENT = 'kashier-paid';
 
-function findPostedEntry(orderId) {
+/**
+ * Journal created for this order's payment posting (ANY status — named
+ * honestly). Only status='posted' means posted (stabilization P0#1/#10).
+ */
+function findOrderJournal(orderId) {
   return db.prepare(`
     SELECT * FROM journal_entries
     WHERE source_type = 'order' AND source_id = ? AND source_event = ?
@@ -27,19 +31,29 @@ function findPostedEntry(orderId) {
 
 /**
  * Post a verified-paid order. Returns { posted, entry } — posted:false with
- * the existing entry on replay (never double-posts, never throws for dupes).
- * Throws loudly for real problems (missing order, bad amounts, dead chart).
+ * the existing POSTED entry on replay (never double-posts), posted:true on a
+ * fresh post OR recovery of a stranded draft (retry-safe). A draft is never
+ * returned as if it were posted. Throws loudly for real problems (missing
+ * order, non-integer money, bad amounts, dead chart, closed-period refusal).
  */
 function postOrderSale(orderId, { costs = [], userId = '' } = {}) {
   const oid = parseInt(orderId, 10) || 0;
   if (!oid) throw new Error('postOrderSale requires an order id');
-  const existing = findPostedEntry(oid);
-  if (existing) return { posted: false, entry: journalService.getEntry(existing.id) };
+  const existing = findOrderJournal(oid);
+  if (existing && existing.status === 'posted') {
+    return { posted: false, entry: journalService.getEntry(existing.id) };
+  }
 
   const order = db.prepare('SELECT id, total FROM orders WHERE id = ?').get(oid);
   if (!order) throw new Error(`Order #${oid} not found — cannot post a missing order`);
-  const total = Math.round(Number(order.total) || 0);
+  const total = journalService.assertIntegerCents(order.total, `Order #${oid} total`);
   if (!(total > 0)) throw new Error(`Order #${oid} has no positive total — refusing to post`);
+
+  // Stranded draft from a previously failed attempt: recover by posting
+  // (stabilization P0#1 — never return a draft as replayed truth).
+  if (existing) {
+    return { posted: true, entry: journalService.postEntry(existing.id, userId || 'kashier-webhook') };
+  }
 
   const cash = resolveAccount('1000');
   const revenue = resolveAccount('4000');
@@ -48,8 +62,8 @@ function postOrderSale(orderId, { costs = [], userId = '' } = {}) {
 
   let cogsTotal = 0;
   for (const c of (costs || [])) {
-    const unit = Math.round(Number(c.unitCost) || 0);
-    const qty = Math.round(Number(c.qty ?? c.quantity) || 0);
+    const unit = c.unitCost == null ? 0 : journalService.assertIntegerCents(c.unitCost, `COGS unit cost (product ${c.productId ?? c.product_id})`);
+    const qty = (c.qty ?? c.quantity) == null ? 0 : journalService.assertIntegerCents(c.qty ?? c.quantity, `COGS qty (product ${c.productId ?? c.product_id})`);
     if (unit > 0 && qty > 0) cogsTotal += unit * qty;
   }
 
@@ -71,4 +85,4 @@ function postOrderSale(orderId, { costs = [], userId = '' } = {}) {
   return { posted: true, entry };
 }
 
-module.exports = { SKELETON, SOURCE_EVENT, resolveAccount, findPostedEntry, postOrderSale };
+module.exports = { SKELETON, SOURCE_EVENT, resolveAccount, findOrderJournal, postOrderSale };

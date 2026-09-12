@@ -187,22 +187,60 @@ describe('Admin Inventory API', () => {
     expect(Array.isArray(res.body)).toBe(true);
   });
 
-  test('movements: receipt increases stock, count restores it (self-cleaning)', async () => {
-    // pick the first product + warehouse
-    const prodRes = await req('GET', '/api/products?sort=newest');
-    expect(prodRes.status).toBe(200);
-    const product = prodRes.body[0];
+  // Self-contained fixtures (stabilization #12): ambient state (whatever
+  // `sort=newest` returns; whether its legacy stock column matches the ERP
+  // ledger; leftover litter products) must never decide an integration result.
+  let testProductId = null;
+  let testWarehouseId = null;
+
+  afterAll(async () => {
+    if (testProductId) {
+      // count to exactly 0, then trash the product so nothing lingers
+      await req('POST', '/api/admin/inventory/movements', {
+        json: true,
+        body: JSON.stringify({ product_id: testProductId, warehouse_id: testWarehouseId, type: 'count', counted_qty: 0, note: 'api-test:cleanup' }),
+      });
+      await req('DELETE', `/api/admin/products/${testProductId}`, {});
+      testProductId = null;
+    }
+  });
+
+  async function ensureFixture() {
+    if (testProductId) return;
     const whRes = await req('GET', '/api/admin/warehouses');
     expect(whRes.status).toBe(200);
-    const wh = whRes.body[0];
-    const originalStock = product.stock;
+    testWarehouseId = whRes.body[0].id;
+    // Use a category that actually exists in this DB (seed ids are not 1 here).
+    const cats = await req('GET', '/api/products/categories/list');
+    const categoryId = cats.body?.[0]?.id || 5; // fall back to a known-good id
+    const created = await req('POST', '/api/admin/products', {
+      json: true,
+      body: JSON.stringify({ name: 'api-test inventory product', price: 10, category_id: categoryId }),
+    });
+    expect([200, 201]).toContain(created.status);
+    testProductId = created.body.id;
+  }
+
+  test('movements: receipt increases stock, count restores it (self-cleaning)', async () => {
+    await ensureFixture();
+
+    // Use the movement ledger itself as the source of truth (stable across any
+    // legacy-stock drift in ambient products). First count sets the baseline.
+    const baseline = 5;
+    const seed = await req('POST', '/api/admin/inventory/movements', {
+      json: true,
+      body: JSON.stringify({ product_id: testProductId, warehouse_id: testWarehouseId, type: 'count', counted_qty: baseline, note: 'api-test:seed' }),
+    });
+    expect(seed.status).toBe(201);
+    expect(seed.body.qty_after).toBe(baseline);
+    const originalStock = seed.body.qty_after;
 
     // receipt +5
     const rec = await req('POST', '/api/admin/inventory/movements', {
       json: true,
       body: JSON.stringify({
-        product_id: product.id,
-        warehouse_id: wh.id,
+        product_id: testProductId,
+        warehouse_id: testWarehouseId,
         type: 'receipt',
         qty_change: 5,
         note: 'api-test:receipt',
@@ -213,15 +251,15 @@ describe('Admin Inventory API', () => {
     expect(rec.body.qty_after).toBe(originalStock + 5);
 
     // storefront stock follows the ERP ledger
-    const afterRec = await req('GET', `/api/products/${product.id}`);
+    const afterRec = await req('GET', `/api/products/${testProductId}`);
     expect(afterRec.body.stock).toBe(originalStock + 5);
 
     // count sets exact stock (counted_qty)
     const count = await req('POST', '/api/admin/inventory/movements', {
       json: true,
       body: JSON.stringify({
-        product_id: product.id,
-        warehouse_id: wh.id,
+        product_id: testProductId,
+        warehouse_id: testWarehouseId,
         type: 'count',
         counted_qty: originalStock,
         note: 'api-test:count-restore',
@@ -231,21 +269,17 @@ describe('Admin Inventory API', () => {
     expect(count.body.qty_after).toBe(originalStock);
 
     // restored
-    const restored = await req('GET', `/api/products/${product.id}`);
+    const restored = await req('GET', `/api/products/${testProductId}`);
     expect(restored.body.stock).toBe(originalStock);
   });
 
   test('movement with insufficient stock returns 409', async () => {
-    const prodRes = await req('GET', '/api/products?sort=newest');
-    const product = prodRes.body[0];
-    const whRes = await req('GET', '/api/admin/warehouses');
-    const wh = whRes.body[0];
-
+    await ensureFixture();
     const res = await req('POST', '/api/admin/inventory/movements', {
       json: true,
       body: JSON.stringify({
-        product_id: product.id,
-        warehouse_id: wh.id,
+        product_id: testProductId,
+        warehouse_id: testWarehouseId,
         type: 'issue',
         qty_change: -999999,
         note: 'api-test:over-issue',

@@ -12,9 +12,13 @@
  * through reversePayment() which posts the opposite entry and flips status to
  * 'reversed' (original + reversal both remain visible).
  *
- * Replay-safety: optional caller idempotency_key (UNIQUE) returns the existing
- * payment; the journal ux_journal_source UNIQUE(str_type,id,event) is the
- * posting backstop.
+ * Replay-safety (stabilization): idempotency_key returns the existing payment
+ * only when the CANONICAL REQUEST FINGERPRINT (sha256 supplier/amount/method/
+ * date/sorted-applications, stored in idem_fp) matches — same key + different
+ * material request is an idempotency-conflict (409 at the route). The journal
+ * ux_journal_source UNIQUE(str_type,id,event) is the posting backstop.
+ * Overpayment authority is re-derived INSIDE the write transaction — the
+ * pre-check is convenience only and nothing depends on it staying correct.
  *
  * Outstanding AP per PO is DERIVED from posted journals (ADR-014: posted
  * journals are the accounting truth) — never from a mutable operational counter.
@@ -22,6 +26,7 @@
  *   − applications on recorded (non-reversed) payments
  */
 
+const crypto = require('crypto');
 const db = require('../db');
 const journalService = require('./journalService');
 const documentNumberService = require('./documentNumberService');
@@ -31,20 +36,40 @@ const { resolveAccount } = require('./accountChart');
 const SOURCE_TYPE = 'supplier_payment';
 const EVENT_RECORDED = 'payment-recorded';
 const EVENT_REVERSED = 'payment-reversed';
+const REASON_MAX_CHARS = 300; // canonical limit for reversal/audit reasons (stabilization)
 
 // Method → cash-side account code. Extensible: add 'bank'/'transfer' later.
 const METHOD_ACCOUNTS = { cash: '1000' };
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+/** Business date, canonical rule — see journalService.todayISO (UTC calendar day). */
+function businessToday() {
+  return journalService.todayISO();
 }
 
 function assertDate(v) {
-  const s = String(v || '').trim() || todayISO();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    throw new Error(`Invalid paid_at "${v}" — expected YYYY-MM-DD`);
+  const s = String(v || '').trim() || businessToday();
+  if (!journalService.isValidCalendarDate(s)) {
+    throw new Error(`Invalid paid_at "${v}" — expected real calendar date in YYYY-MM-DD`);
   }
   return s;
+}
+
+/**
+ * Deterministic fingerprint of the CANONICAL request (stabilization P0#5):
+ * an idempotency key may only replay its own payment. Different material
+ * request under the same key is a CONFLICT, never a silent replay.
+ * Covers: supplier, amount, method, business date, applications (sorted).
+ */
+function requestFingerprint({ supplierId, amount, method, date, apps }) {
+  const canonical = {
+    v: 1,
+    s: supplierId,
+    a: amount,
+    m: method,
+    d: date,
+    apps: apps.map(a => ({ p: a.poId, a: a.amount })).sort((x, y) => x.p - y.p),
+  };
+  return crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
 /**
@@ -101,24 +126,54 @@ function getPayment(id) {
   return payment;
 }
 
-function findPostedJournal(paymentId, event) {
+/**
+ * Journal created for this payment + event, ANY status. Named honestly
+ * (stabilization #10): only `.status === 'posted'` means posted.
+ */
+function findPaymentJournal(paymentId, event) {
   return db.prepare(`
-    SELECT * FROM journal_entries
+    SELECT id FROM journal_entries
     WHERE source_type = ? AND source_id = ? AND source_event = ?
     LIMIT 1
   `).get(SOURCE_TYPE, paymentId, event) || null;
 }
 
 /**
+ * AUTHORITATIVE application validation: every applied amount must still fit
+ * the live derived outstanding and sum to the payment (stabilization #9:
+ * re-runs INSIDE the write transaction, not just as a pre-check).
+ */
+function validateApplications({ supplierId, supplierName, apps, total }) {
+  let appliedTotal = 0;
+  for (const a of apps) {
+    const po = db.prepare('SELECT id, supplier_id, po_number FROM purchase_orders WHERE id = ?').get(a.poId);
+    if (!po) throw new Error(`Purchase order #${a.poId} not found`);
+    if (po.supplier_id !== supplierId) {
+      throw new Error(`Purchase order ${po.po_number} does not belong to supplier "${supplierName}"`);
+    }
+    const remaining = outstandingForPo(a.poId); // derived from POSTED truth
+    if (a.amount > remaining) {
+      throw new Error(`Overpayment on ${po.po_number}: applying ${a.amount} but only ${remaining} outstanding`);
+    }
+    appliedTotal += a.amount;
+  }
+  if (appliedTotal !== total) {
+    throw new Error(`Applications (${appliedTotal}) must equal payment amount (${total}) — over/under-application rejected`);
+  }
+}
+
+/**
  * Record + apply + post a supplier payment. Atomic: payment row, applications,
  * journal entry/lines and the audit event all succeed or all roll back.
+ * Overpayment authority is re-validated INSIDE the transaction (stabilization
+ * #9); the pre-check only exists for fast, friendly rejection before writes.
  *
  * @param {object} args
  * @param {number} args.supplierId
- * @param {number} args.amount        cents, > 0
- * @param {Array}  args.applications  [{ purchaseOrderId, amount }] cents
+ * @param {number} args.amount        INTEGER cents, > 0 — fractional rejected
+ * @param {Array}  args.applications  [{ purchaseOrderId, amount }] int cents
  * @param {string} [args.method]      'cash' (default)
- * @param {string} [args.paidAt]      YYYY-MM-DD
+ * @param {string} [args.paidAt]      real calendar date YYYY-MM-DD (default UTC today)
  * @param {string} [args.notes]
  * @param {string} [args.idempotencyKey]
  * @param {string} [args.userId]
@@ -140,50 +195,46 @@ function recordPayment({
   if (!supplier) throw new Error(`Supplier #${sid} not found`);
   if (!supplier.is_active) throw new Error(`Supplier "${supplier.name}" is inactive`);
 
-  const total = Math.round(Number(amount) || 0);
-  if (!(total > 0)) throw new Error('Supplier payment amount must be a positive amount (cents)');
+  // Money at the canonical boundary: integer cents or fail loudly (#2).
+  const total = journalService.assertIntegerCents(amount, 'Supplier payment amount');
+  if (!(total > 0)) throw new Error('Supplier payment amount must be a positive amount (integer cents)');
 
-  const cashCode = METHOD_ACCOUNTS[String(method).toLowerCase()];
-  if (!cashCode) throw new Error(`Unsupported payment method "${method}"`);
+  const methodKey = String(method).toLowerCase();
+  const cashCode = METHOD_ACCOUNTS[methodKey];
+  if (!cashCode) throw new Error(`Unsupported payment method "${method}" (known: ${Object.keys(METHOD_ACCOUNTS).join(', ')})`);
 
   if (!Array.isArray(applications) || applications.length === 0) {
     throw new Error('Supplier payment requires at least one application');
   }
 
-  // Replay: caller-supplied key returns the existing payment, never a dupe.
-  const replay = findByIdempotencyKey(idempotencyKey);
-  if (replay) {
-    return { paid: false, payment: getPayment(replay.id), entry: null, reason: 'duplicate idempotency key — returned existing payment' };
-  }
-
   const date = assertDate(paidAt);
 
-  // Normalize + validate applications against live outstanding (pre-check).
+  // Normalize applications (shape only; authority re-checked later, in-txn).
   const seenPo = new Set();
   const apps = [];
-  let appliedTotal = 0;
   for (const raw of applications) {
     const poId = parseInt(raw.purchaseOrderId ?? raw.purchase_order_id, 10) || 0;
     if (!poId) throw new Error('Each application requires a purchaseOrderId');
     if (seenPo.has(poId)) throw new Error(`Duplicate application for purchase order #${poId}`);
     seenPo.add(poId);
-    const amt = Math.round(Number(raw.amount) || 0);
+    const amt = journalService.assertIntegerCents(raw.amount, `Application amount for PO #${poId}`);
     if (!(amt > 0)) throw new Error(`Application for PO #${poId} must be a positive amount`);
-    const po = db.prepare('SELECT id, supplier_id, po_number FROM purchase_orders WHERE id = ?').get(poId);
-    if (!po) throw new Error(`Purchase order #${poId} not found`);
-    if (po.supplier_id !== sid) {
-      throw new Error(`Purchase order ${po.po_number} does not belong to supplier "${supplier.name}"`);
-    }
-    const remaining = outstandingForPo(poId);
-    if (amt > remaining) {
-      throw new Error(`Overpayment on ${po.po_number}: applying ${amt} but only ${remaining} outstanding`);
-    }
     apps.push({ poId, amount: amt });
-    appliedTotal += amt;
   }
-  if (appliedTotal !== total) {
-    throw new Error(`Applications (${appliedTotal}) must equal payment amount (${total}) — over/under-application rejected`);
+
+  // Replay: same key returns the SAME payment only if the canonical request
+  // matches. Key reuse with a different request is an explicit conflict (#5).
+  const fingerprint = requestFingerprint({ supplierId: sid, amount: total, method: methodKey, date, apps });
+  const replay = findByIdempotencyKey(idempotencyKey);
+  if (replay) {
+    if (replay.idem_fp === fingerprint) {
+      return { paid: false, payment: getPayment(replay.id), entry: null, reason: 'duplicate idempotency key — returned existing payment' };
+    }
+    throw new Error(`idempotency-conflict: key reused with a different request (supplier/amount/method/date/applications) — use a fresh key or the identical request`);
   }
+
+  // Friendly pre-check (fast UX rejection) — authoritative check runs in-txn.
+  validateApplications({ supplierId: sid, supplierName: supplier.name, apps, total });
 
   const payable = resolveAccount('2100');
   const cash = resolveAccount(cashCode);
@@ -191,13 +242,19 @@ function recordPayment({
   let paymentId = null;
   let entry = null;
   db.transaction(() => {
+    // Stabilization #9: outstanding authority re-derived after the write lock
+    // is held (nested SAVEPOINTs keep this atomically in sync with INSERTs),
+    // so correctness never depends on a pre-check "remaining safe".
+    validateApplications({ supplierId: sid, supplierName: supplier.name, apps, total });
+
     const { document_number } = documentNumberService.generate('PAY');
     const res = db.prepare(`
       INSERT INTO supplier_payments
-        (payment_no, supplier_id, method, amount, status, paid_at, notes, idempotency_key, created_by)
-      VALUES (?, ?, ?, ?, 'recorded', ?, ?, ?, ?)
-    `).run(document_number, sid, String(method).toLowerCase(), total, date,
-      String(notes || ''), idempotencyKey ? String(idempotencyKey) : null, String(userId || ''));
+        (payment_no, supplier_id, method, amount, status, paid_at, notes, idempotency_key, idem_fp, created_by)
+      VALUES (?, ?, ?, ?, 'recorded', ?, ?, ?, ?, ?)
+    `).run(document_number, sid, methodKey, total, date,
+      String(notes || ''), idempotencyKey ? String(idempotencyKey) : null,
+      idempotencyKey ? fingerprint : null, String(userId || ''));
     paymentId = res.lastInsertRowid;
 
     const insApp = db.prepare(`
@@ -236,6 +293,10 @@ function recordPayment({
  * flips status to 'reversed'. The original payment + its applications remain as
  * immutable history; reversal is its own audited event. Idempotent — reversing
  * an already-reversed payment returns the existing state without re-posting.
+ *
+ * Stabilization: the reason is MANDATORY SERVER-SIDE (not UI-only), trimmed,
+ * non-blank, capped at REASON_MAX_CHARS. The stored payment method must map to
+ * a real chart account — no silent cash fallback (#8).
  */
 function reversePayment(paymentId, { reason = '', userId = '' } = {}) {
   const pid = parseInt(paymentId, 10) || 0;
@@ -248,15 +309,26 @@ function reversePayment(paymentId, { reason = '', userId = '' } = {}) {
     throw new Error(`Supplier payment cannot be reversed from status "${payment.status}"`);
   }
 
+  const cleanReason = String(reason == null ? '' : reason).trim();
+  if (!cleanReason) {
+    throw new Error('Reversal requires a non-empty reason (server-side rule)');
+  }
+  if (cleanReason.length > REASON_MAX_CHARS) {
+    throw new Error(`Reversal reason exceeds ${REASON_MAX_CHARS} characters`);
+  }
+
   const payable = resolveAccount('2100');
-  const cashCode = METHOD_ACCOUNTS[payment.method] || '1000';
+  const cashCode = METHOD_ACCOUNTS[String(payment.method).toLowerCase()];
+  if (!cashCode) {
+    throw new Error(`Cannot reverse: stored payment method "${payment.method}" has no chart mapping — repair the chart, never guess the account`);
+  }
   const cash = resolveAccount(cashCode);
-  const total = Math.round(Number(payment.amount) || 0);
+  const total = journalService.assertIntegerCents(payment.amount, `Payment #${pid} amount`);
 
   let entry = null;
   db.transaction(() => {
     const draft = journalService.createEntry({
-      entry_date: todayISO(),
+      entry_date: businessToday(),
       description: `Reversal of supplier payment ${payment.payment_no}`,
       lines: [
         { account_id: cash.id, debit: total, credit: 0, description: `${payment.payment_no} cash refund` },
@@ -271,11 +343,11 @@ function reversePayment(paymentId, { reason = '', userId = '' } = {}) {
       SET status = 'reversed', reversed_by = ?, reversed_at = CURRENT_TIMESTAMP,
           reversal_reason = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(String(userId || ''), String(reason || ''), pid);
+    `).run(String(userId || ''), cleanReason, pid);
 
     eventService.emit(eventService.EVENT_TYPES.SUPPLIER_PAYMENT_REVERSED, eventService.ENTITY_TYPES.SUPPLIER_PAYMENT, pid, {
       userId: userId || '',
-      payload: { payment_no: payment.payment_no, amount: total, reason: String(reason || '') },
+      payload: { payment_no: payment.payment_no, amount: total, reason: cleanReason },
     });
   });
 
@@ -319,7 +391,9 @@ module.exports = {
   appliedToPo,
   outstandingForPo,
   getPayment,
-  findPostedJournal,
+  findPaymentJournal,
+  requestFingerprint,
+  validateApplications,
   recordPayment,
   reversePayment,
   listPayments,

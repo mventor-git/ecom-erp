@@ -1,5 +1,25 @@
 # Changelog
 
+## [4.18.0] - 2026-09-12 - mventor-stabilization (Accounting integrity hardening 086–089, P0 F1–F13)
+
+### Fixed
+- **F1** Payment posting bridge: `findPostedReceipt`/`findPostedEntry` checked any `status`, so a stranded **draft** journal from a crashed attempt returned as a replayed payment; now `.status==='posted'` gates replay, and on retry the draft is **reposted** (recovered) instead. Functions renamed `find*Journal` honestly (F10).
+- **F2** Integer-cents enforcement: `assertIntegerCents` used in journalService, payment/ applications in both bridges + payment. Fractional cents rejected with a clear error — never silently rounded.
+- **F3** Real calendar validation: `isValidCalendarDate` replaces the bare regex in `journalService.assertEntryDate` and `supplierPaymentService.assertDate` (rejects `2026-02-31` et al.); `todayISO` UTC semantics documented in-code.
+- **F4** Server-side reversal reason enforcement: `reversePayment` requires non-blank reason ≤300 chars (was UI+route only); direct service callers cannot make reasonless reversals.
+- **F5** Idempotency key ⇄ request fingerprinting: `idem_fp` column (sha256 canonical: supplier/amount/method/date/apps) stored next to the key. Same key + same fingerprint ⇒ replay; different ⇒ explicit `idempotency-conflict` (409). Idempotent probe migration adds column to legacy DBs.
+- **F6** Posted financial journals immutable: `unpostEntry` refuses `source_type` journals (086/087/088/089 bridges) — only 079 manual null-source journals cycle `posted→draft`. Existing 079 tests unchanged.
+- **F7** Period control now **fails closed**: `closedPeriodContaining` and the movement gate refuse on lookup errors (`period control unavailable`); null on query success ("no period covers today") is the only allowed path.
+- **F8** `reversePayment` no longer falls back to Cash `1000` for unknown stored method — explicit "no chart mapping" throw.
+- **F9** Overpayment/outstanding authority **re-validated inside `db.transaction()`**: `validateApplications` runs pre-txn (fast UX) + post-txn (authoritative on derived outstanding).
+- **F11** `order_items` schema fork: mirrored normalized family (`qty/base_price/final_price/cost_snapshot/price_list_code/…` + indexes) added idempotently to `db.js` so fresh databases match what the five writers insert.
+- **F12** Test-isolation: `purchaseOrder.test` cleans its products (removed the 7-worker-fail cascade from leaked `po-item` products); `mobileApi.test` picks in-stock products via fixture; `ECOM_DB_PATH` env var supported in `db.js`+`run-integration-tests`; NEW `run-isolated-tests.js` snapshots a `store.test.db` for CI/repeatable runs (`npm run test:isolated[:integration]`).
+### Test result
+- `npm test`: **42 suites / 235 tests all pass** (was exit-1 on both HEAD and stable = pre-existing jest worker issue, NOT a fail)
+- integration: **107/107 pass, exit 0** (was 7-fail at 4d2420d)
+- smoke on live HTTP routes: **14/14 checks pass** (replay, 409-fingerprint, integer/date rejection, server-side reason, sourced-immutable, no orphan payment/appl/journal rows)
+- secret scan clean; admin build pass.
+
 ## [4.17.0] - 2026-09-12 - mventor-ticket-089: Supplier payment UI (Completed)
 ### Added
 - PO detail panel: derived payables (Receipt value / Paid / Outstanding) + this-PO payment list with `StatusBadge` (`recorded`/`reversed`); Record-Payment dialog (EGP→cents via `utils/money`, stable-per-edit idempotency key); Reverse dialog mirroring PO-reject (required reason, counter, inline errors).

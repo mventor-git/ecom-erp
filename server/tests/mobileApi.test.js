@@ -375,8 +375,14 @@ describe('Mobile â€” Worker API', () => {
   let workerProductId = null;
 
   beforeAll(async () => {
-    const res = await req('GET', '/api/v1/products?limit=1');
-    workerProductId = res.body.data[0].id;
+    // Stabilization #12: the OLD pattern `products?limit=1` returns the newest
+    // row first (created_at DESC) — which can be a leftover 0-stock/0-price
+    // product from other suites, making cart-add fail and cascading 7 failures.
+    // Sibling blocks pick a real in-stock listing; worker suite now matches that.
+    const res = await req('GET', '/api/v1/products?limit=50');
+    const inStock = (res.body.data || []).find(p => p.stock > 0);
+    workerProductId = inStock ? inStock.id : null;
+    expect(workerProductId).toBeTruthy();
   });
 
   test('GET /api/v1/worker/orders without token returns 401', async () => {

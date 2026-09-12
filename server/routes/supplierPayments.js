@@ -9,9 +9,16 @@ const adminAuth = require('../middleware/adminAuth');
 const { requirePermission } = require('../middleware/rbac');
 const supplierPaymentService = require('../services/supplierPaymentService');
 
+/**
+ * mventor-ticket-088 — Supplier payments (thin route).
+ * All accounting semantics live in supplierPaymentService — no account codes,
+ * no money rules here. Status mapping (stabilization): idempotency-conflict
+ * gets 409; validation rejections 400; anything else 500.
+ */
 function mapError(err) {
   const m = String(err.message || '');
-  if (/not found|inactive|Overpayment|must equal|positive amount|requires|Duplicate application|does not belong|Unsupported|Invalid paid_at|at least one application|already reversed|cannot be reversed/i.test(m)) {
+  if (/idempotency-conflict|reused with/i.test(m)) return 409;
+  if (/not found|inactive|Overpayment|must equal|positive amount|integer number of cents|must be required|requires|at least one|duplicate application|does not belong|Unsupported|Invalid paid_at|reversal/i.test(m)) {
     return 400;
   }
   return 500;

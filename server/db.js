@@ -2,7 +2,12 @@ const initSqlJs = require('sql.js');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'data', 'store.db');
+// DB location. ECOM_DB_PATH lets CI / isolated test runs work on a COPY of
+// the data file instead of mutating the live store.db (stabilization #12).
+// Default behavior is unchanged: server/data/store.db.
+const DB_PATH = process.env.ECOM_DB_PATH
+  ? path.resolve(process.env.ECOM_DB_PATH)
+  : path.join(__dirname, 'data', 'store.db');
 
 // Ensure data directory exists
 const dataDir = path.dirname(DB_PATH);
@@ -449,11 +454,14 @@ async function initDb() {
       verified_at DATETIME
     )
   `);
-  // mventor-ticket-050: backfill user_roles from the legacy single role_id (works on existing DBs)
-  db.run(`
+  // mventor-ticket-050: backfill user_roles from the legacy single role_id (works on existing DBs).
+  // Stabilization check: the users table doesn't exist yet on a FRESH database
+  // at this point — the backfill is a no-op anyway (no legacy rows), so wrap
+  // this to unblock the first-ever fresh-start boot (no existing users/rows).
+  try { db.run(`
     INSERT OR IGNORE INTO user_roles (user_id, role_id)
     SELECT id, role_id FROM users WHERE role_id IS NOT NULL
-  `);
+  `); } catch { /* fresh database — nothing to backfill yet */ }
 
   db.run(`
     CREATE TABLE IF NOT EXISTS sessions (
@@ -489,6 +497,34 @@ async function initDb() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Stabilization #11 — ONE canonical schema. The single-row builder
+  // (services/orderLines + adminSale + mobile checkout) and the backfill read
+  // the normalized mirror family (qty/base_price/final_price/cost_snapshot/
+  // price_list_code…); migrations/004+005 defined it but nothing executes SQL
+  // files, so fresh DBs crashed on first checkout. Mirror the full 005 shape
+  // through the house idempotent probe idiom (catch performs migration; only
+  // a failed ALTER can throw, never silence).
+  for (const col of [
+    'variant_id INTEGER REFERENCES product_variants(id)',
+    "sku TEXT DEFAULT ''",
+    'qty INTEGER DEFAULT 0',
+    'base_price INTEGER DEFAULT 0',
+    "discount_type TEXT DEFAULT 'none'",
+    'discount_value INTEGER DEFAULT 0',
+    'discount_amount INTEGER DEFAULT 0',
+    'final_price INTEGER DEFAULT 0',
+    "price_list_code TEXT DEFAULT 'retail'",
+    'tax_rate REAL DEFAULT 0',
+    'tax_amount INTEGER DEFAULT 0',
+    'cost_snapshot INTEGER DEFAULT 0',
+  ]) {
+    const name = col.split(' ')[0];
+    let missing = false;
+    try { db.prepare(`SELECT ${name} FROM order_items LIMIT 1`).get(); } catch { missing = true; }
+    if (missing) db.run(`ALTER TABLE order_items ADD COLUMN ${col}`);
+  }
+  db.run('CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id)');
+  db.run('CREATE INDEX IF NOT EXISTS idx_order_items_product ON order_items(product_id)');
 
   db.run(`
     CREATE TABLE IF NOT EXISTS user_addresses (
@@ -1026,6 +1062,15 @@ async function initDb() {
   `);
   db.run(`CREATE UNIQUE INDEX IF NOT EXISTS ux_supplier_payment_idem
     ON supplier_payments(idempotency_key) WHERE idempotency_key IS NOT NULL`);
+
+  // Stabilization #5: canonical REQUEST FINGERPRINT (sha256 of normalized
+  // request: supplier/amount/method/date/sorted-applications). Replay is only
+  // honored when the key AND the fingerprint match; same key + different
+  // request must conflict, never silently replay. Idempotent probe: the catch
+  // performs the migration for existing DBs.
+  let idemFpMissing = false;
+  try { db.prepare('SELECT idem_fp FROM supplier_payments LIMIT 1').get(); } catch { idemFpMissing = true; }
+  if (idemFpMissing) db.run('ALTER TABLE supplier_payments ADD COLUMN idem_fp TEXT');
 
   db.run(`
     CREATE TABLE IF NOT EXISTS supplier_payment_applications (

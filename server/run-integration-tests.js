@@ -19,7 +19,9 @@ const TEST_STAFF_PASSWORD = 'IntegrationTest123!';
 // Pre-seed staff user for mobile JWT tests (before server starts)
 function seedTestUser() {
   return new Promise((resolve, reject) => {
-    const DB_PATH = path.join(__dirname, 'data', 'store.db');
+    const DB_PATH = process.env.ECOM_DB_PATH
+      ? path.resolve(process.env.ECOM_DB_PATH)
+      : path.join(__dirname, 'data', 'store.db');
     if (!fs.existsSync(DB_PATH)) return resolve();
 
     const initSqlJs = require('sql.js');
@@ -52,7 +54,9 @@ function seedTestUser() {
 
 // Remove the test staff user and any mobile test customers after tests finish
 function cleanupTestUser() {
-  const DB_PATH = path.join(__dirname, 'data', 'store.db');
+  const DB_PATH = process.env.ECOM_DB_PATH
+    ? path.resolve(process.env.ECOM_DB_PATH)
+    : path.join(__dirname, 'data', 'store.db');
   if (!fs.existsSync(DB_PATH)) return;
 
   const initSqlJs = require('sql.js');

@@ -32,6 +32,16 @@ afterAll(async () => {
     db.prepare('DELETE FROM purchase_orders WHERE supplier_id = ?').run(supplierId);
     db.prepare('DELETE FROM suppliers WHERE id = ?').run(supplierId);
     db.prepare("DELETE FROM customers WHERE email LIKE 'po-%@example.com'").run();
+    // Self-clean every product this suite created (incl. their inventory +
+    // movements) — previously leaked `po-item` rows poisoned the mobile
+    // /products listing and cascaded 7 worker-API integration failures.
+    for (const pid of _madeProducts.splice(0)) {
+      db.prepare('DELETE FROM inventory_movements WHERE product_id = ?').run(pid);
+      db.prepare('DELETE FROM inventory WHERE product_id = ?').run(pid);
+      db.prepare('DELETE FROM inventory_cost_layers WHERE product_id = ?').run(pid);
+      db.prepare('DELETE FROM order_items WHERE product_id = ?').run(pid);
+      db.prepare('DELETE FROM products WHERE id = ?').run(pid);
+    }
     db.saveDb();
   } catch {}
 });
@@ -40,9 +50,12 @@ function onHand(pid) {
   return db.prepare('SELECT qty_on_hand FROM inventory WHERE product_id = ? AND warehouse_id = 1').get(pid)?.qty_on_hand ?? 0;
 }
 
+const _madeProducts = []; // stabilization #12: self-clean every product this suite creates
+
 function makeProduct(name, stock) {
   const r = db.prepare("INSERT INTO products (name, price, cost_price, category_id, active, stock) VALUES (?, 90000, 50000, ?, 1, 0)").run(name, catId);
   const pid = r.lastInsertRowid;
+  _madeProducts.push(pid);
   db.prepare('INSERT INTO inventory (product_id, warehouse_id, qty_on_hand) VALUES (?, 1, 0)').run(pid);
   db.prepare("INSERT INTO inventory_movements (product_id, warehouse_id, type, qty_change, qty_before, qty_after, unit_cost, note) VALUES (?, 1, 'receipt', ?, 0, ?, 50000, 'po-test seed')").run(pid, stock, stock);
   return pid;
