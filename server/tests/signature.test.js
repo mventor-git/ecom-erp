@@ -18,9 +18,15 @@ let targetUserId;
 
 async function start() {
   await db.initPromise;
-  // A normal, non-admin user to be the signature target.
-  targetUserId = db.prepare("INSERT INTO users (email, username, name, password_hash, is_active, role_id) VALUES ('sig.target@example.com','sigtarget','Sig Target','x',1,2)")
-    .run().lastInsertRowid;
+  // A normal, non-admin user to be the signature target. Idempotent
+  // get-or-create: a previous force-killed run can leave the fixed-email row
+  // (teardown skipped), and a blind re-insert would hit UNIQUE forever; a
+  // blind DELETE can FK-fail if other fixtures reference it. Reuse if present.
+  const existing = db.prepare("SELECT id FROM users WHERE email = 'sig.target@example.com'").get();
+  targetUserId = existing
+    ? existing.id
+    : db.prepare("INSERT INTO users (email, username, name, password_hash, is_active, role_id) VALUES ('sig.target@example.com','sigtarget','Sig Target','x',1,2)")
+        .run().lastInsertRowid;
   const app = express();
   app.use(express.json());
   // Stub an authenticated super-admin session so requirePermission('users.update')
@@ -33,7 +39,7 @@ async function start() {
 }
 
 afterAll(async () => {
-  try { server && server.close(); } catch {}
+  try { if (server) { server.closeAllConnections?.(); server.close(); } } catch {}
   try {
     const u = db.prepare('SELECT signature_path FROM users WHERE id = ?').get(targetUserId);
     if (u && u.signature_path) { const f = path.join(__dirname, '..', 'public', u.signature_path.replace(/^\/images\//, '')); try { fs.unlinkSync(f); } catch {} }

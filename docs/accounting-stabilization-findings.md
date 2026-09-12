@@ -49,3 +49,27 @@ Nothing deferred. All 13 findings are confirmed and implemented here.
 - No ticket 090 / AP aging started
 - No account codes added to routes/controllers; business logic in services; no silent fallbacks for financial semantics
 - No test weakened or deleted
+
+---
+
+## ADDENDUM — 2026-09-12 readiness checkpoint (pre-090 sweep): N1 + N2 NEW CONFIRMED (same class as F5)
+
+CHECK 4 pattern sweep of the financial/document/inventory paths found two bugs the F1–F13 pass had not covered. Both are **reported, NOT fixed** — 090 is **BLOCKED** on owner decision.
+
+### N1 — `services/idempotencyService.js` (mounted on `POST /api/admin/inventory/movements`, checkout-adjacent controls): response cache keyed `METHOD path :: header` only
+- **No actor scoping** — two staff reusing a header string each receive the other's cached response (info disclosure).
+- **No request fingerprint** (the exact F5 class) — same header + totally different body → the second request **never executes**, the first response is returned. For inventory movements the ledger IS the SSOT: a silently-dropped movement means the ledger diverges from reality while the caller saw success.
+- **In-memory only** — restart clears the guard precisely in the double-submit-after-crash window it exists to protect.
+
+### N2 — `routes/orders.js` L32-35 guest checkout: client-supplied `idempotency_key`, unscoped lookup
+- `SELECT * FROM orders WHERE idempotency_key = ? LIMIT 1` → returns the **entire order row** (customer shipping name/phone/address, totals, status, `stripe_session_id`) to whoever replays that key → **PII/order leak**.
+- No UNIQUE index on `orders.idempotency_key`: a collision silently **discards the second order** (revenue loss) while answering 200.
+- Same root shape as F5: identity of the request/actor is never compared to the stored key.
+
+### Recommended fixes (NOT implemented in this checkpoint, awaiting owner go)
+- N1: include actor in cache key + canonical request fingerprint (mirror `idem_fp` in supplierPayments); persist (settings/DB or `idempotency_cache` table) or explicitly accept the restart gap in docs; **409 on mismatch** instead of silent replay.
+- N2: scope the lookup by `customer_id` (key belongs to the creating identity), add a partial UNIQUE index on non-null `orders.idempotency_key`, conflict → new key required.
+
+### Checkpoint verification evidence (commit after this addendum)
+- **CHECK 1 order_items:** data audit — mirror values agree 100% on materialized rows (`qty=quantity`, `base_price=price`, `final_price=price`, `cost_snapshot` 0/unknown = legitimately never-issued/cancelled, fixtures-only); the 39 `orders_no_rows` = 0 real orders, 39 fixtures/legacy; **SAFE**.
+- **CHECK 2:** `npm test` 42/235 **exit 0** after fixing true causes (server closeAllConnections in 4 suites' afterAll; removed two library `console.log`s in `db.js` violating the no-console-log-in-production rule + causing "Cannot log after tests are done"); signature fixture made idempotent (was self-poisoning after force-killed runs); `npm run test:isolated` → 235/235 **exit 0** ("finished (exit 0), copy removed, live store.db untouched"); `test:integration` **exit 0** 107/107.

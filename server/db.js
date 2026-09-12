@@ -1768,7 +1768,8 @@ async function initDb() {
             VALUES (?, ?, NULL, ?, 0, 0, 0, 0)
           `, [pid, whId, stock]);
         });
-        console.log(`📦  Seeded inventory ledger: ${products[0].values.length} products at warehouse #${whId}`);
+        // Library must not console.log: startup/operator banners live at the
+        // entry point (index.js). This fired after Jest teardown before.
       }
     }
   }
@@ -1778,7 +1779,6 @@ async function initDb() {
   // which previously left declared FOREIGN KEYs unenforced (orphan risk).
   db.run('PRAGMA foreign_keys = ON');
   saveDb();
-  console.log(`📦  Database initialized at ${DB_PATH}`);
   return db;
 }
 

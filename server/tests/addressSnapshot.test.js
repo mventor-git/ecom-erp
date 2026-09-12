@@ -37,7 +37,9 @@ function post(body) {
 }
 
 afterAll(async () => {
-  try { server && server.close(); } catch {}
+  // close() alone waits on keep-alive sockets → jest force-exit (exit 1).
+  // End existing connections so the server can actually close.
+  try { if (server) { server.closeAllConnections?.(); server.close(); } } catch {}
   try {
     db.prepare('DELETE FROM order_items WHERE order_id IN (SELECT id FROM orders WHERE items LIKE \'%snap-prod%\')').run();
     db.prepare('DELETE FROM orders WHERE items LIKE \'%snap-prod%\'').run();

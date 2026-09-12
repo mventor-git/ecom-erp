@@ -1,10 +1,20 @@
 ﻿# Handover Note
 
-**Date:** 2026-09-12 (fourth stop of session — accounting stabilization F1–F13)
+**Date:** 2026-09-12 (fifth stop — pre-090 readiness checkpoint + N1/N2)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session
 
-## 🔬 FORENSIC STABILIZATION F1–F13 (086–089) COMPLETED — ALL VERIFICATION GREEN
+## ✅ READINESS CHECKPOINT (pre-090): unit exit now honest 0; F11 data SAFE; 090 = BLOCKED on N1/N2
+
+- **CHECK 1 F11:** live-DB data audit — every mirror family agrees on materialized rows (`qty=quantity`, `base_price=final_price=price` on all 67 rows; `price_list_code` never empty; `cost_snapshot`=0 only for never-issued/cancelled/fixture rows; 0 real orders missing rows) → **SAFE, no backfill**.
+- **CHECK 2:** `npm test` = 42/42, 235/235, **process exit 0** (root-fixed: `server.closeAllConnections()` in 4 suites; 2 library `console.log` banners deleted from `db.js`; signature fixture idempotent). `npm run test:isolated` exit 0. `test:integration` exit 0 (107/107).
+- **CHECK 3:** 086→089 accounting invariants re-verified on code: sourced journals immutable, no AP counter anywhere, outstanding derived from posted journals, idem_fp + ux + partial UNIQUE, fail-closed period controls both sides, integer cents + calendar dates + strict methods.
+- **CHECK 4 NEW — 090 BLOCKED:** N1 `services/idempotencyService.js` (in-memory, no actor/request fingerprint → movements replay collision); N2 `POST /api/orders` `idempotency_key` unscoped lookup (PII cross-read + silent order drop). Details + recommended fixes in `docs/accounting-stabilization-findings.md` ADDENDUM + CHANGELOG [4.18.1].
+- **State on `master`:** `0f57522` (F1-F13) pushed; checkpoint commit follows this note.
+
+---
+
+## 🔬 FORENSIC STABILIZATION F1–F13 (086–089) COMPLETED (fourth stop) — ALL VERIFICATION GREEN
 
 Owner directive: review/fix integrity **before** AP aging (090). **No 090 code written.**
 

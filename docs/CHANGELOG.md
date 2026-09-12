@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.18.1] - 2026-09-12 - readiness checkpoint: honest test-exit fix + F11 data proof + NEW findings N1/N2 (CHECK 4)
+### Fixed
+- `npm test` process exit code now **0**: root causes fixed, no jest config weakening — (a) released keep-alive sockets in 4 HTTP-fixture suites (`server.closeAllConnections()` in purchaseOrder/signature/addressSnapshot/mobileApi afterAll) that forced jest worker exits; (b) removed two library `console.log` banners in `db.js` (violated the "no console.log in prod; entry-point logs" rule AND fired after Jest teardown = "Cannot log after tests are done"); (c) signature fixture idempotent get-or-create (was self-poisoning: leftover fixed-email row → UNIQUE insert failure forever after the first aborted run).
+### Evidence
+- CHECK 1 F11 data-semantic audit on live store.db: all mirror families agree 100% on materialized rows (`qty=quantity`, `base_price=price` everywhere; no NULLs on real data); orders without rows are fixtures only; cancelled orders legitimately having cost_snapshot=0 (never issued) — SAFE, no backfill needed, no invented values.
+- Unit 42/235 **exit 0**; isolated snapshot 235/235 **exit 0** (live DB untouched); integration 107/107 **exit 0**.
+### Found (reported, NOT fixed)
+- **N1** `idempotencyService` (movements/checkout replay control): in-memory, key lacks actor + request identity — F5-class collision can silently drop an intended movement while returning the old success.
+- **N2** `POST /api/orders`: client body `idempotency_key` — unscoped lookup returns another customer's full order (PII) or silently discards the new order (no UNIQUE).
+- Findings + recommended fixes in `docs/accounting-stabilization-findings.md` (addendum). 090 remains BLOCKED awaiting owner decision.
+
 ## [4.18.0] - 2026-09-12 - mventor-stabilization (Accounting integrity hardening 086–089, P0 F1–F13)
 
 ### Fixed

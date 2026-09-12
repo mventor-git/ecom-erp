@@ -26,7 +26,9 @@ async function start() {
 }
 
 afterAll(async () => {
-  try { server && server.close(); } catch {}
+  // Release keep-alive sockets then close — a bare close() strands the
+  // open connections and makes jest force-exit the worker (exit 1).
+  try { if (server) { server.closeAllConnections?.(); server.close(); } } catch {}
   try {
     db.prepare('DELETE FROM purchase_order_items WHERE po_id IN (SELECT id FROM purchase_orders WHERE supplier_id = ?)').run(supplierId);
     db.prepare('DELETE FROM purchase_orders WHERE supplier_id = ?').run(supplierId);

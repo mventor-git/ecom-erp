@@ -708,7 +708,8 @@ describe('Mobile â€” Webhooks API', () => {
   });
 
   afterAll(() => {
-    if (listener) listener.close();
+    // webhook deliveries use keep-alive; bare close() hangs → force-exit
+    if (listener) { listener.closeAllConnections?.(); listener.close(); }
   });
 
   test('POST /api/v1/webhooks with customer token returns 403', async () => {
