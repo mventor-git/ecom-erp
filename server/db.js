@@ -1426,6 +1426,21 @@ async function initDb() {
       SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = ?)
     `, [name, description, name]);
   });
+
+  // mventor-ticket-092: GL operability permissions (insert-if-missing, existing DBs too)
+  const ticket92Permissions = [
+    ['accounts.read', 'View the chart of accounts'],
+    ['accounts.manage', 'Create, edit, deactivate chart-of-account entries'],
+    ['journals.read', 'View journals and journal detail'],
+    ['journals.manage', 'Author, post and unpost manual journal entries'],
+    ['ledger.read', 'View ledger, trial balance and GL statements'],
+  ];
+  ticket92Permissions.forEach(([name, description]) => {
+    db.run(`
+      INSERT INTO permissions (name, description)
+      SELECT ?, ? WHERE NOT EXISTS (SELECT 1 FROM permissions WHERE name = ?)
+    `, [name, description, name]);
+  });
   // Ensure super_admin always has every permission (existing DBs too)
   const saRoleAll = db.exec("SELECT id FROM roles WHERE name = 'super_admin'");
   if (saRoleAll && saRoleAll[0] && saRoleAll[0].values && saRoleAll[0].values[0]) {

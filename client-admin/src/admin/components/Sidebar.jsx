@@ -68,10 +68,13 @@ const SECTIONS = [
   {
     id: 'finance', label: 'Finance', icon: 'banknote',
     items: [
-      { to: '/dashboard-detail/revenue', label: 'Accounting', icon: 'chart' },
-      { to: '/erp/reports', label: 'Reports', icon: 'bars' },
+      { to: '/dashboard-detail/revenue', label: 'Accounting', icon: 'banknote' },
+      { to: '/erp/reports', label: 'Reports', icon: 'chart' },
+      { to: '/erp/chart-of-accounts', label: 'Chart of Accounts', icon: 'box' },
+      { to: '/erp/journals', label: 'Journals', icon: 'document' },
+      { to: '/erp/statements', label: 'Statements', icon: 'chart' },
       { to: '/erp/financial-periods', label: 'Financial Periods', icon: 'calendar' },
-      { to: '/erp/kashier', label: 'Payments & Reconciliation', icon: 'banknote' },
+      { to: '/erp/kashier', label: 'Payments & Reconciliation', icon: 'card' },
     ],
   },
   { id: 'website', label: 'Website', icon: 'globe', items: [{ to: '/site-config', label: 'Site Config', icon: 'globe' }] },

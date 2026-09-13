@@ -64,6 +64,13 @@ function cleanupTestUser() {
     const db = new SQL.Database(fs.readFileSync(DB_PATH));
     db.run('DELETE FROM users WHERE email = ?', [TEST_STAFF_EMAIL]);
     db.run("DELETE FROM customers WHERE email LIKE 'mobile.customer.%@test.com'");
+    // House janitor (092): integration runs may leave events whose entities
+    // the suites already deleted (e.g. bridge journals cleaned by source).
+    // Sweep entity-referencing orphans so live stays at zero residue.
+    db.run("DELETE FROM events WHERE entity_type = 'journal' AND entity_id NOT IN (SELECT id FROM journal_entries)");
+    db.run("DELETE FROM events WHERE entity_type = 'order' AND entity_id NOT IN (SELECT id FROM orders)");
+    db.run("DELETE FROM events WHERE entity_type = 'financial_period' AND entity_id NOT IN (SELECT id FROM financial_periods)");
+    db.run("DELETE FROM events WHERE entity_type = 'account' AND entity_id NOT IN (SELECT id FROM accounts)");
     fs.writeFileSync(DB_PATH, Buffer.from(db.export()));
     console.log(`Removed test staff user: ${TEST_STAFF_EMAIL} and mobile test customers`);
   }).catch(err => {

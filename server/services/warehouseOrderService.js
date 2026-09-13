@@ -621,10 +621,15 @@ function listFinancialPeriods() {
   return db.prepare('SELECT * FROM financial_periods ORDER BY start_date DESC').all();
 }
 
-function closeFinancialPeriod(id) {
+function closeFinancialPeriod(id, userId = '') {
   const period = db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
   if (!period) throw new Error('Financial period not found');
   db.prepare("UPDATE financial_periods SET status = 'CLOSED', closed_at = CURRENT_TIMESTAMP WHERE id = ?").run(id);
+  // Operator audit (092): closing is a ledger lock control — auditable who/when.
+  const eventService = require('./eventService');
+  eventService.emit(eventService.EVENT_TYPES.FINANCIAL_PERIOD_CLOSED, eventService.ENTITY_TYPES.FINANCIAL_PERIOD, id, {
+    userId: userId || '', payload: { name: period.name, start_date: period.start_date, end_date: period.end_date },
+  });
   return db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
 }
 
@@ -635,11 +640,16 @@ function closeFinancialPeriod(id) {
  * controlled-adjust stays a future ticket. closed_at cleared so an OPEN
  * period never carries a stale closed stamp.
  */
-function reopenFinancialPeriod(id) {
+function reopenFinancialPeriod(id, userId = '') {
   const period = db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
   if (!period) throw new Error('Financial period not found');
   if (period.status !== 'CLOSED') throw new Error('Only closed periods can be reopened');
   db.prepare("UPDATE financial_periods SET status = 'OPEN', closed_at = NULL WHERE id = ?").run(id);
+  // Operator audit (092): un-locking the ledger is exactly as important as locking it.
+  const eventService = require('./eventService');
+  eventService.emit(eventService.EVENT_TYPES.FINANCIAL_PERIOD_REOPENED, eventService.ENTITY_TYPES.FINANCIAL_PERIOD, id, {
+    userId: userId || '', payload: { name: period.name, start_date: period.start_date, end_date: period.end_date },
+  });
   return db.prepare('SELECT * FROM financial_periods WHERE id = ?').get(id);
 }
 

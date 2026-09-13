@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const compression = require('compression');
@@ -38,7 +38,7 @@ if (isProduction) {
   }
 }
 
-// Trust proxy — needed when behind ngrok/reverse proxy
+// Trust proxy â€” needed when behind ngrok/reverse proxy
 // This ensures req.protocol and req.hostname use the forwarded values
 app.set('trust proxy', 1);
 
@@ -107,8 +107,8 @@ if (isProduction) {
   app.use(morgan(logFormat, { stream: accessLogStream }));
 }
 
-console.log(`📝  Request logging enabled (${isProduction ? 'file only' : 'console + file'})`);
-console.log(`📂  Logs directory: ${logsDir}`);
+console.log(`ðŸ“  Request logging enabled (${isProduction ? 'file only' : 'console + file'})`);
+console.log(`ðŸ“‚  Logs directory: ${logsDir}`);
 
 // --------------- Rate Limiting ---------------
 
@@ -117,7 +117,7 @@ const apiLimiter = rateLimit({
   max: 200,                  // limit each IP to 200 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  // Admin requests are handled by adminLimiter (1000/15min) — don't double-count
+  // Admin requests are handled by adminLimiter (1000/15min) â€” don't double-count
   skip: (req) => req.originalUrl.startsWith('/api/admin'),
   message: { error: 'Too many requests, please try again later.' },
 });
@@ -267,6 +267,7 @@ app.use('/api/admin/suppliers', require('./routes/suppliers'));
 app.use('/api/admin', require('./routes/warehouses'));
 app.use('/api/admin/purchase-orders', require('./routes/purchaseOrders'));
 app.use('/api/admin/supplier-payments', require('./routes/supplierPayments'));
+app.use('/api/admin/accounting', require('./routes/accounting'));
 app.use('/api/admin/reports', require('./routes/reports'));
 app.use('/api/admin/integrations', require('./routes/integrations'));
 app.use('/api/admin/invoices', require('./routes/invoices'));
@@ -372,16 +373,17 @@ db.initPromise.then(() => {
   }, 60 * 1000); // check every minute
 
   app.listen(PORT, () => {
-    console.log(`🛒  Store backend running at http://localhost:${PORT}`);
-    console.log(`🔍  Health check: http://localhost:${PORT}/api/health`);
+    console.log(`ðŸ›’  Store backend running at http://localhost:${PORT}`);
+    console.log(`ðŸ”  Health check: http://localhost:${PORT}/api/health`);
   });
 }).catch(err => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
 });
 
-// VIP invitation routes (must be mounted BEFORE module.exports — was dead code)
+// VIP invitation routes (must be mounted BEFORE module.exports â€” was dead code)
 app.use('/api/admin/vip', require('./routes/vipInvitations'));
 app.use('/api/admin/recommendations', require('./routes/recommendations'));
 
 module.exports = app;
+

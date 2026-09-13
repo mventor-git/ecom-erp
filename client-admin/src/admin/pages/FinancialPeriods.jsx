@@ -4,7 +4,7 @@ import StatCard from '../components/StatCard';
 import ConfirmDialog from '../components/ConfirmDialog';
 import AdminIcon from '../components/AdminIcon';
 import {
-  getFinancialPeriods, createFinancialPeriod, closeFinancialPeriod,
+  getFinancialPeriods, createFinancialPeriod, closeFinancialPeriod, reopenFinancialPeriod,
   setOpeningBalance, getWarehouses, getInventorySummary,
 } from '../../api/adminApi';
 
@@ -186,6 +186,14 @@ export default function FinancialPeriods() {
               <button onClick={() => setPendingClose(r.id)} className="px-2.5 py-1 text-xs bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100">Close</button>
             </>
           )}
+          {/* 092: closing locks POSTINGS into the range (journal + movement gates); reopen recovers */}
+          {r.status === 'CLOSED' && (
+            <button
+              onClick={() => reopenFinancialPeriod(r.id)
+                .then(() => { setSavedMsg('Financial period reopened'); setTimeout(() => setSavedMsg(''), 3500); loadAll(); })
+                .catch(err => setError(err.response?.data?.error || 'Failed to reopen period'))}
+              className="px-2.5 py-1 text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-lg hover:bg-amber-100">Reopen</button>
+          )}
         </div>
       ),
     },
@@ -196,7 +204,7 @@ export default function FinancialPeriods() {
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Financial Periods</h1>
-          <p className="text-sm text-gray-500 mt-1">Period management — opening balance posts a real <code>opening_balance</code> ledger movement. Not accounting: no GL/journal/lock.</p>
+          <p className="text-sm text-gray-500 mt-1">Period management — closing LOCKS the books: journal postings (manual and bridged) and stock movements dated inside a closed period are refused fail-closed. GL lives in Journals / Chart of Accounts / Statements.</p>
         </div>
         <button onClick={() => { setShowCreate(true); setError(''); }} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">+ New Period</button>
       </div>
@@ -217,8 +225,9 @@ export default function FinancialPeriods() {
       {/* Honest boundary note */}
       <p className="text-xs text-gray-400 mt-3">
         Opening balance reconciles the inventory ledger to the counted quantity via an <code>opening_balance</code> movement
-        (<code>financial_period</code> reference). Closing a period is a status flip that blocks further opening balances. There is no
-        journal, no chart of accounts, no AR/AP, and no accounting lock — those are out of scope by design.
+        (<code>financial_period</code> reference). Since 084/085 a CLOSED period fails CLOSED for stock movements AND journal
+        postings; since 092 the GL itself lives in Chart of Accounts / Journals / Statements, and posted journals inside a
+        closed period cannot be unposted until reopen. Close/reopen are audited.
       </p>
 
       {/* Create modal */}

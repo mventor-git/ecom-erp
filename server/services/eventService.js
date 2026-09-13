@@ -79,6 +79,16 @@ const EVENT_TYPES = {
   JOURNAL_POSTED: 'journal_posted',
   JOURNAL_UNPOSTED: 'journal_unposted',
 
+  // GL operability (mventor-ticket-092 — manual operator actions on the ledger)
+  JOURNAL_ENTRY_CREATED: 'journal_entry_created',   // manual draft authored
+  JOURNAL_ENTRY_UPDATED: 'journal_entry_updated',   // manual draft edited
+  JOURNAL_ENTRY_DELETED: 'journal_entry_deleted',   // manual draft discarded
+  ACCOUNT_CREATED: 'account_created',
+  ACCOUNT_UPDATED: 'account_updated',
+  ACCOUNT_DELETED: 'account_deleted',
+  FINANCIAL_PERIOD_CLOSED: 'financial_period_closed',
+  FINANCIAL_PERIOD_REOPENED: 'financial_period_reopened',
+
   // Supplier payments (088 — AP relief, immutable + reversal)
   SUPPLIER_PAYMENT_RECORDED: 'supplier_payment_recorded',
   SUPPLIER_PAYMENT_REVERSED: 'supplier_payment_reversed',
@@ -97,6 +107,8 @@ const ENTITY_TYPES = {
   SYSTEM: 'system',
   JOURNAL: 'journal',
   SUPPLIER_PAYMENT: 'supplier_payment',
+  ACCOUNT: 'account',
+  FINANCIAL_PERIOD: 'financial_period',
 };
 
 /**

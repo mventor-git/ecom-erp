@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const adminAuth = require('../middleware/adminAuth');
 const { requirePermission } = require('../middleware/rbac');
@@ -6,7 +6,7 @@ const warehouseOrderService = require('../services/warehouseOrderService');
 const documentService = require('../services/documentService');
 const fs = require('fs');
 
-// ── Supply Orders ──
+// â”€â”€ Supply Orders â”€â”€
 router.get('/supply-orders', adminAuth, requirePermission('inventory.view'), (req, res) => {
   try {
     res.json(warehouseOrderService.listSupplyOrders());
@@ -72,7 +72,7 @@ router.post('/supply-orders/:id/cancel', adminAuth, requirePermission('inventory
   }
 });
 
-// ── Issue Orders ──
+// â”€â”€ Issue Orders â”€â”€
 router.get('/issue-orders', adminAuth, requirePermission('inventory.view'), (req, res) => {
   try {
     const q = req.query;
@@ -148,7 +148,7 @@ router.post('/issue-orders/:id/cancel', adminAuth, requirePermission('inventory.
   }
 });
 
-// ── Financial Periods ──
+// â”€â”€ Financial Periods â”€â”€
 router.get('/financial-periods', adminAuth, requirePermission('inventory.view'), (req, res) => {
   try {
     res.json(warehouseOrderService.listFinancialPeriods());
@@ -169,7 +169,7 @@ router.post('/financial-periods', adminAuth, requirePermission('inventory.manage
 
 router.post('/financial-periods/:id/close', adminAuth, requirePermission('inventory.manage'), (req, res) => {
   try {
-    res.json(warehouseOrderService.closeFinancialPeriod(parseInt(req.params.id)));
+    res.json(warehouseOrderService.closeFinancialPeriod(parseInt(req.params.id), req.session.username || req.user?.email || 'admin'));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -177,7 +177,7 @@ router.post('/financial-periods/:id/close', adminAuth, requirePermission('invent
 
 router.post('/financial-periods/:id/reopen', adminAuth, requirePermission('inventory.manage'), (req, res) => {
   try {
-    res.json(warehouseOrderService.reopenFinancialPeriod(parseInt(req.params.id)));
+    res.json(warehouseOrderService.reopenFinancialPeriod(parseInt(req.params.id), req.session.username || req.user?.email || 'admin'));
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -196,7 +196,7 @@ router.post('/financial-periods/:id/opening-balance', adminAuth, requirePermissi
   }
 });
 
-// ── Documents (.md with QR + barcode) ──
+// â”€â”€ Documents (.md with QR + barcode) â”€â”€
 router.get('/documents/:type', adminAuth, requirePermission('documents.manage'), (req, res) => {
   try {
     res.json(documentService.listDocuments(req.params.type.toUpperCase()));
@@ -215,8 +215,8 @@ router.get('/documents/:type/:filename', adminAuth, requirePermission('documents
   }
 });
 
-// ── Fulfillment pipeline (mventor-ticket-057) ──
-// issued → packed → sent → delivering → delivered, with driver claim/assign.
+// â”€â”€ Fulfillment pipeline (mventor-ticket-057) â”€â”€
+// issued â†’ packed â†’ sent â†’ delivering â†’ delivered, with driver claim/assign.
 
 router.post('/issue-orders/:id/pack', adminAuth, requirePermission('inventory.manage'), (req, res) => {
   try {
@@ -232,7 +232,7 @@ router.post('/issue-orders/:id/assign-driver', adminAuth, requirePermission('inv
   } catch (err) { res.status(400).json({ error: err.message }); }
 });
 
-// Driver actions — any authenticated staff; service validates role fit via claim ownership.
+// Driver actions â€” any authenticated staff; service validates role fit via claim ownership.
 const driverAction = (fn, getDriver) => (req, res) => {
   try {
     const driverId = getDriver(req);
@@ -265,3 +265,4 @@ router.post('/issue-orders/:id/delivered', adminAuth, requirePermission('invento
   driverAction((id, d) => warehouseOrderService.markDelivered(id, d), req => req.body?.driver_id));
 
 module.exports = router;
+

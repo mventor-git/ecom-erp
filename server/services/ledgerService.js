@@ -136,4 +136,97 @@ function getTrialBalance({ from = null, to = null } = {}) {
   };
 }
 
-module.exports = { getLedger, getTrialBalance };
+/**
+ * Profit & Loss — mventor-ticket-092. STRICTLY journal-derived:
+ * revenue = net credit, expenses = net debit over POSTED lines in range,
+ * grouped by account type. NEVER reads orders, statuses, or current product
+ * cost — if an event is not in the books it is not in this statement.
+ */
+function getProfitAndLoss({ from = null, to = null } = {}) {
+  const tb = getTrialBalance({ from, to });
+  const money = (r) => ({ account_id: r.account_id, code: r.code, name: r.name, net_cents: 0 });
+  const revenue = [];
+  const expenses = [];
+  let totalRevenue = 0;
+  let totalExpense = 0;
+  for (const r of tb.rows) {
+    if (r.type === 'revenue') {
+      const net = r.period_credit - r.period_debit; // normal-side revenue activity (reversals reduce it)
+      if (net === 0 && r.period_debit === 0 && r.period_credit === 0) continue;
+      revenue.push({ ...money(r), net_cents: net });
+      totalRevenue += net;
+    } else if (r.type === 'expense') {
+      const net = r.period_debit - r.period_credit;
+      if (net === 0 && r.period_debit === 0 && r.period_credit === 0) continue;
+      expenses.push({ ...money(r), net_cents: net });
+      totalExpense += net;
+    }
+  }
+  return {
+    from: tb.from,
+    to: tb.to,
+    basis: 'POSTED journal lines only (account type revenue/expense); order status and product cost are NOT inputs',
+    revenue,
+    expenses,
+    total_revenue_cents: totalRevenue,
+    total_expense_cents: totalExpense,
+    net_income_cents: totalRevenue - totalExpense,
+    ledger_balanced: tb.balanced,
+  };
+}
+
+/**
+ * Balance Sheet — mventor-ticket-092, TRUTHFUL scope: a statement of the
+ * POSTED LEDGER as of a date. Every posted journal balances (service rule),
+ * so Σ(debit-side nets) == Σ(credit-side nets) identically — the check here
+ * proves the books, it does not bless their coverage: physical-vs-ledger
+ * inventory truth is ticket 093's reconciliation, and coverage caveats are
+ * surfaced verbatim. No retained-earnings roll-forward exists (the model has
+ * no closing process): current earnings DERIVE from journal nets instead.
+ */
+function getBalanceSheet({ as_of = null } = {}) {
+  if (as_of && !require('./journalService').isValidCalendarDate(as_of)) {
+    throw new Error(`Invalid as_of "${as_of}" — expected real calendar date YYYY-MM-DD`);
+  }
+  // final_* columns of a TB run with only `to` = lifetime posted position as of date
+  const tb = getTrialBalance({ from: null, to: as_of || null });
+  const net = (r) => (r.final_debit - r.final_credit); // debit-normal positive
+  const bucket = { asset: [], liability: [], equity: [], other: [] };
+  let earnings = 0;
+  for (const r of tb.rows) {
+    if (r.type === 'revenue') { earnings += (r.final_credit - r.final_debit); continue; }
+    if (r.type === 'expense') { earnings -= (r.final_debit - r.final_credit); continue; }
+    const key = (r.type === 'liability' || r.type === 'equity' || r.type === 'asset') ? r.type : 'other';
+    const signed = key === 'liability' || key === 'equity' ? -net(r) : net(r); // normal-side positive
+    if (signed === 0) continue;
+    bucket[key].push({ account_id: r.account_id, code: r.code, name: r.name, balance_cents: signed });
+  }
+  const sum = (arr) => arr.reduce((s, x) => s + x.balance_cents, 0);
+  const assets = sum(bucket.asset);
+  const liabilities = sum(bucket.liability);
+  const equityAccounts = sum(bucket.equity);
+  const other = sum(bucket.other); // 'other'-type accounts: surfaced as unclassified, never hidden
+  const checkDiff = (assets + other) - (liabilities + equityAccounts + earnings);
+  return {
+    as_of: as_of || null,
+    basis: 'POSTED journal balances per account as of date (no valuations, no closing entries, nothing carried from operational state)',
+    assets: bucket.asset,
+    total_assets_cents: assets,
+    liabilities: bucket.liability,
+    total_liabilities_cents: liabilities,
+    equity: bucket.equity,
+    total_equity_cents: equityAccounts,
+    current_earnings_cents: earnings,
+    unclassified_other: bucket.other,
+    total_other_cents: other,
+    balanced: checkDiff === 0,
+    balance_check: { assets_plus_other_cents: assets + other, liabilities_equity_earnings_cents: liabilities + equityAccounts + earnings, difference_cents: checkDiff },
+    limitations: [
+      'No retained-earnings closing (model carries no closing process); current earnings derive directly from posted revenue/expense nets.',
+      'Ledger balances are only as complete as what is BOOKED — inventory adjustments/returns/transfers are not journaled yet (physical-vs-ledger truth is the 093 reconciliation), and legacy unbooked settlements appear only via the 091 revenue reconciliation.',
+      'No revaluation: all amounts are the cents posted at transaction time.',
+    ],
+  };
+}
+
+module.exports = { getLedger, getTrialBalance, getProfitAndLoss, getBalanceSheet };

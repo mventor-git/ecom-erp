@@ -29,10 +29,12 @@ afterEach(() => {
     db.prepare('DELETE FROM journal_lines WHERE entry_id = ?').run(eid);
     db.prepare('DELETE FROM journal_entries WHERE id = ?').run(eid);
   }
-  db.prepare("DELETE FROM events WHERE entity_type = 'journal' AND entity_id NOT IN (SELECT id FROM journal_entries)").run();
   for (const pid of periodIds.splice(0)) {
     db.prepare('DELETE FROM financial_periods WHERE id = ?').run(pid);
   }
+  db.prepare("DELETE FROM events WHERE entity_type = 'journal' AND entity_id NOT IN (SELECT id FROM journal_entries)").run();
+  // 092: close/reopen are audited now — sweep this suite's orphan period events.
+  db.prepare("DELETE FROM events WHERE entity_type = 'financial_period' AND entity_id NOT IN (SELECT id FROM financial_periods)").run();
 });
 
 afterAll(() => {
@@ -40,6 +42,7 @@ afterAll(() => {
   db.prepare("DELETE FROM journal_entries WHERE description LIKE 'jest079%'").run();
   db.prepare("DELETE FROM accounts WHERE code LIKE 'jest-079-%'").run();
   db.prepare("DELETE FROM financial_periods WHERE name LIKE 'jest079%'").run();
+  db.prepare("DELETE FROM events WHERE entity_type = 'financial_period' AND entity_id NOT IN (SELECT id FROM financial_periods)").run();
   db.saveDb();
 });
 

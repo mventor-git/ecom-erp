@@ -97,6 +97,65 @@ function listEntries({ limit = 100 } = {}) {
   return db.prepare('SELECT * FROM journal_entries ORDER BY id DESC LIMIT ?').all(n);
 }
 
+/**
+ * Filtered journal listing for the operator surface (mventor-ticket-092).
+ * Reads only — the same `journal_entries` model, never a second one.
+ * Filters: from/to (calendar-valid), status, source ('order'|'inventory_movement'|
+ * 'supplier_payment'|'manual'), account (id or code — matches ANY line using it),
+ * q (entry_no/description contains). Each row carries total_cents (debit sum).
+ * Returns { rows, total } where total is the count over the FULL filtered set.
+ */
+function listEntriesFiltered({ from = null, to = null, status = null, source = null, account = null, q = null, limit = 50, offset = 0 } = {}) {
+  const conds = [];
+  const params = [];
+  if (from) {
+    if (!isValidCalendarDate(from)) throw new Error(`Invalid from "${from}" — expected real calendar date YYYY-MM-DD`);
+    conds.push('date(e.entry_date) >= date(?)'); params.push(from);
+  }
+  if (to) {
+    if (!isValidCalendarDate(to)) throw new Error(`Invalid to "${to}" — expected real calendar date YYYY-MM-DD`);
+    conds.push('date(e.entry_date) <= date(?)'); params.push(to);
+  }
+  if (status) {
+    if (!['draft', 'posted'].includes(status)) throw new Error(`Invalid status filter "${status}"`);
+    conds.push('e.status = ?'); params.push(status);
+  }
+  if (source) {
+    const s = String(source);
+    conds.push(s === 'manual' ? 'e.source_type IS NULL' : 'e.source_type = ?');
+    if (s !== 'manual') params.push(s);
+  }
+  const acct = account != null && account !== '' ? parseInt(account, 10) : null;
+  if (account != null && account !== '') {
+    if (!db.prepare('SELECT id FROM accounts WHERE id = ? OR code = ?').get(acct, String(account))) {
+      throw new Error(`Unknown account filter "${account}"`);
+    }
+    conds.push('EXISTS (SELECT 1 FROM journal_lines fl WHERE fl.entry_id = e.id AND fl.account_id = (SELECT id FROM accounts WHERE id = ? OR code = ?))');
+    params.push(acct, String(account));
+  }
+  if (q && String(q).trim()) {
+    conds.push('(e.entry_no LIKE ? OR e.description LIKE ?)');
+    const like = `%${String(q).trim().slice(0, 80)}%`;
+    params.push(like, like);
+  }
+  const where = conds.length ? ` WHERE ${conds.join(' AND ')}` : '';
+  const n = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+  const off = Math.max(parseInt(offset, 10) || 0, 0);
+  const rows = db.prepare(`
+    SELECT e.*, (SELECT COALESCE(SUM(l.debit), 0) FROM journal_lines l WHERE l.entry_id = e.id) AS total_cents
+    FROM journal_entries e${where}
+    ORDER BY e.id DESC LIMIT ? OFFSET ?
+  `).all(...params, n, off);
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM journal_entries e${where}`).get(...params).n;
+  return { rows, total };
+}
+
+/**
+ * Create a DRAFT journal (never posted — posting is its own audited step).
+ * Manual-operator lifecycle events belong to the accounting service (092);
+ * bridges create+post their sourced journals and are audited by their own
+ * source flow. Keeping THIS model quiet preserves every existing caller.
+ */
 function createEntry({ entry_date, description = '', lines, source = null }) {
   const date = assertEntryDate(entry_date);
   const clean = normalizeLines(lines);
@@ -128,8 +187,25 @@ function assertDraft(id) {
   return header;
 }
 
+/**
+ * A SOURCED draft belongs to an accounting bridge (a stranded posting waiting
+ * for its own recovery path, e.g. re-settlement) — humans never edit or
+ * delete it. Manual (source-less) drafts are bookkeeper-owned. (092)
+ * Source ownership outranks the draft rule so the refusal states the deeper
+ * fact first: bridged journals are machine property at ANY status.
+ */
+function assertManualDraft(id) {
+  const header = db.prepare('SELECT * FROM journal_entries WHERE id = ?').get(id);
+  if (!header) throw new Error('Journal entry not found');
+  if (header.source_type) {
+    throw new Error(`Sourced journal ${header.entry_no} belongs to its source flow (${header.source_type}/${header.source_id}) — recover via the posting service, not by editing`);
+  }
+  if (header.status !== 'draft') throw new Error('Only draft entries can be modified');
+  return header;
+}
+
 function updateDraftEntry(id, { entry_date, description, lines }) {
-  const header = assertDraft(id);
+  const header = assertManualDraft(id);
   const date = entry_date !== undefined ? assertEntryDate(entry_date) : header.entry_date;
   const desc = description !== undefined ? String(description) : header.description;
   const clean = normalizeLines(lines);
@@ -147,12 +223,13 @@ function updateDraftEntry(id, { entry_date, description, lines }) {
 }
 
 function deleteDraftEntry(id) {
-  const header = assertDraft(id);
+  assertManualDraft(id);
+  const entryNo = db.prepare('SELECT entry_no FROM journal_entries WHERE id = ?').get(id).entry_no;
   db.transaction(() => {
     db.prepare('DELETE FROM journal_lines WHERE entry_id = ?').run(id);
     db.prepare('DELETE FROM journal_entries WHERE id = ?').run(id);
   });
-  return { success: true, deleted: header.entry_no };
+  return { success: true, deleted: entryNo };
 }
 
 /**
@@ -223,6 +300,14 @@ function unpostEntry(id, userId = '') {
   if (header.source_type) {
     throw new Error(`Posted sourced journals are immutable ${header.source_type}/${header.source_id} — use the posting service's reversal flow, not unpost`);
   }
+  // Period lock for manual accounting (092): un-posting removes a journal
+  // from a CLOSED period's books — fail closed. A closed period's truth is
+  // frozen; correct it with a new dated entry once reopened, never by
+  // deleting history.
+  const blocker = closedPeriodContaining(header.entry_date);
+  if (blocker) {
+    throw new Error(`Cannot unpost into closed financial period "${blocker.name}" — reopen the period first`);
+  }
   const eventService = require('./eventService');
   db.transaction(() => {
     db.prepare(`UPDATE journal_entries SET status = 'draft', posted_by = NULL, posted_at = NULL,
@@ -241,6 +326,7 @@ module.exports = {
   assertIntegerCents,
   getEntry,
   listEntries,
+  listEntriesFiltered,
   createEntry,
   updateDraftEntry,
   deleteDraftEntry,

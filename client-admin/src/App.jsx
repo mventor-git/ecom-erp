@@ -35,6 +35,9 @@ const SupplierDetail = lazy(() => import('./admin/pages/SupplierDetail'));
 const PurchaseOrdersList = lazy(() => import('./admin/pages/PurchaseOrdersList'));
 const APAgingReport = lazy(() => import('./admin/pages/APAgingReport'));
 const RevenueReconciliation = lazy(() => import('./admin/pages/RevenueReconciliation'));
+const ChartOfAccounts = lazy(() => import('./admin/pages/ChartOfAccounts'));
+const Journals = lazy(() => import('./admin/pages/Journals'));
+const FinancialStatements = lazy(() => import('./admin/pages/FinancialStatements'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -316,6 +319,31 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <RevenueReconciliation />
+              </Suspense>
+            }
+          />
+          {/* GL operability (mventor-ticket-092) */}
+          <Route
+            path="/erp/chart-of-accounts"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <ChartOfAccounts />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/erp/journals"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <Journals />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/erp/statements"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <FinancialStatements />
               </Suspense>
             }
           />

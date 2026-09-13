@@ -82,12 +82,12 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-13 — ticket 091 + verification gate 4.21.1)
-- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. the 091 `products.deleted_at` fork fix** (brand-new file: JE-0001 settle -> JE-0002 reversal -> reconciliation all pass)
-- Frontend: admin build clean (091 settle/refund dialogs + revenue-reconciliation added)
-- **Unit suite: 46 suites / 311 tests PASS, process exit 0** (+29 `salesSettlement091.test`, +4 gate-closure tests)
-- **Integration: 107/107 PASS, exit 0** · isolated 311/311 exit 0 · HTTP smokes 17/17 + post-091 gate 10/10 on throwaway boots · live residue 0 · secret scan clean
+## Build Verification (baseline 2026-09-13 — tickets 091 + 091 gate + 092 GL operability)
+- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified**: 091 flow (JE settle→reversal→recon) + 092 (5 GL permissions seeded, manual-JE lifecycle, statements, audit chain)
+- Frontend: admin build clean (091 settle/refund dialogs + revenue-reconciliation; 092 Chart of Accounts / Journals / Statements + period Reopen)
+- **Unit suite: 47 suites / 332 tests PASS, process exit 0** (live AND isolated snapshot) · **Integration 107/107** · HTTP smokes 17/17 + gate 10/10 + **092 22/22** on throwaway boots · residue 0 incl. orphan events · secret scan clean
 - **Sales settlement is now canonical on every real path** (091): P1 Kashier webhook + P2 worker COD (status+proof) + P3 evidence-backed manual/admin settlement all post ONE `Dr Cash/Cr Revenue` + COGS-leg journal atomically (`sale-settled`, single-post-per-order UNIQUE, cross-channel replay-safe); refunds post a NEW mirrored cash/revenue reversal (`sale-reversed`, never edits/unposts, never restores inventory); provider refund webhook routed through the same seam; period controls fail closed on settlements AND reversals + both webhook directions. `revenueReconciliation` control flags settled-vs-journal divergence by order/source. **Post-091 gate closed the last status-only money doors: admin AND worker routes refuse `paid`/`refunded` intents (SETTLEMENT_REQUIRED / REFUND_REQUIRED), and a booked order can never be `cancelled` (LEDGER_BLOCKED at `transitionOrder` + pre-checks on mobile cancel / on-bill decline; provider trans-void never cancels posted revenue) — booked money moves ONLY through the immutable reversal seam.** Vendored docs kept honest: partial refunds / goods-returns / VIP on-bill AR / counter-sale cash are OUT of 091 (not fake-implemented).
+- **GL is now OPERATIONAL (092):** /api/admin/accounting surface (CoA CRUD with referenced-delete refusal + per-account posted-only ledger · manual journals draft→post→manual-unpost with all invariants server-enforced and period-locked on BOTH sides · every bridge journal badged machine-owned and immutable · filtered journal list/detail with audit timeline) + journal-derived Trial Balance / P&L / truthful Balance Sheet (identity machine-checked, limitations surfaced) under permissions accounts.*/journals.*/ledger.read; reportService profit stays explicitly OPERATIONAL, statements are the accounting view. ADR-018.
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -96,10 +96,10 @@
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
 ## Next Steps (updated 2026-09-13)
-- **mventor-ticket-091 — SALES SETTLEMENT JOURNALING + REFUND REVERSAL COMPLETED** (canonical seam across P1/P2/P3 + refunds + reconciliation; see HANDOVER). **STOP — owner review required; 092/093 NOT started.**
-- Prior: N1+N2 4.19.0; AP Aging 090 + hardening (4.20.0/4.20.1); stabilization 4.18.0/4.18.1; 086→090 chain in CHANGELOG. Details `docs/accounting-stabilization-findings.md`; ADR-017 (091). 
-- **Deferred accounting queue:** GL operability 092 (manual journals / CoA UI / journal-based statements), inventory↔GL 093 (valuation + goods-return + adjustment/RMA), supplier invoices + payment terms (true due-date aging), bank/transfer methods, cash-flow / VAT bookkeeping. Not started without owner direction.
-- Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
+- **mventor-ticket-091 CLOSED (owner-accepted) · mventor-ticket-092 — GL OPERABILITY COMPLETED** (CoA + manual journals + journal list/detail + TB + journal-derived P&L + truthful Balance Sheet + period-locked manual ops + `accounts.*`/`journals.*`/`ledger.read` RBAC + audit trail; ADR-018). **STOP — owner review required; 093 NOT started.**
+- Prior: 091 gate fixes 4.21.1 (booked-cancel + worker money-intent closures); N1+N2 4.19.0; AP Aging 090 (+hardening); stabilization F1–F13. Details `docs/accounting-stabilization-findings.md`; ADRs 014–018.
+- **Deferred accounting queue:** inventory↔GL 093 (valuation + adjustments + goods-return/RMA), supplier invoices + payment terms (true due-date aging), bank/transfer methods + bank accounts in CoA usage, cash-flow / VAT bookkeeping, retained-earnings closing. Not started without owner direction.
+- **Owner triage carried (091):** ~105k-cents legacy settled_unbooked visible in revenue reconciliation — book-only-settle or leave; NOT auto-repaired.
 - Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 
 ## Mobile App Architecture
@@ -123,3 +123,4 @@ The project has pivoted from a simple e-commerce store to a **modular ERP platfo
 - Everything produces events â€” immutable, auditable
 - Never couple modules â€” communicate through services
 - Every configurable value belongs in Settings
+

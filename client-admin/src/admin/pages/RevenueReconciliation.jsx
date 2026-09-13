@@ -61,7 +61,7 @@ export default function RevenueReconciliation() {
           <StatCard label="Posted revenue (net)" value={format(data.totals.posted_revenue_net_cents)} sub="sale journals − reversals" tone="neutral" icon="chart" />
           <StatCard label="Difference" value={format(diff)}
             sub={diff === 0 ? 'views agree ✓' : 'investigate the classes below'}
-            tone={diff === 0 ? 'green' : 'red'} icon="alert" />
+            tone={diff === 0 ? 'success' : 'warning'} icon="alert" />
         </div>
       )}
 
@@ -93,3 +93,4 @@ export default function RevenueReconciliation() {
     </div>
   );
 }
+

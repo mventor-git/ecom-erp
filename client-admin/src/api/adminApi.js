@@ -305,6 +305,27 @@ export const createFinancialPeriod = (data) => api.post('/admin/financial-period
 
 export const closeFinancialPeriod = (id) => api.post(`/admin/financial-periods/${id}/close`);
 
+export const reopenFinancialPeriod = (id) => api.post(`/admin/financial-periods/${id}/reopen`);
+
+// ── GL operability (mventor-ticket-092) — all rules server-side; these fns
+// only move the operator's intent. Errors arrive as server 400 {error}.
+export const getAccounts = (params = {}) => api.get('/admin/accounting/accounts', { params });
+export const createAccount = (body) => api.post('/admin/accounting/accounts', body);
+export const updateAccount = (id, body) => api.put(`/admin/accounting/accounts/${id}`, body);
+export const deleteAccount = (id) => api.delete(`/admin/accounting/accounts/${id}`);
+export const getAccountLedger = (id, params = {}) => api.get(`/admin/accounting/accounts/${id}/ledger`, { params });
+export const getJournals = (params = {}) => api.get('/admin/accounting/journals', { params });
+export const getJournal = (id) => api.get(`/admin/accounting/journals/${id}`);
+export const createJournal = (body) => api.post('/admin/accounting/journals', body);
+export const updateJournal = (id, body) => api.put(`/admin/accounting/journals/${id}`, body);
+export const deleteJournalDraft = (id) => api.delete(`/admin/accounting/journals/${id}`);
+export const postJournal = (id) => api.post(`/admin/accounting/journals/${id}/post`);
+export const unpostJournal = (id) => api.post(`/admin/accounting/journals/${id}/unpost`);
+export const getJournalTimeline = (id) => api.get('/admin/events/timeline/journal/' + id);
+export const getTrialBalance = (params = {}) => api.get('/admin/accounting/trial-balance', { params });
+export const getProfitLoss = (params = {}) => api.get('/admin/accounting/profit-loss', { params });
+export const getBalanceSheet = (params = {}) => api.get('/admin/accounting/balance-sheet', { params });
+
 export const setOpeningBalance = (id, warehouseId, items) =>
   api.post(`/admin/financial-periods/${id}/opening-balance`, { warehouse_id: warehouseId, items });
 

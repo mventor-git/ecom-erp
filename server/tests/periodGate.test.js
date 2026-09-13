@@ -37,6 +37,7 @@ afterAll(() => {
     pid = null;
   }
   db.prepare("DELETE FROM financial_periods WHERE name LIKE 'jest084%'").run();
+  db.prepare("DELETE FROM events WHERE entity_type = 'financial_period' AND entity_id NOT IN (SELECT id FROM financial_periods)").run();
   db.prepare("DELETE FROM events WHERE user_id = 'jest084'").run();
   db.saveDb();
 });
@@ -73,3 +74,4 @@ describe('choke-point period gate (084)', () => {
     expect(m.qty_after).toBeGreaterThanOrEqual(1);
   });
 });
+

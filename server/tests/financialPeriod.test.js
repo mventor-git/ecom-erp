@@ -51,6 +51,8 @@ afterAll(() => {
   for (const pid of periodIds.splice(0)) {
     db.prepare('DELETE FROM financial_periods WHERE id = ? AND name LIKE ?').run(pid, 'Jest FP %');
   }
+  // 092: period transitions are audited now — clear this suite's orphan events.
+  db.prepare("DELETE FROM events WHERE entity_type = 'financial_period' AND entity_id NOT IN (SELECT id FROM financial_periods)").run();
   db.saveDb();
 });
 

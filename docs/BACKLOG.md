@@ -1,8 +1,8 @@
 ﻿# Backlog
 
 ## Active (2026-09-13)
-- **mventor-ticket-091 COMPLETE — STOP for owner review gate (092/093 NOT started).** Candidates once authorized: **092** GL operability (manual journals UI/API + Chart-of-Accounts surface + journal-based statements), **093** inventory↔GL reconciliation/valuation + goods-returns/RMA journals. Also queued: supplier invoices + payment terms (true due-date aging), bank/transfer methods, advances/prepayments, cash-flow + financial statements, settings IA follow-ups.
-- **Owner follow-up from 091:** reconciliation surfaced ~105,000 EGP-cents of pre-091 slider-'paid'-without-journal in the LIVE DB (operational truth, classed `settled_unbooked`); book-only settle heals them individually — decide which to book vs. leave for audit. No silent backfill was done (correct).
+- **mventor-ticket-091 CLOSED (owner-accepted; gate fixes 4.21.1). mventor-ticket-092 COMPLETE — STOP for owner review (093 NOT started).** Candidates once authorized: **093** inventory↔GL reconciliation/valuation + goods-returns/RMA journals. Also queued: supplier invoices + payment terms (true due-date aging), bank/transfer methods, advances/prepayments, cash-flow, VAT bookkeeping, settings IA follow-ups.
+- **Owner follow-up from 091:** reconciliation surfaced ~105,000 EGP-cents of pre-091 slider-'paid'-without-journal in the LIVE DB (operational truth, classed `settled_unbooked`); book-only settle (092 UI: journals/settle endpoints) heals them individually — decide which to book vs. leave for audit. No silent backfill was done (correct).
 - ~~**Stabilization F1-F13 (086-089 integrity review):**~~ ✅ DONE 2026-09-12 - 13 confirmed bugs fixed (draft-replay, silent rounding, bad-date regex, reasonless reversal, fingerprint idempotency, posted-journal immutability, fail-open period gates, silent method fallback, out-of-txn overpayment, `order_items` fresh-DB schema fork, test-isolation). `docs/accounting-stabilization-findings.md`.
 - **Owner browser verification 089:** ✅ Passed (panel, partial, settle, reason-gated reversal, overpayment guard, posted-source-journal refusal).
 - **Deferred (accounting queue):** bank/transfer payment method wiring (`METHOD_ACCOUNTS` seam ready), supplier advances/prepayments, supplier invoices → invoice-level application grain, cash-flow / financial statements (gap-map Ticket M).
@@ -15,6 +15,7 @@
 - **mventor-ticket-011 (Planned):** Paymob Payment Gateway (Vodafone Cash + Instapay) - Plan ready in `tickets/mventor-ticket-011.md`
 
 ## Completed
+- **mventor-ticket-092:** GL operability — operator surface over the ONE journal model: CoA CRUD + per-account ledger, manual JE lifecycle (period-locked both directions, sourced journals machine-owned), journal list/detail + filters, TB reuse, journal-derived P&L + truthful BS (identity checked, limitations surfaced), accounts.*/journals.*/ledger.read RBAC, full operator audit, 3 admin pages + Reopen; verified 47/332×2, 107 integration, smoke 22/22, fresh-DB OK, residue 0. ADR-018.
 - **mventor-ticket-091:** Sales settlement journaling + refund reversal - canonical `sale-settled` journal on all 3 real settlement paths (Kashier webhook / worker COD / evidence manual), single-post-per-order cross-channel, refunds via immutable `sale-reversed` cash/revenue mirror (no fake goods return, partial refused), period fail-closed both sides, webhook atomic + clear-claim redelivery, `settleCod`/`settle`/`refund` services (zero accounting in routes), reconciliation control (5 difference classes) + admin dialogs/page, slider money-lock, fresh-DB `deleted_at` fork fix. ADR-017. Verified 46/311 exit 0 ↔ isolated 311 exit 0 ↔ integration 107 ↔ smokes 17/17 + gate 10/10 ↔ fresh-boot OK ↔ admin build 0 ↔ residue 0. POST-091 GATE 4.21.1: worker paid/refunded intents + booked-cancel (LEDGER_BLOCKED at transitionOrder/mobile-cancel/decline/trans-void) closed; booked money moves only via the reversal seam.
 - **mventor-ticket-090:** AP Aging report (recognition-date basis, ADR-016) — posted-journal-derived open payable lines, explicit as-of w/ historical receipt/payment/reversal cutoffs, per-PO FIFO application allocation, 5 non-overlapping buckets, supplier summary + drill-down detail, machine control totals, admin page + thin aging route. Verified 45/272 exit 0 · isolated 272 exit 0 · integration 107 exit 0 · smoke 8/8 · fresh-boot OK.
 - **mventor-ticket-089:** Supplier payment UI — PO detail payables panel (derived totals + this-PO payments), record/reverse dialogs (EGP→cents, server-authority errors inline), `?purchase_order_id=` list seam. Verified 41/218 + admin clean.
@@ -89,4 +90,5 @@
 - **mventor-ticket-003:** Admin Order Management - Orders list, stats dashboard, status updates
 - **mventor-ticket-002:** Sample Products & Category Polish - 15 products, sorting, "New" badge, sort dropdown
 - **mventor-ticket-001:** Project Foundation - Server, frontend, admin panel, Stripe, docs
+
 
