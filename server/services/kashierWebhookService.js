@@ -62,6 +62,19 @@ function recordEvent(eventKeyStr, eventType, payload) {
   `).run(eventKeyStr, eventType, payload.status || '', JSON.stringify(payload).slice(0, 4000));
 }
 
+/**
+ * 091 recovery: a handler that failed ROLLED BACK its whole mutation, so the
+ * event must not stay recorded — delete the claim and let the provider
+ * redeliver. (This is the durable claim/delete pattern proven in N1.)
+ */
+function clearEvent(eventKeyStr) {
+  try {
+    db.prepare('DELETE FROM kashier_webhook_events WHERE event_key = ?').run(eventKeyStr);
+  } catch (err) {
+    console.error('[kashier-webhook] failed to clear event claim:', err.message);
+  }
+}
+
 // ── Business handlers (idempotent — guarded by event log) ──
 
 const HANDLERS = {
@@ -99,39 +112,35 @@ function handleTransactionSuccess(payload) {
     return;
   }
 
-  // ATOMIC (P0): release + issue + verified-payment state are ONE transaction —
-  // if any step fails, the whole sequence ROLLS BACK. We record the verification
-  // evidence (payment_status='verified', paid_at, payment_method='kashier') so
-  // "paid" is never a client- or slider-fabricated state — it only ever comes
-  // from a verified provider confirmation.
-  // Truth-telling AFTER commit (086): snapshots + journals are best-effort and
-  // logged — a rolled-back handler would be recorded as processed upstream
-  // (recordEvent runs first), stranding money-taken orders as pending forever.
-  // Paid-without-yet-books is detectable (TB vs orders) and re-postable;
-  // stuck-pending is neither. Never the reverse.
-  let issuedCosts = [];
+  // ATOMIC (P0 + 091): release + issue + verified-payment state + canonical
+  // sales journal are ONE transaction — if ANY step fails (including the
+  // period-gated posting) the whole sequence ROLLS BACK and the route clears
+  // the event claim, so the provider redelivers and settlement is retried.
+  // Since 091 "paid" can no longer exist without its books: the best-effort
+  // post-commit posting of 086 (which could strand a paid order unjournaled
+  // with no re-post seam) is replaced by this all-or-nothing boundary.
+  // Payment evidence semantics unchanged: "paid" only ever comes from a
+  // SIGNED amount/currency match against the authoritative order total.
   db.transaction(() => {
     const bridge = require('./salesInventoryBridge');
+    const orderLines = require('./orderLines');
+    const salesPosting = require('./salesPosting');
     const items = parseItems(order);
     bridge.releaseForOrder(orderId, items, 'kashier-webhook');
     const issued = bridge.issueForOrder(orderId, items, 'kashier-webhook');
-    issuedCosts = (issued && issued.costs) || [];
+    const issuedCosts = (issued && issued.costs) || [];
     db.prepare(`
       UPDATE orders SET status = 'paid', payment_status = 'verified', payment_method = 'kashier',
         paid_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `).run(orderId);
+    orderLines.applyLineCosts(orderId, issuedCosts);
+    salesPosting.postOrderSale(orderId, {
+      costs: issuedCosts,
+      userId: 'kashier-webhook',
+      evidence: `kashier verified session:${payload.sessionId || payload._id || '-'}`,
+    });
   });
-  try {
-    require('./orderLines').applyLineCosts(orderId, issuedCosts);
-  } catch (costErr) {
-    console.error('[kashier-webhook] line cost snapshot error:', costErr.message);
-  }
-  try {
-    require('./salesPosting').postOrderSale(orderId, { costs: issuedCosts, userId: 'kashier-webhook' });
-  } catch (postErr) {
-    console.error('[kashier-webhook] sales posting error:', postErr.message);
-  }
 }
 
 function handleTransactionCapture(payload) {
@@ -147,7 +156,27 @@ function handleTransactionRefund(payload) {
   if (orderId) {
     const order = db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId);
     if (order && order.status !== 'refunded') {
-      db.prepare("UPDATE orders SET status = 'refunded', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(orderId);
+      // 091: the provider refund is a FINANCIAL event — it goes through the
+      // canonical refund seam (status + immutable reversal journal, one
+      // transaction). A closed period makes postEntry throw → this handler
+      // fails → the route clears the event claim → redelivery retries until
+      // the period reopens. No silent unbooked refund, no bypass.
+      const settlement = require('./salesSettlementService');
+      try {
+        settlement.refundOrder(orderId, {
+          actor: 'kashier-webhook',
+          reason: `provider refund session:${payload.sessionId || payload._id || '-'}`,
+        });
+      } catch (err) {
+        if (err && err.code === 'INVALID_TRANSITION') {
+          // Provider refunded an order our lifecycle can't model as refunded
+          // (e.g. already cancelled before capture settled) — nothing was
+          // booked, nothing to reverse. Ack + surface; never fabricate state.
+          console.warn(`[kashier-webhook] provider refund not modeled for order ${orderId} (${order.status}): ${err.message}`);
+        } else {
+          throw err; // period gate & integrity failures → claim cleared → redelivery
+        }
+      }
     }
   }
   markSession(payload, 'REFUNDED');
@@ -211,6 +240,7 @@ module.exports = {
   eventKey,
   isDuplicate,
   recordEvent,
+  clearEvent,
   routeEvent,
   HANDLERS,
 };

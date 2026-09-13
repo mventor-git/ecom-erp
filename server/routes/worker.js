@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const db = require('../db');
 const { authenticateToken } = require('../middleware/jwtAuth');
 const workflow = require('../services/orderWorkflowService');
+const settlement = require('../services/salesSettlementService');
 const eventService = require('../services/eventService');
 
 const PROOF_DIR = path.join(__dirname, '..', 'public', 'uploads', 'worker-proofs');
@@ -150,11 +151,21 @@ router.put('/orders/:id/status', authenticateToken, requireStaff, (req, res) => 
     }
 
     try {
-      const updated = workflow.transitionOrder(orderId, status, { userId: `worker-${req.user.id}`, reason: reason || '' });
-      // COD payment capture on delivery
-      if (status === 'delivered' && updated.payment_method === 'cod' && updated.payment_status !== 'paid') {
-        db.prepare("UPDATE orders SET payment_status = 'paid', paid_at = CURRENT_TIMESTAMP WHERE id = ?").run(orderId);
-      }
+      let codResult = null;
+      db.transaction(() => {
+        const updated = workflow.transitionOrder(orderId, status, { userId: `worker-${req.user.id}`, reason: reason || '' });
+        // COD payment capture on delivery — canonical settlement (evidence
+        // + journal) in ONE transaction. A driver marking delivered is not a
+        // bookkeeping fact by itself: money is proven by the posted sale
+        // journal, so a failed posting rolls back the payment stamp.
+        if (status === 'delivered') {
+          codResult = settlement.settleCodOnDelivery(orderId, {
+            actor: `worker-${req.user.id}`,
+            reason: 'COD cash collected at delivery',
+          });
+        }
+        return updated;
+      });
       // Event for the web admin feed
       eventService.emit(
         eventService.EVENT_TYPES.ORDER_STATUS_CHANGED,
@@ -167,8 +178,14 @@ router.put('/orders/:id/status', authenticateToken, requireStaff, (req, res) => 
         }
       );
       const fresh = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
-      res.json({ success: true, message: 'Status updated', data: fresh });
+      res.json({ success: true, message: 'Status updated', data: fresh, cod_settled: !!(codResult && codResult.settled) });
     } catch (err) {
+      // Settlement failures (closed period, integrity) must surface loudly —
+      // they are NOT silent best-effort; the whole delivery mutation rolled back.
+      if (String(err.message).includes('closed financial period') || String(err.message).includes('refusing to post')) {
+        console.error('[worker] COD settlement blocked by financial control:', err.message);
+        return res.status(409).json({ success: false, error: { code: 'SETTLEMENT_BLOCKED', message: err.message } });
+      }
       return res.status(400).json({
         success: false,
         error: { code: 'INVALID_TRANSITION', message: err.message },
@@ -207,34 +224,49 @@ router.post('/orders/:id/proof', authenticateToken, requireStaff, proofUpload.si
     const proofUrl = `/uploads/worker-proofs/${req.file.filename}`;
     const note = req.body.note || '';
 
-    // If order isn't delivered yet, transition it first
+    // Delivery + proof + COD settlement are ONE transaction: the money
+    // fact (posted journal) and the physical fact (proof) commit together
+    // or not at all (091). Settlement is delegated to the canonical
+    // service — no accounting in routes.
     let current = order;
-    if (current.status !== 'delivered') {
-      try {
-        current = workflow.transitionOrder(orderId, 'delivered', { userId: `worker-${req.user.id}`, reason: 'proof-of-delivery' });
-      } catch (err) {
-        // Remove the uploaded file — the transition is what matters
-        try { fs.unlinkSync(req.file.path); } catch {}
+    let codResult = null;
+    try {
+      db.transaction(() => {
+        if (current.status !== 'delivered') {
+          current = workflow.transitionOrder(orderId, 'delivered', { userId: `worker-${req.user.id}`, reason: 'proof-of-delivery' });
+        }
+        db.prepare(`
+          UPDATE orders
+          SET proof_image = ?, proof_note = ?, delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP),
+              updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `).run(proofUrl, note || null, orderId);
+        codResult = settlement.settleCodOnDelivery(orderId, {
+          actor: `worker-${req.user.id}`,
+          reference: proofUrl,
+          reason: 'COD collected at proof-of-delivery',
+        });
+      });
+    } catch (err) {
+      // Remove the uploaded file — the transaction is what matters
+      try { fs.unlinkSync(req.file.path); } catch {}
+      if (String(err.message).includes('Invalid transition')) {
         return res.status(400).json({
           success: false,
           error: { code: 'INVALID_TRANSITION', message: err.message },
         });
       }
+      if (String(err.message).includes('closed financial period') || String(err.message).includes('refusing to post')) {
+        console.error('[worker] COD settlement blocked by financial control:', err.message);
+        return res.status(409).json({ success: false, error: { code: 'SETTLEMENT_BLOCKED', message: err.message } });
+      }
+      throw err;
     }
-
-    db.prepare(`
-      UPDATE orders
-      SET proof_image = ?, proof_note = ?, delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP),
-          payment_status = CASE WHEN payment_method = 'cod' THEN 'paid' ELSE payment_status END,
-          paid_at = CASE WHEN payment_method = 'cod' THEN COALESCE(paid_at, CURRENT_TIMESTAMP) ELSE paid_at END,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(proofUrl, note || null, orderId);
 
     res.status(201).json({
       success: true,
       message: 'Proof of delivery saved',
-      data: { proof_image: proofUrl, order_id: orderId, status: current.status },
+      data: { proof_image: proofUrl, order_id: orderId, status: current.status, cod_settled: !!(codResult && codResult.settled) },
     });
   } catch (err) {
     console.error('Worker proof upload error:', err);

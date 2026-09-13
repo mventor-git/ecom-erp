@@ -2,16 +2,26 @@ import { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
 import StatusBadge from '../components/StatusBadge';
 import DocumentViewer from '../components/DocumentViewer';
-import { getAdminOrders, getAdminOrderStats, updateOrderStatus, getOrderStatuses, getOrderTimeline, viewInvoiceUrl, viewReceiptUrl, viewShippingUrl, viewPickingSheetUrl, emailReceipt } from '../../api/adminApi';
+import { getAdminOrders, getAdminOrderStats, updateOrderStatus, settleOrder, refundOrder, getOrderStatuses, getOrderTimeline, viewInvoiceUrl, viewReceiptUrl, viewShippingUrl, viewPickingSheetUrl, emailReceipt } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
 import { useLanguage } from '../../i18n';
 
 const VALID_TRANSITIONS = {
   pending: ['paid', 'cancelled'],
-  paid: ['shipped', 'cancelled'],
-  shipped: ['cancelled'],
+  paid: ['shipped', 'cancelled', 'refunded'],
+  shipped: ['cancelled', 'refunded'],
   cancelled: [],
 };
+
+// mventor-ticket-091 — settlement methods the server accepts (policy B).
+// reference is required for everything but cash; backend re-validates.
+const SETTLEMENT_METHODS = [
+  { value: 'cash', label: 'Cash', refRequired: false },
+  { value: 'card', label: 'Card terminal', refRequired: true },
+  { value: 'bank_transfer', label: 'Bank transfer', refRequired: true },
+  { value: 'wallet', label: 'Wallet', refRequired: true },
+  { value: 'other', label: 'Other', refRequired: true },
+];
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -37,6 +47,8 @@ export default function OrdersList() {
   const [emailingId, setEmailingId] = useState(null);
   const [statusData, setStatusData] = useState(null); // {flowEnabled, statuses, transitions}
   const [timelines, setTimelines] = useState({});
+  const [settle, setSettle] = useState(null);  // settlement-evidence dialog (091)
+  const [refund, setRefund] = useState(null);  // full-refund dialog (091)
 
   // Fetch the configured workflow statuses (dynamic when the full flow is enabled)
   useEffect(() => {
@@ -76,12 +88,45 @@ export default function OrdersList() {
   }, [statusFilter]);
 
   const handleStatusUpdate = async (orderId, newStatus) => {
+    // 091: money states never go through the plain status slider —
+    // 'paid' requires settlement EVIDENCE, 'refunded' goes through the
+    // reversal seam. The backend enforces this; the UI collects it.
+    if (newStatus === 'paid') { setSettle({ order: orders.find(o => o.id === orderId), method: 'cash', reference: '', reason: '', error: '', busy: false }); return; }
+    if (newStatus === 'refunded') { setRefund({ order: orders.find(o => o.id === orderId), reason: '', error: '', busy: false }); return; }
     try {
       const res = await updateOrderStatus(orderId, newStatus);
       setOrders(prev => prev.map(o => o.id === orderId ? res.data : o));
       getAdminOrderStats().then(r => setStats(r.data)).catch(() => {});
     } catch {
       alert(t('Failed to update order status'));
+    }
+  };
+
+  const confirmSettle = async () => {
+    const { order, method, reference, reason } = settle;
+    setSettle(s => ({ ...s, busy: true, error: '' }));
+    try {
+      await settleOrder(order.id, { method, reference, reason });
+      const res = await getAdminOrders({ limit: 100 });
+      setOrders(res.data.orders || []);
+      getAdminOrderStats().then(r => setStats(r.data)).catch(() => {});
+      setSettle(null);
+    } catch (err) {
+      setSettle(s => ({ ...s, busy: false, error: err.response?.data?.error || 'Settlement failed' }));
+    }
+  };
+
+  const confirmRefund = async () => {
+    const { order, reason } = refund;
+    setRefund(s => ({ ...s, busy: true, error: '' }));
+    try {
+      await refundOrder(order.id, { reason });
+      const res = await getAdminOrders({ limit: 100 });
+      setOrders(res.data.orders || []);
+      getAdminOrderStats().then(r => setStats(r.data)).catch(() => {});
+      setRefund(null);
+    } catch (err) {
+      setRefund(s => ({ ...s, busy: false, error: err.response?.data?.error || 'Refund failed' }));
     }
   };
 
@@ -284,6 +329,90 @@ export default function OrdersList() {
       </div>
 
       {viewDoc && <DocumentViewer url={viewDoc.url} title={viewDoc.title} onClose={() => setViewDoc(null)} />}
+
+      {/* 091: manual settlement = evidence-backed attestation. Server stamps the
+          payment AND posts the sale journal in one transaction. */}
+      {settle && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="settle-dialog-title">
+            <h3 id="settle-dialog-title" className="text-lg font-bold text-gray-900">Settle order #{settle.order?.id}</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Record money <span className="font-medium">already collected outside the app</span> for order #{settle.order?.id} — total{' '}
+              <span className="font-semibold">{format(settle.order?.total || 0)}</span>. Posts Dr Cash / Cr Revenue (+ COGS legs); a reason is mandatory and audited.
+            </p>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Collection method *</label>
+                <select value={settle.method} onChange={e => setSettle(s => ({ ...s, method: e.target.value, error: '' }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                  {SETTLEMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reference {SETTLEMENT_METHODS.find(m => m.value === settle.method)?.refRequired ? '*' : '(optional for cash)'}
+                </label>
+                <input type="text" value={settle.reference} maxLength={200}
+                  onChange={e => setSettle(s => ({ ...s, reference: e.target.value, error: '' }))}
+                  placeholder="e.g., terminal slip / bank doc no."
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason * (audit)</label>
+                <textarea value={settle.reason} rows={2} maxLength={300}
+                  onChange={e => setSettle(s => ({ ...s, reason: e.target.value, error: '' }))}
+                  placeholder="e.g., cash received at counter, invoice #123"
+                  className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${settle.error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-primary-500'}`} />
+                <div className="mt-1 text-xs text-gray-400">{settle.reason.length}/300</div>
+              </div>
+              {settle.error && <div className="text-sm text-red-600">{settle.error}</div>}
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setSettle(null)} disabled={settle.busy}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={settle.busy || !settle.reason.trim()}
+                onClick={confirmSettle}
+                className="px-4 py-2 text-sm text-white bg-green-600 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {settle.busy ? '…' : 'Record settlement'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 091: refund = immutable accounting reversal of the posted sale (full
+          amount; goods return is a separate operational fact). */}
+      {refund && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true" aria-labelledby="refund-dialog-title">
+            <h3 id="refund-dialog-title" className="text-lg font-bold text-gray-900">Refund order #{refund.order?.id}?</h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Refunds the <span className="font-semibold">{format(refund.order?.total || 0)}</span> in full: posts a NEW mirrored journal (Dr Revenue / Cr Cash) —
+              the original posting stays immutable, and inventory is <span className="font-medium">not</span> restored automatically (goods return is handled in stock).
+              A reason is required and recorded.
+            </p>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Refund reason *</label>
+              <textarea value={refund.reason} onChange={e => setRefund(s => ({ ...s, reason: e.target.value, error: '' }))}
+                rows={3} maxLength={300} placeholder="e.g., customer returned item, damaged on arrival"
+                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${refund.error ? 'border-red-300 focus:ring-red-500' : 'border-gray-300 focus:ring-primary-500'}`}
+                autoFocus />
+              <div className="mt-1 flex items-center justify-between">
+                <span className="text-xs text-gray-400">{refund.reason.length}/300</span>
+                {refund.error && <span className="text-xs text-red-600">{refund.error}</span>}
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" onClick={() => setRefund(null)} disabled={refund.busy}
+                className="px-4 py-2 text-sm text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50">Cancel</button>
+              <button type="button" disabled={refund.busy || !refund.reason.trim()} onClick={confirmRefund}
+                className="px-4 py-2 text-sm text-white bg-red-600 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                {refund.busy ? '…' : 'Refund in full'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

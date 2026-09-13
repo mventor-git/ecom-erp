@@ -34,6 +34,7 @@ const SuppliersList = lazy(() => import('./admin/pages/SuppliersList'));
 const SupplierDetail = lazy(() => import('./admin/pages/SupplierDetail'));
 const PurchaseOrdersList = lazy(() => import('./admin/pages/PurchaseOrdersList'));
 const APAgingReport = lazy(() => import('./admin/pages/APAgingReport'));
+const RevenueReconciliation = lazy(() => import('./admin/pages/RevenueReconciliation'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -306,6 +307,15 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <APAgingReport />
+              </Suspense>
+            }
+          />
+          {/* Revenue settlement reconciliation (mventor-ticket-091) */}
+          <Route
+            path="/erp/revenue-reconciliation"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <RevenueReconciliation />
               </Suspense>
             }
           />

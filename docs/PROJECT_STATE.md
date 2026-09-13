@@ -82,12 +82,12 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-12 — ticket 090 AP Aging report delivered)
-- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. `categories.icon` + durable idempotency + 090 service consistent on a brand-new DB**
-- Frontend: admin build clean (090 surface added)
-- **Unit suite: 45 suites / 272 tests PASS, process exit 0** (history in CHANGELOG; apAging.test 23 new)
-- **Integration: 107/107 PASS, exit 0** · `npm run test:isolated` 272/272 **exit 0** on a snapshot copy (live DB untouched, deterministic)
-- **AP Aging (090): first production aging report live** — recognition-date basis (ADR-016), as-of historical correctness, FIFO allocation, control totals machine-reconciled; admin `/erp/ap-aging` + `GET /api/admin/supplier-payments/aging`
+## Build Verification (baseline 2026-09-13 — ticket 091 sales settlement journaling + refund reversal)
+- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified working incl. the 091 `products.deleted_at` fork fix** (brand-new file: JE-0001 settle -> JE-0002 reversal -> reconciliation all pass)
+- Frontend: admin build clean (091 settle/refund dialogs + revenue-reconciliation added)
+- **Unit suite: 46 suites / 307 tests PASS, process exit 0** (+29 in `salesSettlement091.test`)
+- **Integration: 107/107 PASS, exit 0** · isolated 307/307 exit 0 · HTTP smoke 17/17 on throwaway copy · zero jest091 residue · secret scan clean
+- **Sales settlement is now canonical on every real path** (091): P1 Kashier webhook + P2 worker COD (status+proof) + P3 evidence-backed manual/admin settlement all post ONE `Dr Cash/Cr Revenue` + COGS-leg journal atomically (`sale-settled`, single-post-per-order UNIQUE, cross-channel replay-safe); refunds post a NEW mirrored cash/revenue reversal (`sale-reversed`, never edits/unposts, never restores inventory); provider refund webhook routed through the same seam; period controls fail closed on settlements AND reversals + both webhook directions. `revenueReconciliation` control flags settled-vs-journal divergence by order/source. The admin status slider can no longer book money (SETTLEMENT_REQUIRED / REFUND_REQUIRED). Vendored docs kept honest: partial refunds / goods-returns / VIP on-bill AR / counter-sale cash are OUT of 091 (not fake-implemented).
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -95,13 +95,11 @@
 ## Blockers
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
-## Next Steps (updated 2026-09-12)
-- **mventor-ticket-088/089 COMPLETED and committed** (push `42c300d`→`4d2420d`); **stabilization F1–F13 committed `0f57522`** (pushed).
-- **Readiness checkpoint 4.18.1:** F11 data SAFE; unit exit 0 honest; N1 (idempotencyService) + N2 (orders idempotency_key) reported.
-- **N1+N2 REMEDIATED 4.19.0 (owner directive):** durable actor+endpoint+key+request-fingerprint claims (`idempotency_records`); owner-scoped guest-order idempotency with `(customer_id,idempotency_key)` UNIQUE + `idem_fp`; fresh-start `categories.icon` boot blocker also fixed; 14 new regression tests.
-- **Accounting stabilization F1–F13 + readiness checkpoint 4.18.1:** forensic review + fixes + 18 regression tests; details `docs/accounting-stabilization-findings.md`; CHANGELOG [4.18.0] + [4.18.1] + [4.19.0].
-- **mventor-ticket-090 — AP AGING REPORT COMPLETED + HARDENED** (commit + follow-up 4.20.1 back-dated-payment causality; see ADR-016 ADDENDUM): 45 suites/278 tests exit 0, isolated 278 exit 0, integration 107 exit 0, HTTP smoke 6/6, fresh-boot consistent, admin build 0, zero residue/orphans. **STOP — awaiting owner review; no 091.**
-- **Next candidates (after 090 review):** supplier invoices/payment-terms (true due-date aging), bank/transfer methods, advances/prepayments, cash-flow + statements (gap-map M), settings IA follow-ups. Not implemented without owner direction.
+## Next Steps (updated 2026-09-13)
+- **mventor-ticket-091 — SALES SETTLEMENT JOURNALING + REFUND REVERSAL COMPLETED** (canonical seam across P1/P2/P3 + refunds + reconciliation; see HANDOVER). **STOP — owner review required; 092/093 NOT started.**
+- Prior: N1+N2 4.19.0; AP Aging 090 + hardening (4.20.0/4.20.1); stabilization 4.18.0/4.18.1; 086→090 chain in CHANGELOG. Details `docs/accounting-stabilization-findings.md`; ADR-017 (091). 
+- **Deferred accounting queue:** GL operability 092 (manual journals / CoA UI / journal-based statements), inventory↔GL 093 (valuation + goods-return + adjustment/RMA), supplier invoices + payment terms (true due-date aging), bank/transfer methods, cash-flow / VAT bookkeeping. Not started without owner direction.
+- Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 - Deferred: mobile/worker LAN + eas.json stabilization, Paymob gateway, Google Android OAuth, AI Copilot, API docs refresh.
 
 ## Mobile App Architecture

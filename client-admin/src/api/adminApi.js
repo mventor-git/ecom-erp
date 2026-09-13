@@ -93,6 +93,17 @@ export const getSalesDaily = (days = 14) => api.get('/admin/reports/sales-daily'
 export const updateOrderStatus = (id, status, reason) =>
   api.put(`/admin/orders/${id}/status`, { status, reason: reason || '' });
 
+// mventor-ticket-091 — settlement evidence is a server-enforced business
+// mutation: 'paid'/'refunded' never come from the status slider.
+export const settleOrder = (id, { method, reference = '', reason } = {}) =>
+  api.post(`/admin/orders/${id}/settle`, { method, reference, reason });
+
+export const refundOrder = (id, { reason, amount } = {}) =>
+  api.post(`/admin/orders/${id}/refund`, amount == null ? { reason } : { reason, amount });
+
+export const getRevenueReconciliation = (params = {}) =>
+  api.get('/admin/revenue-reconciliation', { params });
+
 export const getOrderStatuses = () => api.get('/admin/orders/statuses');
 
 export const getOrderTimeline = (id) => api.get(`/admin/orders/${id}/timeline`);

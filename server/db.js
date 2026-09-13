@@ -153,10 +153,15 @@ async function initDb() {
       stock INTEGER DEFAULT 0,
       active INTEGER DEFAULT 1,
       has_variants INTEGER DEFAULT 1,
+      deleted_at DATETIME DEFAULT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Fresh-boot fork repair (091 probe, same class as the categories.icon fix):
+  // the original deleted_at ALTER above runs BEFORE this CREATE on a brand-new
+  // file, so the column is also probed here for tables created this session.
+  try { db.run("ALTER TABLE products ADD COLUMN deleted_at DATETIME DEFAULT NULL"); } catch {}
   db.run(`
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

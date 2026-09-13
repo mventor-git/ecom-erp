@@ -1094,8 +1094,30 @@ router.get('/orders/:id/timeline', adminAuth, (req, res) => {
 // RBAC-gated: only a user with orders.update may force a status transition (the
 // previous guard was adminAuth-only, letting ANY authenticated role mutate
 // order/payment state). Server re-validates the transition via the workflow.
+// 091: the slider is a LIFECYCLE control, never a money control — 'paid'
+// requires recorded settlement evidence (POST .../settle) and 'refunded'
+// requires a refund through the reversal seam (POST .../refund). Booking
+// revenue by dragging a status is how ledgers get fabricated; refused here.
 router.put('/orders/:id/status', adminAuth, requirePermission('orders.update'), (req, res) => {
   try {
+    const { status: intent } = req.body || {};
+    // 091 intent guards BEFORE validation: money states never go through
+    // this endpoint at all — 'paid' requires settlement evidence
+    // (POST .../settle), 'refunded' requires a refund through the reversal
+    // seam (POST .../refund). Booking revenue by dragging a status is how
+    // ledgers get fabricated; refused here.
+    if (intent === 'paid') {
+      return res.status(400).json({
+        code: 'SETTLEMENT_REQUIRED',
+        error: 'Marking an order paid requires recorded settlement evidence — use POST /api/admin/orders/:id/settle (method + reference + reason)',
+      });
+    }
+    if (intent === 'refunded') {
+      return res.status(400).json({
+        code: 'REFUND_REQUIRED',
+        error: 'Refunding goes through the refund seam (posts the accounting reversal) — use POST /api/admin/orders/:id/refund',
+      });
+    }
     const validation = validateOrderStatus(req.body);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.errors.join('; ') });
@@ -1122,41 +1144,108 @@ router.put('/orders/:id/status', adminAuth, requirePermission('orders.update'), 
   }
 });
 
-// POST /api/admin/orders/:id/refund - Record a refund (workflow + event + notification)
-router.post('/orders/:id/refund', adminAuth, (req, res) => {
+// POST /api/admin/orders/:id/settle — evidence-backed manual settlement
+// (mventor-ticket-091, policy B). The operator attests money ALREADY
+// collected offline (counter cash/card terminal/bank transfer); the server
+// validates the evidence, stamps the payment, and posts the canonical sale
+// journal in one transaction. RBAC: orders.manage (money movement is above
+// the orders.update lifecycle bar). Also heals legacy slider-'paid' orders:
+// booked-only when operationally settled but unjournaled.
+router.post('/orders/:id/settle', adminAuth, requirePermission('orders.manage'), (req, res) => {
   try {
-    const workflow = require('../services/orderWorkflowService');
-    const { amount, reason } = req.body || {};
-
+    const settlement = require('../services/salesSettlementService');
+    const { method, reference, reason } = req.body || {};
+    const result = settlement.settleOrder(parseInt(req.params.id, 10), {
+      actor: req.session.username || 'admin',
+      method, reference, reason,
+    });
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-    if (!['paid', 'shipped', 'delivered', 'completed'].includes(order.status)) {
-      return res.status(400).json({ error: `Order cannot be refunded from status "${order.status}"` });
-    }
-
-    const refundAmount = amount !== undefined ? Math.round(Number(amount)) : (order.total || 0);
-    const updated = workflow.transitionOrder(order.id, 'refunded', {
-      userId: req.session.username || 'admin',
-      reason: reason ? `refund: ${reason}` : `refund of ${refundAmount}`,
+    try { order.items = JSON.parse(order.items || '[]'); } catch { order.items = []; }
+    res.json({
+      success: true,
+      data: order,
+      booked_only: result.bookedOnly,
+      journal: result.entry ? { id: result.entry.id, entry_no: result.entry.entry_no } : null,
     });
-
-    // record the refund amount on the order
-    db.prepare("UPDATE orders SET refund_amount = ?, refunded_at = CURRENT_TIMESTAMP, status_reason = ? WHERE id = ?")
-      .run(refundAmount, reason || '', order.id);
-
-    eventService.emit(eventService.EVENT_TYPES.ORDER_REFUNDED, eventService.ENTITY_TYPES.ORDER, order.id, {
-      userId: req.session.username || 'admin',
-      userRole: 'admin',
-      payload: { amount: refundAmount, reason: reason || '' },
-    });
-
-    res.json({ ...db.prepare('SELECT * FROM orders WHERE id = ?').get(order.id), refund_amount: refundAmount });
   } catch (err) {
-    console.error('Error refunding order:', err);
-    if (err.message.includes('Invalid transition') || err.message.includes('cannot be refunded')) {
+    if (err.code === 'ALREADY_SETTLED') return res.status(409).json({ code: err.code, error: err.message });
+    console.error('Error settling order:', err);
+    const m = String(err.message);
+    if (m.includes('closed financial period') || m.includes('refusing to post') || m.includes('Settlement ')
+      || m.includes('not found') || m.includes('positive total') || m.includes('integer number of cents')
+      || m.includes('Cannot settle') || m.includes('inactive')) {
       return res.status(400).json({ error: err.message });
     }
+    res.status(500).json({ error: 'Failed to settle order' });
+  }
+});
+
+// POST /api/admin/orders/:id/refund - Full refund through the reversal seam
+// (mventor-ticket-091). RBAC was previously adminAuth-only — now server-side
+// orders.manage. Accounting truth: the posted sale is corrected by a NEW
+// mirrored journal (never edited/unposted); refund_amount = full order total;
+// goods are not restored (a refund is not a physical return). An explicit
+// amount that differs from the total is REFUSED — partial-refund accounting
+// is not modeled, and we do not fake it (documented limitation for the
+// future return/RMA slice).
+router.post('/orders/:id/refund', adminAuth, requirePermission('orders.manage'), (req, res) => {
+  try {
+    const { amount, reason } = req.body || {};
+    const orderId = parseInt(req.params.id, 10);
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (amount !== undefined && amount !== null && amount !== '') {
+      const claimed = Number(amount);
+      if (!Number.isInteger(claimed)) {
+        return res.status(400).json({ error: 'Refund amount must be integer cents — no silent rounding' });
+      }
+      if (claimed !== order.total) {
+        return res.status(400).json({
+          code: 'PARTIAL_REFUND_UNSUPPORTED',
+          error: `Partial refunds are not accounting-modeled: a refund reverses the posted sale in full (${order.total} cents). Omit amount for a full refund.`,
+        });
+      }
+    }
+
+    const settlement = require('../services/salesSettlementService');
+    const result = settlement.refundOrder(orderId, {
+      actor: req.session.username || 'admin',
+      reason: reason || 'admin refund',
+    });
+    const fresh = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
+    res.json({
+      ...fresh,
+      refund_amount: fresh.refund_amount,
+      reversal: result.reversal && result.reversal.entry
+        ? { id: result.reversal.entry.id, entry_no: result.reversal.entry.entry_no }
+        : null,
+      reversal_note: result.reversal && !result.reversal.reversed ? (result.reversal.already ? 'already reversed' : result.reversal.reason) : null,
+    });
+  } catch (err) {
+    const m = String(err.message);
+    if (err.code === 'INVALID_TRANSITION' || m.includes('cannot be refunded') || m.includes('Invalid transition')) {
+      return res.status(400).json({ error: err.message });
+    }
+    if (m.includes('closed financial period') || m.includes('refusing to post') || m.includes('Refund requires') || m.includes('exceeds')) {
+      return res.status(400).json({ error: err.message });
+    }
+    // also the route's own pre-service refusals (integer/parse problems)
+    console.error('Error refunding order:', err);
     res.status(500).json({ error: 'Failed to refund order' });
+  }
+});
+
+// GET /api/admin/revenue-reconciliation — read-only control (091):
+// operationally settled order amounts vs POSTED sales journals per order,
+// grouped by difference class. Never forces equality — the differences are
+// the output, traceable by order id + journal source event.
+router.get('/revenue-reconciliation', adminAuth, requirePermission('reports.read'), (req, res) => {
+  try {
+    const settlement = require('../services/salesSettlementService');
+    res.json({ success: true, data: settlement.revenueReconciliation({ limit: req.query.limit }) });
+  } catch (err) {
+    console.error('Error building revenue reconciliation:', err);
+    res.status(500).json({ error: 'Failed to build revenue reconciliation' });
   }
 });
 

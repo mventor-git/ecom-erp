@@ -20,6 +20,7 @@ const SECTIONS = [
     id: 'sales', label: 'Sales', icon: 'clipboard',
     items: [
       { to: '/orders', label: 'Orders', icon: 'clipboard' },
+      { to: '/erp/revenue-reconciliation', label: 'Revenue Recon', icon: 'chart' },
       { to: '/erp/customers', label: 'Customers', icon: 'user' },
       { to: '/erp/issue-orders', label: 'Issue Receipts', icon: 'document' },
     ],

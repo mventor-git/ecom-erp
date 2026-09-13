@@ -60,6 +60,10 @@ router.post('/webhook', express.json({ type: '*/*' }), (req, res) => {
     if (String(err.message).startsWith('Unhandled')) {
       return res.status(200).json({ received: true, ignored: err.message });
     }
+    // 091: the handler's mutation rolled back as ONE unit — release the
+    // event claim so the redelivery can actually reprocess it (settlement
+    // is durable-or-retryable, never half-applied and never lost).
+    webhookService.clearEvent(eKey);
     res.status(500).json({ received: false, error: 'Processing failed' });
   }
 });

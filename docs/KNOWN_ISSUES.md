@@ -22,7 +22,11 @@
 - **Fix:** mventor-ticket-067 — repricing via `orderPricing.resolveItem` (web P0.4 parity)
 - **Status:** ✅ Resolved
 
-## Open Issues (from 2026-09-07 full-repo discovery; each needs its own ticket)
-- **order_items schema fork:** code writes legacy cols (product_name/quantity/price); migrations 004/005 expect (qty/base_price/final_price/cost_snapshot) → NULLs break COGS/profit reads. Needs schema-reconciliation ticket.
-- **Tests mutate the live DB** (no isolation; mobileApi needs a running server) — parallel/CI unsafe. Needs test-isolation ticket.
-- **Backup bloat:** `server/backups/` ~70MB, 106 files, no rotation; `server/data/*.bak*` growing. Needs retention ticket.
+## Open Issues (current, 2026-09-13)
+- **Pre-091 slider-'paid' orders unjournaled (live data):** revenue reconciliation reports ~105,000 EGP-cents operationally settled with no posted journal — a TRUTH SURFACE, not corruption; each healable via `POST /orders/:id/settle` (book-only) once evidence is confirmed. Severity: medium (report accuracy until triaged). Owner decision queued (BACKLOG).
+- **mobileApi cart integration flake (pre-existing, intermittent):** `PUT /cart/items/:id updates quantity` + `GET reflects totals` can 400 on `INSUFFICIENT_STOCK` when the products-listing pick (`stock > 0`, legacy `products.stock` vs movement-derived availability — competing-truth class) lands on a low-actual-stock product while the cart PUT path compares the other number. Reproduced identically on the STASHED BASELINE during 091 verification (not a 091 regression); passes every clean run (final: 107/107 exit 0). Workaround: rerun; fix slice: make the mobile listing + cart stock checks read ONE source. Related: mventor-ticket-091.
+- **Tests mutate the live DB on default `npm test`** (self-cleaning fixtures; `test:isolated` snapshot is the CI-safe path) — documented trade-off (F12). Backup retention still unbounded; shared-DB parallel-worker ordering remains a known flake class.
+
+## Resolved history
+- **order_items schema fork** — resolved in F11 (0f57522): fresh CREATE reconciles mirror cols + indexes.
+- **`categories.icon` / `products.deleted_at` fresh-boot forks** — resolved 4.19.0 / 4.21.0 respectively (CREATE now holds the column + idempotent probe; brand-new-file boot + full 091 service flow verified).
