@@ -1137,6 +1137,9 @@ router.put('/orders/:id/status', adminAuth, requirePermission('orders.update'), 
     res.json(updated);
   } catch (err) {
     console.error('Error updating order status:', err);
+    if (err.code === 'LEDGER_BLOCKED') {
+      return res.status(400).json({ code: 'LEDGER_BLOCKED', error: err.message });
+    }
     if (err.message.includes('Invalid transition') || err.message.includes('not found')) {
       return res.status(400).json({ error: err.message });
     }

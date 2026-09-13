@@ -187,7 +187,16 @@ function handleTransactionVoid(payload) {
   if (orderId) {
     const order = db.prepare('SELECT status FROM orders WHERE id = ?').get(orderId);
     if (order && !['delivered', 'completed'].includes(order.status)) {
-      db.prepare("UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(orderId);
+      // Gate post-091: a void on an order whose sale is BOOKED is not a
+      // pre-capture void anymore — the money fact lives in the ledger. We
+      // never silently cancel booked revenue: the provider session is still
+      // marked VOIDED, the order keeps its paid truth, and the anomaly is
+      // surfaced loudly for admin handling via the refund seam.
+      if (require('./salesPosting').hasPostedSale(orderId)) {
+        console.warn(`[kashier-webhook] trans-void on BOOKED order ${orderId} — not cancelling posted revenue; handle as refund through the admin seam`);
+      } else {
+        db.prepare("UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(orderId);
+      }
     }
   }
   markSession(payload, 'VOIDED');

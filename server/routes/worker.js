@@ -145,6 +145,24 @@ router.put('/orders/:id/status', authenticateToken, requireStaff, (req, res) => 
       return res.status(400).json({ success: false, error: { code: 'VALIDATION_ERROR', message: 'status is required' } });
     }
 
+    // 091 gate-fix: the worker lifecycle endpoint must not be able to
+    // fabricate money states either — 'paid' comes only from settlement
+    // (COD collection fires on 'delivered' via the settlement service;
+    // online payment from the provider webhook) and 'refunded' only from
+    // the refund seam. Same guard the admin status route got in 091.
+    if (status === 'paid') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'SETTLEMENT_REQUIRED', message: 'Workers never mark orders paid — COD money is settled at delivery (status delivered) and online payments by the provider. Use the admin settlement path with evidence for anything else.' },
+      });
+    }
+    if (status === 'refunded') {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'REFUND_REQUIRED', message: 'Refunds go through the refund seam (evidence + immutable reversal journal) — see the admin refund endpoint.' },
+      });
+    }
+
     const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(orderId);
     if (!order) {
       return res.status(404).json({ success: false, error: { code: 'NOT_FOUND', message: 'Order not found' } });

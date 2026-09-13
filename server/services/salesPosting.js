@@ -60,6 +60,14 @@ function findReversalJournal(orderId) {
   `).get(orderId, REVERSAL_EVENT) || null;
 }
 
+/** Does this order have its sale BOOKED in the ledger? (gate: booked orders
+ *  can only be corrected through the refund/reversal seam, never by a
+ *  status change to cancelled.) */
+function hasPostedSale(orderId) {
+  const j = findOrderJournal(orderId);
+  return !!(j && j.status === 'posted');
+}
+
 /**
  * Cost lines from order_items snapshots written when stock was actually
  * issued (072/073). cost_snapshot is the UNIT cost; per-line COGS is
@@ -209,6 +217,7 @@ module.exports = {
   resolveAccount,
   findOrderJournal,
   findReversalJournal,
+  hasPostedSale,
   costsFromSnapshots,
   postOrderSale,
   reverseOrderSale,

@@ -370,6 +370,12 @@ router.post('/admin/:id/decline-onbill', adminAuth, (req, res) => {
     if (!order || order.status !== 'pending_approval') {
       return res.status(400).json({ error: 'Order is not awaiting on-bill approval' });
     }
+    // Gate post-091: if this order's money was already settled + booked while
+    // approval was pending, declining must not silently cancel the books —
+    // return the money first through the refund seam (immutable reversal).
+    if (require('../services/salesPosting').hasPostedSale(order.id)) {
+      return res.status(400).json({ code: 'LEDGER_BLOCKED', error: 'Order has a posted sale journal — refund it instead of declining (reversal seam)' });
+    }
     db.prepare("UPDATE orders SET status = 'cancelled', temp_issue = 0, status_reason = 'On-bill order declined by admin', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(order.id);
     db.prepare("UPDATE issue_orders SET is_temp = 0, status = 'cancelled' WHERE order_id = ? AND is_temp = 1").run(order.id);
 

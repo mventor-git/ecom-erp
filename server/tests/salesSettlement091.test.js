@@ -30,6 +30,7 @@ const productIds = [];
 const orderIds = [];
 const customerIds = [];
 const periodIds = [];
+const users091 = [];
 let noneRoleId = null;
 let noneUserId = null;
 
@@ -105,6 +106,9 @@ beforeAll(async () => {
 
 afterEach(() => {
   dropPeriods();
+  for (const uid of users091.splice(0)) {
+    try { db.prepare('DELETE FROM user_roles WHERE user_id = ?').run(uid); db.prepare('DELETE FROM users WHERE id = ?').run(uid); } catch {}
+  }
   for (const oid of orderIds.splice(0)) {
     try {
       db.prepare('DELETE FROM journal_lines WHERE entry_id IN (SELECT id FROM journal_entries WHERE source_type = \'order\' AND source_id = ?)').run(oid);
@@ -481,6 +485,87 @@ describe('Revenue settlement reconciliation control', () => {
     const recon = settlement.revenueReconciliation();
     const classes = Object.values(recon.difference_classes).flatMap(cls => (cls.orders || []).map(o => o.order_id));
     expect(classes).not.toContain(oid); // balanced on both views → invisible (correct)
+  });
+});
+
+describe('Post-091 gate closures — status-only money fabrication must be impossible everywhere', () => {
+  test('a booked order can NEVER be cancelled through the lifecycle (refund seam only)', () => {
+    const pid = seedProduct('jest091-g1', 5);
+    const oid = insertOrder(pid, 1, 9900, { paymentMethod: null });
+    settlement.settleOrder(oid, { actor: 'b', method: 'cash', reason: 'booked' });
+    const workflow = require('../services/orderWorkflowService');
+    expect(() => workflow.transitionOrder(oid, 'cancelled', { userId: 'admin', reason: 'oops' })).toThrow(/posted sale journal/);
+    expect(db.prepare('SELECT status FROM orders WHERE id = ?').get(oid).status).toBe('paid');
+    expect(journalFor(oid)).toBeTruthy(); // books untouched by the refused cancel
+  });
+
+  test('unsettled orders still cancel normally (guard fires on BOOKED only)', () => {
+    const pid = seedProduct('jest091-g2', 5);
+    const oid = insertOrder(pid, 1, 9900, { paymentMethod: 'cod' });
+    const workflow = require('../services/orderWorkflowService');
+    expect(workflow.transitionOrder(oid, 'cancelled', { userId: 'admin' }).status).toBe('cancelled');
+    expect(journalCountFor(oid)).toBe(0);
+  });
+
+  test('worker endpoint refuses paid/refunded intents outright (SETTLEMENT/REFUND_REQUIRED)', async () => {
+    const express = require('express');
+    const jwt = require('jsonwebtoken');
+    const { JWT_SECRET } = require('../middleware/jwtAuth');
+    // staff tokens are checked against the users table (050) — seed a real one
+    const roleId = db.prepare('SELECT id FROM roles ORDER BY id LIMIT 1').get().id;
+    const staffId = db.prepare('INSERT INTO users (email, name, password_hash, role_id, is_active) VALUES (?, ?, ?, ?, 1)')
+      .run('gate091-staff@t.test', 'Gate091 Staff', bcrypt.hashSync('x', 10), roleId).lastInsertRowid;
+    users091.push(staffId);
+    const staffToken = jwt.sign({ id: staffId, email: 'gate091-staff@t.test', role: 'staff' }, JWT_SECRET, { expiresIn: '5m' });
+    const app = express();
+    app.use(express.json());
+    app.use('/api/v1/worker', require('../routes/worker'));
+    const srv = app.listen(0);
+    await new Promise((r) => srv.once('listening', r));
+    try {
+      const pid = seedProduct('jest091-g3', 5);
+      const oid = insertOrder(pid, 1, 9900, { paymentMethod: 'cod' });
+      const call = async (status) => {
+        const res = await fetch(`http://localhost:${srv.address().port}/api/v1/worker/orders/${oid}/status`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json', authorization: 'Bearer ' + staffToken },
+          body: JSON.stringify({ status }),
+        });
+        let body = null;
+        try { body = await res.json(); } catch {}
+        return { status: res.status, body };
+      };
+      const paid = await call('paid');
+      expect(paid.status).toBe(400);
+      expect(paid.body?.error?.code).toBe('SETTLEMENT_REQUIRED');
+      const ref = await call('refunded');
+      expect(ref.status).toBe(400);
+      expect(ref.body?.error?.code).toBe('REFUND_REQUIRED');
+      expect(journalCountFor(oid)).toBe(0);
+      expect(db.prepare('SELECT status FROM orders WHERE id = ?').get(oid).status).toBe('pending');
+    } finally {
+      srv.closeAllConnections?.(); srv.close();
+    }
+  }, 15000);
+
+  test('trans-void on a BOOKED order never cancels posted revenue (loud warn, books intact)', () => {
+    const pid = seedProduct('jest091-g4', 5);
+    const oid = insertOrder(pid, 1, 9900);
+    ws.routeEvent('transaction-success', {
+      eventType: 'transaction-success', sessionId: 'jest091-sv', merchantOrderId: String(oid),
+      amount: '99.00', currency: 'EGP', status: 'SUCCESS',
+    });
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      ws.routeEvent('trans-void', {
+        eventType: 'trans-void', sessionId: 'jest091-sv', merchantOrderId: String(oid), status: 'VOIDED',
+      });
+      expect(db.prepare('SELECT status FROM orders WHERE id = ?').get(oid).status).toBe('paid');
+      expect(journalFor(oid)).toBeTruthy();
+      expect(warnSpy.mock.calls.some(c => String(c[0]).includes('BOOKED order'))).toBe(true);
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
 

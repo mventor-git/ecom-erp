@@ -171,6 +171,17 @@ function transitionOrder(orderId, toStatus, { userId = 'admin', reason = '' } = 
     throw new Error(`Invalid transition: ${from} → ${toStatus}`);
   }
 
+  // Gate post-091 (ledger authority): an order whose sale is BOOKED can never
+  // be silently "cancelled" — cancellation of collected money is a FINANCIAL
+  // event and only exists as the refund seam (immutable reversal). A throw
+  // here blocks every caller (admin/worker routes included) — status alone
+  // can never diverge the operational story from the books.
+  if (toStatus === 'cancelled' && require('./salesPosting').hasPostedSale(orderId)) {
+    const err = new Error(`Order #${orderId} has a posted sale journal — it cannot be cancelled; refund it instead (reversal seam)`);
+    err.code = 'LEDGER_BLOCKED';
+    throw err;
+  }
+
   // Entering admin_review — stamp the review start time (drives auto-approval)
   let extraSql = '';
   const params = [];

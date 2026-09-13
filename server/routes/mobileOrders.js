@@ -421,6 +421,19 @@ router.post('/:id/cancel', authenticateToken, (req, res) => {
       });
     }
 
+    // Gate post-091: a confirmed order whose money was already settled and
+    // BOOKED is a financial fact — customers never cancel out of the books;
+    // that requires the admin refund seam (immutable reversal).
+    if (require('../services/salesPosting').hasPostedSale(orderId)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'REFUND_REQUIRED',
+          message: 'This order was already paid and booked — contact support for a refund instead of cancelling.',
+        },
+      });
+    }
+
     // Update order status
     db.prepare(`
       UPDATE orders SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP

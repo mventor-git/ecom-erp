@@ -1,5 +1,24 @@
 ﻿# Handover Note
 
+**Date:** 2026-09-13 (eleventh stop — POST-091 verification gate: two status-only money holes found + closed)
+**From:** Mventor (Execution Owner)
+**To:** Project Owner / Next Session
+
+## ✅ POST-091 GATE — VERDICT: 091 COMPLETE (with two gate fixes shipped in 4.21.1)
+
+- **Read-only forensic pass over the settlement matrix found TWO status-only money paths 091 had left open (both reproduced at file level, then fixed + re-probed):**
+  1. **Worker `PUT .../status` accepted `paid`/`refunded` bodies** (legacy `pending→paid` / `paid→refunded` are valid transitions; the worker route only special-cased `delivered`). Fix: the SAME `SETTLEMENT_REQUIRED` / `REFUND_REQUIRED` intent guards 091 added to the admin route now block money intents on the worker route too. Re-run of the exploit: 200→**400** for both; file stays `pending`, journals 0.
+  2. **EVERY route into `cancelled` skipped the ledger** — an order with a posted sale (kashier/settled) could be "cancelled" by admin/worker, VIP decline, or a provider `trans-void`, abandoning posted revenue with no reversal. Fix (ledger authority at the choke point): `transitionOrder` now THROWS `LEDGER_BLOCKED` when entering `cancelled` if `salesPosting.hasPostedSale()` (covers all callers); mobile-customer cancel + on-bill decline pre-check the predicate (400 `REFUND_REQUIRED`/`LEDGER_BLOCKED`); `trans-void` on a booked order marks the session VOIDED but never cancels posted revenue (loud admin-handling warning). A booked order can now ONLY be corrected by the reversal seam.
+- Guarded the payment-state-machine doc against its own stale design sketch (partial-refund states that were never built).
+- **Re-verified the full matrix after the fixes:** new suite 33/33 (+4 gate-closure tests); unit `npm test` 46/46 **311/311 exit 0** (live) + isolated 311/311 exit 0; integration 107/107 exit 0; accounting group 13 suites/134 exit 0; focused HTTP gate-smoke 10/10 (real settle→refund→replay→booked-cancel-refused→worker-refused→recon identity over booted copy); fresh-DB brand-new-file probe (settle→cancel-REFUSED→reversal→recon) OK; exploits return 4xx and persist nothing; live residue 0.
+- **Invariant now holds on all paths:** operational settlement on every supported path (P1 Kashier, P2 worker COD, P3 evidence-backed manual/admin) is exactly one posted journal; refunds are immutable reversals; money states cannot be fabricated by status anymore on any route; booked orders cannot be cancelled outside the reversal seam. Reconciliation still shows the ~105,000 EGP-cent legacy slider-'paid'-without-journal population as `settled_unbooked` (surfaced, healable via book-only settle — NOT auto-backfilled, awaiting owner triage).
+
+**Deliberate out-of-scope remains:** RMA/physical-goods-return journals, partial refunds (refused, not faked), VIP on-bill AR recognition (no AR model — 092/093 dependency).
+
+**Full 091 build detail: see the tenth-stop section below + CHANGELOG [4.21.0]/[4.21.1] + ADR-017(+ADDENDUM).**
+
+---
+
 **Date:** 2026-09-13 (tenth stop — ticket 091 sales settlement journaling + refund reversal; STOP for owner review)
 **From:** Mventor (Execution Owner)
 **To:** Project Owner / Next Session

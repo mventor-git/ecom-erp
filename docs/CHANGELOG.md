@@ -1,5 +1,17 @@
 # Changelog
 
+## [4.21.1] - 2026-09-13 - 091 verification gate: closed the remaining status-only money paths
+### Fixed (CONFIRMED integrity defects found by the post-091 read-only pass; file-level repro before and after on throwaway copies)
+- **Worker status endpoint could fabricate money states** (`PUT /api/v1/worker/orders/:id/status` accepted `status:'paid'`/`'refunded'` in legacy mode — the 4211 probe persisted `refunded` with 0 journals). The 091 settlement-evidence intent guards (`SETTLEMENT_REQUIRED` / `REFUND_REQUIRED`) are now enforced on the worker route exactly as on the admin route.
+- **Cancelling a BOOKED order left revenue posted** — any lifecycle path into `cancelled` (admin slider, worker, on-bill decline) skipped reversal entirely. New ledger authority inside `orderWorkflowService.transitionOrder`: an order with a posted `sale-settled` journal can NEVER be cancelled (`LEDGER_BLOCKED` — refund through the reversal seam instead); covers every caller. Customer mobile cancel + VIP decline-onbill (direct writers) check `salesPosting.hasPostedSale` and refuse with 400.
+- **`trans-void` webhook on a booked order silently cancelled posted revenue** — now the provider session is marked VOIDED, the order keeps its booked truth, and the anomaly is surfaced loudly for admin refund handling (never silently diverging the ledger).
+### Added
+- `salesPosting.hasPostedSale(orderId)` (shared ledger-authority predicate); 4 gate-closure tests in `salesSettlement091.test.js` (booked-cancel refusal incl. HTTP `LEDGER_BLOCKED`, unsettled cancel still works, worker intents refused with a REAL seeded staff JWT, trans-void on booked order keeps status+journals); `docs/payment-state-machine.md` now says what IS implemented vs the old design sketch (partial refunds were never built).
+### Verification
+- New suite 33/33; full matrix re-run after the fixes: `npm test` 46/46 **311/311 exit 0** (live) + `test:isolated` 311/311 exit 0 + `test:integration` 107/107 exit 0 + focused accounting group 13 suites/134 exit 0; gate HTTP smoke on booted throwaway copy **10/10** (incl. booked-cancel refusal + worker REFUND_REQUIRED over real HTTP); fresh-DB brand-new-file probe: settle → booked-cancel refused → reversal → recon OK; exploit probe re-run returns 400/400 and file stays `pending`; live-DB residue 0; secret scan on gate diff clean.
+### ADR
+- ADR-017 ADDENDUM: booked orders are corrected only through the reversal seam; cancellation is structurally unavailable once money is booked.
+
 ## [4.21.0] - 2026-09-13 - mventor-ticket-091: sales settlement journaling + refund reversal
 ### Added
 - **`salesSettlementService`** — the money authority behind every real settlement path: `settleOrder` (evidence-backed manual settlement — policy B: actor + method ∈ {cash,card,bank_transfer,wallet,other} + mandatory reason + reference required off-cash; ALSO heals legacy slider-'paid' orders by booking without re-stamping), `settleCodOnDelivery` (worker attestation → stamp + canonical journal in ONE transaction), `refundOrder` (full refund only: transition + immutable reversal atomically), `revenueReconciliation` (read-only control: operational settled vs posted journal nets per order, five difference classes, integer cents, never forces equality).
