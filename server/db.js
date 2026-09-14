@@ -1455,6 +1455,7 @@ async function initDb() {
     ['journals.read', 'View journals and journal detail'],
     ['journals.manage', 'Author, post and unpost manual journal entries'],
     ['ledger.read', 'View ledger, trial balance and GL statements'],
+    ['customers.manage', 'Manually add or edit customer book entries (095 onboarding)'],
   ];
   ticket92Permissions.forEach(([name, description]) => {
     db.run(`

@@ -253,6 +253,35 @@ export const updateSetting = (key, value) => api.put(`/admin/settings/${key}`, {
 // records; writing happens through each domain's own gated endpoints.
 export const getSetupStatus = () => api.get('/admin/setup/status');
 
+// Master-data onboarding imports (mventor-ticket-095): preview is a pure read,
+// commit is all-or-nothing; both are server-validated per dataset.
+export const getOnboardingTypes = () => api.get('/admin/onboarding/types');
+export const downloadOnboardingTemplate = async (type) => {
+  const res = await api.get('/admin/onboarding/template', { params: { type }, responseType: 'text' });
+  const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `onboarding-${type}-template.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+export const onboardingPreview = (type, file, opts = {}) => {
+  const form = new FormData();
+  form.append('type', type);
+  form.append('file', file);
+  if (opts.allow_new_categories != null) form.append('allow_new_categories', opts.allow_new_categories ? '1' : '0');
+  return api.post('/admin/onboarding/preview', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+export const onboardingCommit = (type, file, opts = {}) => {
+  const form = new FormData();
+  form.append('type', type);
+  form.append('file', file);
+  if (opts.allow_new_categories != null) form.append('allow_new_categories', opts.allow_new_categories ? '1' : '0');
+  return api.post('/admin/onboarding/commit', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+export const createAdminCustomer = (body) => api.post('/admin/customers', body);
+export const updateAdminCustomer = (id, body) => api.put(`/admin/customers/${id}`, body);
+
 // 3D model upload (.glb/.gltf) for the welcome-page showcase
 export const uploadModel = (file) => {
   const form = new FormData();

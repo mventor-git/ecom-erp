@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import {
   getCustomers, getCustomersExportUrl, getCustomerActionsExportUrl,
-  createVipInvite, getVipInvites, vipInviteCardUrl,
+  createVipInvite, getVipInvites, vipInviteCardUrl, createAdminCustomer,
 } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
 import { useLanguage } from '../../i18n';
@@ -23,11 +23,37 @@ export default function CustomersList() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
 
-  useEffect(() => {
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ email: '', name: '', phone: '', city: '', address: '' });
+  const [addBusy, setAddBusy] = useState(false);
+  const [addErr, setAddErr] = useState('');
+
+  const loadCustomers = () => {
+    setLoading(true);
     getCustomers({ q: search || undefined, page: 1, limit: 10 })
       .then(res => setCustomers(res.data?.items || res.data || []))
       .catch(err => setError(err.response?.data?.error || t('Failed to load customers')))
       .finally(() => setLoading(false));
+  };
+
+  // 095: manual entry — the book is no longer signup-only; customers.manage gates.
+  const submitAdd = async () => {
+    setAddErr('');
+    if (!addForm.email.trim() || !addForm.name.trim()) { setAddErr('email and name are required'); return; }
+    setAddBusy(true);
+    try {
+      await createAdminCustomer({ email: addForm.email.trim(), name: addForm.name.trim(), phone: addForm.phone.trim(), city: addForm.city.trim(), address: addForm.address.trim() });
+      setAddOpen(false);
+      setAddForm({ email: '', name: '', phone: '', city: '', address: '' });
+      loadCustomers();
+    } catch (err) {
+      setAddErr(err.response?.data?.error || 'Failed to create customer');
+    } finally { setAddBusy(false); }
+  };
+
+  useEffect(() => {
+    loadCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const q = search.toLowerCase().trim();
@@ -102,9 +128,12 @@ export default function CustomersList() {
           <p className="text-sm text-gray-500 mt-1">{t('All signed-in customers with their activity')}</p>
         </div>
         {tab !== 'invites' && (
-          <a href={getCustomersExportUrl()} className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
-            {t('⬇ Export All CSV')}
-          </a>
+          <div className="flex items-center gap-2">
+            <button onClick={() => { setAddErr(''); setAddOpen(true); }} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium">+ Add customer</button>
+            <a href={getCustomersExportUrl()} className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+              {t('⌄ Export All CSV')}
+            </a>
+          </div>
         )}
       </div>
 
@@ -143,6 +172,29 @@ export default function CustomersList() {
       )}
 
       {tab === 'invites' && <InvitationsPanel dateLocale={dateLocale} />}
+
+      {addOpen && (
+        <div className="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4" role="presentation">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6" role="dialog" aria-modal="true">
+            <h3 className="text-lg font-bold text-gray-900">Add customer to the book</h3>
+            <p className="text-xs text-gray-500 mt-1">Manual entry for walk-ins and existing contacts — duplicates are matched by email and refused with the existing record's id.</p>
+            <div className="mt-4 space-y-3">
+              {[['email', 'Email *', 'text'], ['name', 'Name *', 'text'], ['phone', 'Phone', 'text'], ['city', 'City', 'text'], ['address', 'Address', 'text']].map(([k, label, tpe]) => (
+                <label key={k} className="block text-sm text-gray-700">{label}
+                  <input type={tpe} value={addForm[k]} maxLength={k === 'address' ? 120 : 60}
+                    onChange={(e) => setAddForm((f) => ({ ...f, [k]: e.target.value }))}
+                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                </label>
+              ))}
+              {addErr && <div className="p-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{addErr}</div>}
+            </div>
+            <div className="mt-5 flex justify-end gap-3">
+              <button onClick={() => setAddOpen(false)} disabled={addBusy} className="px-4 py-2 text-sm bg-gray-100 rounded-lg hover:bg-gray-200">Cancel</button>
+              <button onClick={submitAdd} disabled={addBusy} className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50">{addBusy ? '…' : 'Create customer'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

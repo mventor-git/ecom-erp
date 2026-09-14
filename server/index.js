@@ -267,6 +267,8 @@ app.use('/api/admin/suppliers', require('./routes/suppliers'));
 app.use('/api/admin', require('./routes/warehouses'));
 app.use('/api/admin/purchase-orders', require('./routes/purchaseOrders'));
 app.use('/api/admin/supplier-payments', require('./routes/supplierPayments'));
+// Master-data onboarding (mventor-ticket-095): preview/validate/commit imports
+app.use('/api/admin/onboarding', require('./routes/onboarding'));
 app.use('/api/admin/accounting', require('./routes/accounting'));
 app.use('/api/admin/reports', require('./routes/reports'));
 app.use('/api/admin/integrations', require('./routes/integrations'));

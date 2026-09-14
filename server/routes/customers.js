@@ -11,6 +11,7 @@ const { requirePermission } = require('../middleware/rbac');
 const customerService = require('../services/customerService');
 const vipService = require('../services/vipService');
 const settingsService = require('../services/settingsService');
+const eventService = require('../services/eventService');
 
 // ── VIP Invitations (mventor-ticket-060) ──
 
@@ -104,6 +105,69 @@ router.delete('/vip-cart/:customerId/:itemId', adminAuth, requirePermission('use
 });
 
 // GET /api/admin/customers - all customers with stats
+// ── Manual customer entry (095): operators must be able to ADD a customer
+// (walk-in book, imported lead) without waiting for a storefront signup.
+// Upsert semantics here match the onboarding importer's business key:
+// lower-cased email. NO delete ever — orders/history anchor on customers.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function cleanCustomerBody(body) {
+  const email = String((body && body.email) || '').trim().toLowerCase();
+  if (!EMAIL_RE.test(email)) { const e = new Error('A valid email is required'); e.status = 400; throw e; }
+  if (email.length > 190) { const e = new Error('email too long'); e.status = 400; throw e; }
+  const name = String((body && body.name) || '').trim().slice(0, 120);
+  if (!name) { const e = new Error('name is required'); e.status = 400; throw e; }
+  const phone = String((body && body.phone) || '').trim();
+  if (phone && !/^\+?[\d][\d\s-]{6,19}$/.test(phone)) { const e = new Error('phone is not valid'); e.status = 400; throw e; }
+  return {
+    email, name, phone: phone.slice(0, 30),
+    address: String((body && body.address) || '').trim().slice(0, 120),
+    city: String((body && body.city) || '').trim().slice(0, 60),
+    governorate: String((body && body.governorate) || '').trim().slice(0, 60),
+  };
+}
+
+router.post('/', adminAuth, requirePermission('customers.manage'), (req, res) => {
+  try {
+    const c = cleanCustomerBody(req.body);
+    const clash = db.prepare('SELECT id FROM customers WHERE LOWER(email) = ?').get(c.email);
+    if (clash) return res.status(409).json({ error: `A customer with email ${c.email} already exists (id ${clash.id}) — edit that record instead` });
+    // Onboarding-created customers are usable immediately (verified book entry).
+    const r = db.prepare('INSERT INTO customers (email, name, phone, address, city, governorate, is_verified) VALUES (?, ?, ?, ?, ?, ?, 1)')
+      .run(c.email, c.name, c.phone, c.address, c.city, c.governorate);
+    eventService.emit('customer_created', 'customer', r.lastInsertRowid, {
+      userId: req.session.username || 'admin', payload: { email: c.email, name: c.name, manual: true },
+    });
+    res.status(201).json({ success: true, data: db.prepare('SELECT * FROM customers WHERE id = ?').get(r.lastInsertRowid) });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    console.error('customer create failed:', err);
+    res.status(500).json({ error: 'Failed to create customer' });
+  }
+});
+
+router.put('/:id', adminAuth, requirePermission('customers.manage'), (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const existing = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
+    if (!existing) return res.status(404).json({ error: 'Customer not found' });
+    const c = cleanCustomerBody({ ...req.body, email: req.body.email || existing.email });
+    if (c.email !== String(existing.email || '').toLowerCase()) {
+      const clash = db.prepare('SELECT id FROM customers WHERE LOWER(email) = ? AND id != ?').get(c.email, id);
+      if (clash) return res.status(409).json({ error: `email already used by customer ${clash.id}` });
+    }
+    db.prepare('UPDATE customers SET email = ?, name = ?, phone = ?, address = ?, city = ?, governorate = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
+      .run(c.email, c.name, c.phone, c.address, c.city, c.governorate, id);
+    eventService.emit('customer_updated', 'customer', id, {
+      userId: req.session.username || 'admin', payload: { email: c.email, manual: true },
+    });
+    res.json({ success: true, data: db.prepare('SELECT * FROM customers WHERE id = ?').get(id) });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    console.error('customer update failed:', err);
+    res.status(500).json({ error: 'Failed to update customer' });
+  }
+});
+
 router.get('/', adminAuth, requirePermission('users.read'), (req, res) => {
   try {
     res.json(customerService.customersWithStats(req.query.q || null, req.query.status || null, req.query.page || 1, req.query.limit || 10));

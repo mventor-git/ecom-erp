@@ -26,7 +26,7 @@ function freshBootProbe() {
   const resFile = path.join(os.tmpdir(), `fresh094-${stamp}.json`);
   try {
     const { spawnSync } = require('child_process');
-    spawnSync('node', ['_freshBootProbe.js', tmp, resFile], {
+    spawnSync('node', [path.join('probes', 'freshBootProbe.js'), tmp, resFile], {
       cwd: SERVER_DIR, timeout: 120000, windowsHide: true,
       env: {
         ...process.env,

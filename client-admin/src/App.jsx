@@ -40,6 +40,8 @@ const Journals = lazy(() => import('./admin/pages/Journals'));
 const FinancialStatements = lazy(() => import('./admin/pages/FinancialStatements'));
 // First-run setup (mventor-ticket-094)
 const SetupWizard = lazy(() => import('./admin/pages/SetupWizard'));
+// Master-data onboarding (mventor-ticket-095)
+const OnboardImport = lazy(() => import('./admin/pages/OnboardImport'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -78,6 +80,14 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <SetupWizard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/setup/import"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <OnboardImport />
               </Suspense>
             }
           />
