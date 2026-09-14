@@ -1,9 +1,9 @@
-﻿# Project State
+# Project State
 
 **Project:** Ecom-ERP — Open-Source E-commerce + ERP  
 **Location:** `ecom-erp`  
-**Current Phase:** ERP Platform â€” All Core Modules Complete  
-**Status:** Active Development  
+**Current Phase:** Productization - fresh-install integrity + first-run setup + master-data onboarding delivered (milestones A/B, tickets 094-095); inventory<->GL integrity + journey acceptance in progress
+**Status:** Active Development - autonomous product-completion mission
 
 ## Architecture
 - **Backend:** Node.js + Express + SQL.js
@@ -82,12 +82,13 @@
 - **Mobile Tables:** cart_items, order_items, user_addresses, device_tokens, notification_preferences
 - **ERP Product Columns:** cost_price, weight_kg, is_trackable, default_warehouse_id, barcode, sku, min_stock, max_stock, reorder_point
 
-## Build Verification (baseline 2026-09-13 — tickets 091 + 091 gate + 092 GL operability)
-- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified**: 091 flow (JE settle→reversal→recon) + 092 (5 GL permissions seeded, manual-JE lifecycle, statements, audit chain)
-- Frontend: admin build clean (091 settle/refund dialogs + revenue-reconciliation; 092 Chart of Accounts / Journals / Statements + period Reopen)
-- **Unit suite: 47 suites / 332 tests PASS, process exit 0** (live AND isolated snapshot) · **Integration 107/107** · HTTP smokes 17/17 + gate 10/10 + **092 22/22** on throwaway boots · residue 0 incl. orphan events · secret scan clean
+## Build Verification (baseline 2026-09-14 — tickets 091+gate+092 (ledger) + 094/095 (productization))
+- Backend: `5172` healthy + FK `PRAGMA foreign_keys=1` + nested SAVEPOINT transactions + audit events + Kashier HMAC/amount verify; **fresh DB-file boot verified**: 091 flow (JE settle→reversal→recon) + 092 (5 GL permissions, manual-JE lifecycle, statements) + **094: 55 formerly-forked columns ALL present on brand-new files, real bilingual/VIP/order inserts work, zero fake customers/reviews, ADMIN_EMAIL no longer crashes boot**; probe tracked at `server/probes/freshBootProbe.js` and spawn-safe on clean checkouts
+- Frontend: admin + storefront builds clean (092 statements set; 094 /setup wizard + banner + WelcomePage empty-state escape; 095 /setup/import onboarding + Add-customer dialog)
+- **Unit suite: 49 suites / 353 tests PASS, process exit 0** (live AND isolated snapshot) · **Integration 107/107** · HTTP smokes 17/17 + gate 10/10 + 092 22/22 · residue 0 incl. orphan events (76 pre-existing product-type orphan events left INTACT by design — immutable audit history of old fixture deletions) · secret scan clean
 - **Sales settlement is now canonical on every real path** (091): P1 Kashier webhook + P2 worker COD (status+proof) + P3 evidence-backed manual/admin settlement all post ONE `Dr Cash/Cr Revenue` + COGS-leg journal atomically (`sale-settled`, single-post-per-order UNIQUE, cross-channel replay-safe); refunds post a NEW mirrored cash/revenue reversal (`sale-reversed`, never edits/unposts, never restores inventory); provider refund webhook routed through the same seam; period controls fail closed on settlements AND reversals + both webhook directions. `revenueReconciliation` control flags settled-vs-journal divergence by order/source. **Post-091 gate closed the last status-only money doors: admin AND worker routes refuse `paid`/`refunded` intents (SETTLEMENT_REQUIRED / REFUND_REQUIRED), and a booked order can never be `cancelled` (LEDGER_BLOCKED at `transitionOrder` + pre-checks on mobile cancel / on-bill decline; provider trans-void never cancels posted revenue) — booked money moves ONLY through the immutable reversal seam.** Vendored docs kept honest: partial refunds / goods-returns / VIP on-bill AR / counter-sale cash are OUT of 091 (not fake-implemented).
 - **GL is now OPERATIONAL (092):** /api/admin/accounting surface (CoA CRUD with referenced-delete refusal + per-account posted-only ledger · manual journals draft→post→manual-unpost with all invariants server-enforced and period-locked on BOTH sides · every bridge journal badged machine-owned and immutable · filtered journal list/detail with audit timeline) + journal-derived Trial Balance / P&L / truthful Balance Sheet (identity machine-checked, limitations surfaced) under permissions accounts.*/journals.*/ledger.read; reportService profit stays explicitly OPERATIONAL, statements are the accounting view. ADR-018.
+- **THE PRODUCT ONBOARDS A REAL COMPANY (094+095):** fresh install is intentionally EMPTY (no invented customers/reviews ever again; starter scaffolding only) + derived SETUP checklist (`GET /api/admin/setup/status` → wizard `/setup`: identity/locale/warehouse/first period/catalog core + guidance; banner + redirect; never a lie — recomputed from records); master data arrives through `/setup/import` (CSV/XLSX: preview → per-line validation incl. exact-cent/money/phone/email checks → business-key dup detection → ALL-OR-NOTHING commit; products/suppliers/customers/warehouses; stock law: imports never mutate existing stock) or manual entry (Add-customer dialog with server 409/400 + audit). Legacy import force-printer side effect REMOVED.
 - Payables live end-to-end: receipts Dr Inventory / Cr Payables per movement; supplier payments relieve AP (Dr 2100 / Cr 1000, full/partial/multi-PO, replay-safe + reversal) **with admin UI on PO detail** (payables panel, record + reverse dialogs)
 - Mobile: Expo bundles OK (customer + worker) — but `API_BASE_URL http://<dev-lan-ip>:5172/api/v1` hardcoded LAN + missing `projectId`/`eas.json` — stabilization deferred
 - DB: `server/data/store.db` 917KB + 30 daily backups (02:00) + `server/db.js` 61 tables (schema.sql is doc reference only)
@@ -96,7 +97,7 @@
 - **mventor-ticket-041 (APK):** requires the user to run `npx eas-cli login` + `eas build` (Expo account) â€” no local Java/Android SDK on this machine
 
 ## Next Steps (updated 2026-09-13)
-- **mventor-ticket-091 CLOSED (owner-accepted) · mventor-ticket-092 — GL OPERABILITY COMPLETED** (CoA + manual journals + journal list/detail + TB + journal-derived P&L + truthful Balance Sheet + period-locked manual ops + `accounts.*`/`journals.*`/`ledger.read` RBAC + audit trail; ADR-018). **STOP — owner review required; 093 NOT started.**
+- **Autonomous product-completion mission (in progress):** 091 CLOSED (accepted) · 092 delivered · **094 (fresh-install integrity + first-run setup) + 095 (onboarding imports + manual customer entry) DELIVERED** (milestones A/B, pushed `fd68555`). **Next in flight:** 093 inventory<->GL integrity (opening-balance/shrinkage/gain + goods-return journaling + ledger-vs-inventory reconciliation control) then 096 end-to-end business-journey acceptance + product docs. STOP condition = usable-product acceptance, not ticket count.
 - Prior: 091 gate fixes 4.21.1 (booked-cancel + worker money-intent closures); N1+N2 4.19.0; AP Aging 090 (+hardening); stabilization F1–F13. Details `docs/accounting-stabilization-findings.md`; ADRs 014–018.
 - **Deferred accounting queue:** inventory↔GL 093 (valuation + adjustments + goods-return/RMA), supplier invoices + payment terms (true due-date aging), bank/transfer methods + bank accounts in CoA usage, cash-flow / VAT bookkeeping, retained-earnings closing. Not started without owner direction.
 - **Owner triage carried (091):** ~105k-cents legacy settled_unbooked visible in revenue reconciliation — book-only-settle or leave; NOT auto-repaired.
