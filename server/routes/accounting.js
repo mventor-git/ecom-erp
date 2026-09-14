@@ -167,4 +167,26 @@ router.get('/balance-sheet', adminAuth, requirePermission('ledger.read'), (req, 
   } catch (err) { fail(res, err); }
 });
 
+// GET /api/admin/accounting/inventory-reconciliation — ledger-vs-inventory
+// control (mventor-ticket-093): posted 1300 net vs cost-layer book value +
+// every ledger-owned movement still lacking its journal. Differences are
+// LISTED, never forced (same philosophy as AP aging + revenue recon).
+router.get('/inventory-reconciliation', adminAuth, requirePermission('ledger.read'), (req, res) => {
+  try {
+    res.json({ success: true, data: require('../services/inventoryPosting').reconcile({ limit: req.query.limit }) });
+  } catch (err) { fail(res, err); }
+});
+
+// POST /api/admin/accounting/inventory-reconciliation/post/:movementId —
+// operator catch-up for a movement whose posting failed/was blocked earlier
+// (idempotent: replay returns the posted entry; skip-reasons answer honestly).
+router.post('/inventory-reconciliation/post/:movementId', adminAuth, requirePermission('journals.manage'), (req, res) => {
+  try {
+    const r = require('../services/inventoryPosting').postMovement(parseInt(req.params.movementId, 10), {
+      userId: req.session.username || req.user?.email || 'operator',
+    });
+    res.json({ success: true, data: r });
+  } catch (err) { fail(res, err); }
+});
+
 module.exports = router;

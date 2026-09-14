@@ -15,7 +15,7 @@ import { centsToEGPInput, egpToCents } from '../../utils/money';
 // are: machine-owned, immutable history — the UI offers no mutation because
 // the server refuses one.
 
-const SOURCE_LABEL = { order: 'sales bridge', inventory_movement: 'purchase bridge', supplier_payment: 'supplier payment' };
+const SOURCE_LABEL = { order: 'sales bridge', inventory_movement: 'inventory bridges (receipts/stock)', supplier_payment: 'supplier payments' };
 
 function emptyLine() { return { account_id: '', debitEGP: '', creditEGP: '', description: '' }; }
 
@@ -155,7 +155,7 @@ export default function Journals() {
         </label>
         <label className="text-xs text-gray-600">Origin
           <select value={filters.source} onChange={(e) => { setFilters((f) => ({ ...f, source: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
-            <option value="">any</option><option value="manual">manual</option><option value="order">sales bridge</option><option value="inventory_movement">purchase bridge</option><option value="supplier_payment">supplier payment</option>
+            <option value="">any</option><option value="manual">manual</option><option value="order">sales bridge</option><option value="inventory_movement">stock bridges</option><option value="supplier_payment">supplier payment</option>
           </select>
         </label>
         <label className="text-xs text-gray-600">Account

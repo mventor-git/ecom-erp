@@ -12,8 +12,11 @@ const SKELETON = [
   { code: '1200', name: 'Accounts Receivable', type: 'asset' },
   { code: '1300', name: 'Inventory', type: 'asset' },
   { code: '2100', name: 'Accounts Payable', type: 'liability' },
+  // 093: the equity + adjustment roles the stock ledger needs to stay honest.
+  { code: '3000', name: "Owner's Equity / Opening Capital", type: 'equity' },
   { code: '4000', name: 'Sales Revenue', type: 'revenue' },
   { code: '5000', name: 'Cost of Goods Sold', type: 'expense' },
+  { code: '5100', name: 'Inventory Adjustments (Shrinkage / Gain)', type: 'expense' },
 ];
 
 /** Get-or-create a skeleton account; refuses inactive ones loudly. */

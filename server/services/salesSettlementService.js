@@ -318,10 +318,57 @@ function revenueReconciliation({ limit = 200 } = {}) {
   };
 }
 
+/**
+ * Counter-sale settlement (093): money collected AT the counter is a real
+ * settlement channel — walk-in orders settle here through the SAME canonical
+ * seam as every other path. One transaction: order stamps + payment evidence
+ * + canonical sale journal + audit event; a closed period or posting failure
+ * rolls the whole settlement back (the counter route wraps the stock issue in
+ * the same transaction, so a blocked journal means no stock left either).
+ *
+ * Idempotent by the payment_status guard + the journal source UNIQUE:
+ * re-settling a booked order returns settled:false, never a second journal.
+ */
+function settleCounterSale(orderId, { actor = '', reference = '', reason = '', method = 'cash' } = {}) {
+  const oid = parseInt(orderId, 10) || 0;
+  if (!oid) throw new Error('settleCounterSale requires an order id');
+  const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(oid);
+  assertOrderSettleable(order, 'settle (counter)');
+  if (SETTLED_PAYMENT_STATUSES.includes(order.payment_status)) {
+    const booked = salesPosting.findOrderJournal(oid)?.status === 'posted';
+    if (booked) return { settled: false, reason: 'already settled and booked' };
+  }
+  const cleanMethod = ['cash', 'card', 'wallet'].includes(String(method).toLowerCase()) ? String(method).toLowerCase() : 'cash';
+  const cleanReason = String(reason || 'cash collected at counter').trim().slice(0, REASON_MAX_CHARS);
+  const cleanRef = String(reference || '').trim().slice(0, REASON_MAX_CHARS);
+
+  let journal = null;
+  db.transaction(() => {
+    db.prepare(`
+      UPDATE orders SET status = 'completed',
+        payment_status = 'paid', payment_method = ?, paid_at = COALESCE(paid_at, CURRENT_TIMESTAMP),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(cleanMethod, oid);
+    journal = salesPosting.postOrderSale(oid, {
+      userId: actor || 'counter-sale',
+      evidence: `counter sale by ${actor || 'operator'} | ${cleanMethod}${cleanRef ? ` | ref:${cleanRef}` : ''} | ${cleanReason}`,
+    });
+    const fresh = db.prepare('SELECT total FROM orders WHERE id = ?').get(oid);
+    eventService.emit('order_settlement_recorded', eventService.ENTITY_TYPES.ORDER, oid, {
+      userId: actor || 'counter-sale',
+      payload: { settlement: 'counter_sale', method: cleanMethod, reference: cleanRef || null, reason, amount_cents: fresh.total },
+    });
+  });
+
+  return { settled: journal.posted, replayed: !journal.posted, entry: journal.entry };
+}
+
 module.exports = {
   SETTLEMENT_METHODS,
   settleOrder,
   settleCodOnDelivery,
+  settleCounterSale,
   refundOrder,
   revenueReconciliation,
 };

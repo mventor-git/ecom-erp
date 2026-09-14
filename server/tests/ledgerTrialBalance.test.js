@@ -85,7 +85,12 @@ describe('ledger / trial balance (080)', () => {
     const tb = ledgerService.getTrialBalance({});
     expect(tb.balanced).toBe(true);
     expect(tb.total_period_debit).toBe(tb.total_period_credit);
-    expect(tb.total_period_debit).toBe(13000);
+    // since 093 other suites legitimately post journals in-range too: prove
+    // THIS book's exact sums scoped to its own accounts (the global equality
+    // above still checks the whole ledger holds).
+    const own = tb.rows.filter((r) => String(r.code).startsWith('jest-080-'));
+    expect(own.reduce((s, r) => s + r.period_debit, 0)).toBe(13000);
+    expect(own.reduce((s, r) => s + r.period_credit, 0)).toBe(13000);
     const byCode = Object.fromEntries(tb.rows.map(r => [r.code, r]));
     expect(byCode['jest-080-1000']).toMatchObject({ opening_debit: 0, opening_credit: 0, period_debit: 10000, period_credit: 3000, final_debit: 7000, final_credit: 0 });
     expect(byCode['jest-080-4000']).toMatchObject({ final_debit: 0, final_credit: 10000 });

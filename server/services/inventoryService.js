@@ -191,6 +191,13 @@ function createMovement({ productId, warehouseId, locationId, type, reason, refe
 
   checkLowStock(productId, warehouseId);
 
+  // GL value posting (mventor-ticket-093): movements that change inventory
+  // VALUE flow to inventoryPosting immediately. safePost never throws and
+  // never fails the movement — a posting that cannot happen stays visible in
+  // the ledger-vs-inventory reconciliation until it can (same philosophy as
+  // the 087 receipt bridge, centralized at the one movement door).
+  try { require('./inventoryPosting').safePost(result.lastInsertRowid, userId); } catch { /* belt: never break the movement */ }
+
   return db.prepare('SELECT * FROM inventory_movements WHERE id = ?').get(result.lastInsertRowid);
 }
 

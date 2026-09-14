@@ -75,6 +75,7 @@ const SECTIONS = [
       { to: '/erp/chart-of-accounts', label: 'Chart of Accounts', icon: 'box' },
       { to: '/erp/journals', label: 'Journals', icon: 'document' },
       { to: '/erp/statements', label: 'Statements', icon: 'chart' },
+      { to: '/erp/inventory-reconciliation', label: 'Inventory Recon', icon: 'box' },
       { to: '/erp/financial-periods', label: 'Financial Periods', icon: 'calendar' },
       { to: '/erp/kashier', label: 'Payments & Reconciliation', icon: 'card' },
     ],

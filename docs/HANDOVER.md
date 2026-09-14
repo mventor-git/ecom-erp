@@ -9,8 +9,8 @@
 - Matrix at fd68555: unit 49/353 exit 0 live+isolated (incl 094 probe suite 10, 095 11), integration 107/107, admin+storefront builds 0, residue 0 (76 pre-existing product-orphan events are immutable audit history — left intact deliberately), secret scan clean.
 
 ## MISSION REMAINING (in order)
-1. **093 inventory<->GL integrity:** journal value-moving non-txn stock events honestly — opening balances (Dr 1300 / Cr new Capital account), shrinkage/gain adjustments (vs new Inventory Adjustments expense at movement unit cost), customer goods-returns restock (Dr 1300 / Cr COGS) as the SEPARATE event 091 deliberately refused to fake inside refunds; transfers stay GL-inert (single entity); NO supplier-return journal unless a real flow exists; ledger-vs-inventory reconciliation control (visible drift, never forced, legacy drift included); sourced by movement, one journal per movement, fail-closed periods; then wire the operator surfaces + tests.
-2. **096 acceptance + docs:** scripted end-to-end BUSINESS JOURNEY on a real DB via real services/HTTP (setup wizard data → imports → supplier+PO+receive → sell+settle → payment → statements → both reconciliations → adjust → audit), fresh-install acceptance run, rewrite SETUP.md/operator docs (first launch, data onboarding, supported flows, limitations, backup/recovery), i18n check for new pages.
+1. ~~**093 inventory<->GL integrity**~~ \u2014 DELIVERED 4.25.0 (one-door inventoryPosting bridge, reconciliation control + catch-up posting, canonical atomic counter sales; ticket 093). Next: 096 acceptance (item below).
+1. **096 acceptance + docs (IN FLIGHT):** scripted end-to-end BUSINESS JOURNEY on a real DB via real services/HTTP (setup wizard data → imports → supplier+PO+receive → sell+settle → payment → statements → both reconciliations → adjust → audit), fresh-install acceptance run, rewrite SETUP.md/operator docs (first launch, data onboarding, supported flows, limitations, backup/recovery), i18n check for new pages.
 3. Full matrix + docs commit + FINAL PRODUCT READINESS REPORT at the STOP condition (A–O checklist in the mission brief).
 
 ## STANDING RULES (proven, do not regress)

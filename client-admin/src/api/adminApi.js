@@ -253,6 +253,10 @@ export const updateSetting = (key, value) => api.put(`/admin/settings/${key}`, {
 // records; writing happens through each domain's own gated endpoints.
 export const getSetupStatus = () => api.get('/admin/setup/status');
 
+// Inventory<->GL reconciliation control + catch-up posting (mventor-ticket-093)
+export const getInventoryReconciliation = (params = {}) => api.get('/admin/accounting/inventory-reconciliation', { params });
+export const postInventoryMovementJournal = (movementId) => api.post(`/admin/accounting/inventory-reconciliation/post/${movementId}`);
+
 // Master-data onboarding imports (mventor-ticket-095): preview is a pure read,
 // commit is all-or-nothing; both are server-validated per dataset.
 export const getOnboardingTypes = () => api.get('/admin/onboarding/types');

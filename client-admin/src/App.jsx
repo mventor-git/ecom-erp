@@ -42,6 +42,8 @@ const FinancialStatements = lazy(() => import('./admin/pages/FinancialStatements
 const SetupWizard = lazy(() => import('./admin/pages/SetupWizard'));
 // Master-data onboarding (mventor-ticket-095)
 const OnboardImport = lazy(() => import('./admin/pages/OnboardImport'));
+// Inventory <-> GL reconciliation control (mventor-ticket-093)
+const InventoryReconciliation = lazy(() => import('./admin/pages/InventoryReconciliation'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -364,6 +366,14 @@ function App() {
             element={
               <Suspense fallback={<PageLoader />}>
                 <FinancialStatements />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/erp/inventory-reconciliation"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <InventoryReconciliation />
               </Suspense>
             }
           />
