@@ -38,6 +38,8 @@ const RevenueReconciliation = lazy(() => import('./admin/pages/RevenueReconcilia
 const ChartOfAccounts = lazy(() => import('./admin/pages/ChartOfAccounts'));
 const Journals = lazy(() => import('./admin/pages/Journals'));
 const FinancialStatements = lazy(() => import('./admin/pages/FinancialStatements'));
+// First-run setup (mventor-ticket-094)
+const SetupWizard = lazy(() => import('./admin/pages/SetupWizard'));
 const ReportsDashboard = lazy(() => import('./admin/pages/ReportsDashboard'));
 const SettingsPage = lazy(() => import('./admin/pages/SettingsPage'));
 const IntegrationsPage = lazy(() => import('./admin/pages/IntegrationsPage'));
@@ -71,6 +73,14 @@ function App() {
 
         {/* Admin dashboard (modular layout with sidebar) */}
         <Route element={<AdminLayout />}>
+          <Route
+            path="/setup"
+            element={
+              <Suspense fallback={<PageLoader />}>
+                <SetupWizard />
+              </Suspense>
+            }
+          />
           <Route
             path="/dashboard"
             element={

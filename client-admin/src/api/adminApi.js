@@ -249,6 +249,10 @@ export const getPublicSettings = () => api.get('/settings/public');
 
 export const updateSetting = (key, value) => api.put(`/admin/settings/${key}`, { value });
 
+// First-run readiness (mventor-ticket-094) — derived server-side from real
+// records; writing happens through each domain's own gated endpoints.
+export const getSetupStatus = () => api.get('/admin/setup/status');
+
 // 3D model upload (.glb/.gltf) for the welcome-page showcase
 export const uploadModel = (file) => {
   const form = new FormData();

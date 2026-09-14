@@ -1252,6 +1252,19 @@ router.get('/revenue-reconciliation', adminAuth, requirePermission('reports.read
   }
 });
 
+// GET /api/admin/setup/status — first-run readiness (mventor-ticket-094).
+// Entirely DERIVED from real records (no flag to corrupt); every logged-in
+// admin may read it; the writes the wizard performs use each domain's own
+// normal RBAC-gated endpoints (settings.manage etc.).
+router.get('/setup/status', adminAuth, (req, res) => {
+  try {
+    res.json({ success: true, data: require('../services/setupService').getSetupStatus() });
+  } catch (err) {
+    console.error('Error computing setup status:', err);
+    res.status(500).json({ error: 'Failed to compute setup status' });
+  }
+});
+
 // ========== Supplier-Product Links (Admin only) ==========
 
 // POST /api/admin/products/:id/suppliers - Assign supplier to product

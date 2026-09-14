@@ -137,7 +137,7 @@ export default function CustomersList() {
             columns={baseColumns}
             data={tab === 'vip' ? vips : normal}
             loading={loading}
-            emptyMessage={tab === 'vip' ? t('No VIP customers yet — send an invitation from the VIP Invitations tab') : t('No customers yet')}
+            emptyMessage={tab === 'vip' ? t('No VIP customers yet — send an invitation from the VIP Invitations tab') : t('No customers yet - online/mobile signups and completed orders create customers automatically; you can also import your existing book')}
           />
         </>
       )}
@@ -279,3 +279,4 @@ function InvitationsPanel({ dateLocale }) {
     </div>
   );
 }
+

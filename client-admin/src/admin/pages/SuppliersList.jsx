@@ -115,7 +115,7 @@ export default function SuppliersList() {
         columns={columns}
         data={suppliers}
         loading={loading}
-        emptyMessage={t('No suppliers yet')}
+        emptyMessage={t('No suppliers yet - add the vendors you buy from; purchasing and accounts payable start here.')}
         onRowClick={(row) => navigate(`/erp/suppliers/${row.id}`)}
       />
 
@@ -188,3 +188,4 @@ export default function SuppliersList() {
     </div>
   );
 }
+

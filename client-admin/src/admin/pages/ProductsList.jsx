@@ -274,7 +274,7 @@ export default function ProductsList() {
         columns={columns}
         data={filtered}
         loading={loading}
-        emptyMessage={t('No products yet. Add products through inventory movements or opening balance.')}
+        emptyMessage={t('No products yet - import your catalog from Setup (CSV/XLSX with preview + per-row validation), or add products manually. Stock then arrives via receipts, opening balance or adjustments.')}
       />
     </div>
   );

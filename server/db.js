@@ -31,6 +31,16 @@ async function initDb() {
 
   db.run('PRAGMA foreign_keys = ON');
 
+  // ── Schema migrations (single source, idempotent) ──────────────────
+  // Fresh-boot integrity fix (094): on a BRAND-NEW file these ALTERs ran
+  // while their tables did not exist yet and every catch {} silently
+  // swallowed the failure — 2FA, signatures, VIP, fulfillment columns and
+  // bilingual content were simply ABSENT on new installs (the same class
+  // previously patched one-by-one for categories.icon / products.deleted_at).
+  // The function is therefore applied TWICE per boot: early (upgrade path —
+  // unchanged behavior on existing DBs) and again after every CREATE TABLE
+  // below (fresh-boot repair). Statements stay idempotent.
+  function applySchemaMigrations() {
   // Migrations: add columns that might not exist yet (no UNIQUE — ALTER TABLE doesn't support it)
   try { db.run("ALTER TABLE customers ADD COLUMN google_id TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE customers ADD COLUMN avatar_url TEXT DEFAULT ''"); } catch {}
@@ -123,6 +133,8 @@ async function initDb() {
   try { db.run("ALTER TABLE users ADD COLUMN signature_path TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE users ADD COLUMN signature_mime TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE users ADD COLUMN signature_updated_at DATETIME"); } catch {}
+  }
+  applySchemaMigrations(); // upgrade path (tables of an existing DB are present)
 
   // Create tables
   db.run(`
@@ -1235,6 +1247,15 @@ async function initDb() {
   try { db.run("ALTER TABLE orders ADD COLUMN proof_note TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE orders ADD COLUMN paid_at DATETIME"); } catch {}
 
+  // Fresh-boot repair (094): replay every early migration NOW that all
+  // CREATE TABLEs above exist — closes the entire ADD-COLUMN-before-CREATE
+  // fork class at once (idempotent; a no-op on already-repaired databases).
+  applySchemaMigrations();
+
+  // Migration: users.phone (line 643 class — ALTER precedes the users CREATE
+  // inside this same block region, so it is re-applied after creation)
+  try { db.run("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch {}
+
   // Seed default categories if empty
   const catCount = db.exec('SELECT COUNT(*) as cnt FROM categories');
   if (!catCount || !catCount[0] || !catCount[0].values || catCount[0].values[0][0] === 0) {
@@ -1466,7 +1487,7 @@ async function initDb() {
   // Create initial Super Admin user from .env credentials
   const usersCount = db.exec('SELECT COUNT(*) as cnt FROM users');
   if (!usersCount || !usersCount[0] || !usersCount[0].values || usersCount[0].values[0][0] === 0) {
-    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.ADMIN_USERNAME || 'admin@localhost';
     const adminPassword = process.env.ADMIN_PASSWORD;
     if (!adminPassword || adminPassword.length < 8) {
       throw new Error('ADMIN_PASSWORD env var is required and must be at least 8 characters. Set it in your .env file.');
@@ -1519,6 +1540,11 @@ async function initDb() {
     try { db.run("INSERT INTO settings (key, value, type, category, description, is_public) SELECT 'packaging_product_id', '0', 'number', 'inventory', 'Packaging product consumed automatically per sold item (0 = off)', 0 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='packaging_product_id')"); } catch {}
     // Domain configuration (mventor-ticket-059): QR codes & links point here
     try { db.run("INSERT INTO settings (key, value, type, category, description, is_public) SELECT 'admin_site_url', 'http://localhost:5174', 'string', 'general', 'Admin panel public URL', 1 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='admin_site_url')"); } catch {}
+    // Customer storefront base URL (QR invites, receipt links, payment callbacks).
+    // Consumed by customers.js / kashier.js / printService but never seeded (094):
+    // without it invite QR codes render relative links. Default mirrors the
+    // dev URL; production sets its own in Settings.
+    try { db.run("INSERT INTO settings (key, value, type, category, description, is_public) SELECT 'customer_site_url', 'http://localhost:5173', 'string', 'general', 'Customer storefront base URL (public links)', 1 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='customer_site_url')"); } catch {}
     // ── Welcome page 3D showcase (admin-configurable) ──
     try { db.run("INSERT INTO settings (key, value, type, category, description, is_public) SELECT 'welcome_3d_enabled', '0', 'bool', 'general', 'Show a 3D model on the welcome/landing page', 1 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='welcome_3d_enabled')"); } catch {}
     try { db.run("INSERT INTO settings (key, value, type, category, description, is_public) SELECT 'welcome_3d_model_url', '', 'string', 'general', '3D model file URL (.glb/.gltf) for the welcome page showcase', 1 WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key='welcome_3d_model_url')"); } catch {}
@@ -1739,78 +1765,13 @@ async function initDb() {
   });
 
   // ═══════════════════════════════════════════════════════════════
-  // SEED DEMO REVIEWS (mventor-ticket-041) — only when no reviews exist yet
-  // Mix of good and bad comments so the review UI can be tested.
+  // DEMO REVIEWS / FAKE CUSTOMERS SEED — RETIRED (094 productization).
+  // It invented 6 fake customers + 12 canned reviews bound to product ids
+  // 1-7 the moment ANY catalog existed — right after a real operator
+  // imported merchandise, fake reviews would attach to genuine products.
+  // A product must never fabricate business records; reviews now come
+  // only from real customer actions (existing rows stay untouched).
   // ═══════════════════════════════════════════════════════════════
-
-  const reviewCount = db.exec('SELECT COUNT(*) as cnt FROM reviews');
-  // Only seed demo reviews when a catalog actually exists � on a fresh/empty
-  // store these FK-reference products that are not there yet (fresh reset).
-  const productCountForReviews = db.exec('SELECT COUNT(*) as cnt FROM products');
-  const hasProducts = productCountForReviews && productCountForReviews[0] &&
-    productCountForReviews[0].values && productCountForReviews[0].values[0][0] > 0;
-  if ((!reviewCount || !reviewCount[0] || !reviewCount[0].values || reviewCount[0].values[0][0] === 0) && hasProducts) {
-    const demoCustomers = [
-      ['demo1@mventor.test', 'Ahmed Hassan'],
-      ['demo2@mventor.test', 'Mona Ali'],
-      ['demo3@mventor.test', 'Omar Khaled'],
-      ['demo4@mventor.test', 'Sarah Nabil'],
-      ['demo5@mventor.test', 'Karim Mostafa'],
-      ['demo6@mventor.test', 'Dina Samir'],
-    ];
-    const customerIds = [];
-    demoCustomers.forEach(([email, name]) => {
-      // Match on the stable google_id (emails may have been rebranded over time)
-      const gid = `demo-${email.split('@')[0]}`;
-      let found = null;
-      try {
-        const r = db.prepare('SELECT id FROM customers WHERE google_id = ? OR email = ?').get(gid, email);
-        found = r ? [r.id] : null;
-      } catch { found = null; }
-      if (found && found.length > 0) {
-        customerIds.push(found[0]);
-      } else {
-        try {
-          db.run('INSERT INTO customers (email, name, google_id) VALUES (?, ?, ?)', [email, name, gid]);
-          const idRes = db.exec('SELECT last_insert_rowid() AS id');
-          customerIds.push(idRes[0].values[0][0]);
-        } catch (e) {
-          console.error('Demo customer seed skipped:', e.message);
-          customerIds.push(null);
-        }
-      }
-    });
-
-    const demoReviews = [
-      // Good reviews
-      [1, 0, 5, 'Excellent quality, exactly as described! Very satisfied with the purchase.'],
-      [1, 1, 4, 'Good product overall, comfortable and well made.'],
-      [2, 2, 5, 'Fast delivery and great product. Highly recommend!'],
-      [2, 3, 4, 'Solid set, works as expected. Great value for money.'],
-      [3, 4, 5, 'Better than expected for the price. Very happy!'],
-      [6, 5, 5, 'Amazing support, my knee feels much better after using it.'],
-      [6, 0, 4, 'Good quality brace, fits well.'],
-      [5, 1, 4, 'Great jump rope, smooth rotation and durable.'],
-      // Bad reviews
-      [3, 2, 2, 'Product feels cheap, not worth the price. Disappointed.'],
-      [5, 3, 3, 'Took long to arrive and the quality is average at best.'],
-      [7, 4, 2, "Sizing runs small, doesn't fit as expected. Returned it."],
-      [7, 5, 3, 'Average quality. The belt works but is not very comfortable.'],
-    ];
-
-    demoReviews.forEach(([productId, custIdx, rating, comment]) => {
-      // Skip gracefully if this specific product no longer exists
-      const pExists = db.exec(`SELECT id FROM products WHERE id = ${parseInt(productId)}`);
-      if (!pExists || !pExists[0] || !pExists[0].values || pExists[0].values.length === 0) return;
-      // Skip if the demo customer is gone too (fresh-start wipes customers)
-      const customerId = customerIds[custIdx];
-      if (!customerId) return;
-      db.run(`
-        INSERT INTO reviews (product_id, customer_id, rating, comment)
-        VALUES (?, ?, ?, ?)
-      `, [productId, customerId, rating, comment]);
-    });
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // SEED INVENTORY LEDGER (mventor-ticket-042) — when inventory is empty,

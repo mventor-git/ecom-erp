@@ -16,6 +16,14 @@ const SWIPE_THRESHOLD = 60;
 
 export default function WelcomePage() {
   const [slides, setSlides] = useState([]);
+  // Fresh-install honesty (094): "no welcome slides yet" is a REAL state
+  // (nobody configured the site), not a loading state — never trap the
+  // visitor in an infinite spinner with no way into the store.
+  const [slidesLoaded, setSlidesLoaded] = useState(false);
+  const [storeName, setStoreName] = useState('');
+  useEffect(() => {
+    getPublicSetting('store_name', '').then((v) => setStoreName(v || '')).catch(() => {});
+  }, []);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -64,7 +72,8 @@ export default function WelcomePage() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setSlides(data);
       })
-      .catch(err => console.error('Error fetching welcome slides:', err));
+      .catch(err => console.error('Error fetching welcome slides:', err))
+      .finally(() => setSlidesLoaded(true));
   }, []);
 
   const goToSlide = useCallback((index) => {
@@ -197,9 +206,22 @@ export default function WelcomePage() {
 
   // Loading
   if (slides.length === 0) {
+    if (!slidesLoaded) {
+      return (
+        <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
+        </div>
+      );
+    }
+    // No welcome slides configured YET — an intentional, navigable state.
     return (
-      <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
+      <div className="fixed inset-0 bg-dark-950 flex items-center justify-center px-6">
+        <div className="text-center max-w-md">
+          <div className="text-4xl mb-4" aria-hidden="true">🛍️</div>
+          <h1 className="text-2xl font-bold text-white mb-2">{storeName || 'This store'}</h1>
+          <p className="text-white/60 mb-8">The shop is open — welcome screen not set yet.</p>
+          <Link to="/home" className="btn-secondary text-base px-8 py-3 inline-block">Continue to the shop</Link>
+        </div>
       </div>
     );
   }
