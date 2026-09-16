@@ -222,6 +222,30 @@ export default function WelcomePage() {
     };
   }, [goNext, goPrev, isTransitioning]);
 
+  // ── 3D showcase settings (admin-controlled) ──
+  // NOTE: must live ABOVE the early returns (rules of hooks — hook count
+  // must be identical whether slides are loaded or not).
+  const [model3d, setModel3d] = useState(null);
+  useEffect(() => {
+    Promise.all([
+      getPublicSetting('welcome_3d_enabled', false),
+      getPublicSetting('welcome_3d_model_url', ''),
+      getPublicSetting('welcome_3d_motion', 'float'),
+      getPublicSetting('welcome_3d_clip', ''),
+      getPublicSetting('welcome_3d_scale', 1),
+      getPublicSetting('welcome_3d_speed', 1),
+    ]).then(([enabled, url, motion, clip, scale, speed]) => {
+      setModel3d({
+        enabled: enabled === true || enabled === 'true' || enabled === 1 || enabled === '1',
+        modelUrl: url,
+        motion: motion || 'float',
+        clip: clip || '',
+        scale: Number(scale) || 1,
+        speed: Number(speed) || 1,
+      });
+    }).catch(() => {});
+  }, []);
+
   // Loading — skeleton hero, never a bare spinner on a black void.
   if (slides.length === 0) {
     if (!slidesLoaded) {
@@ -268,28 +292,6 @@ export default function WelcomePage() {
   const containerStyle = isDragging
     ? { transform: `translateY(${baseTranslate + dragOffset}px)`, transition: 'none' }
     : { transform: `translateY(${baseTranslate}px)`, transition: `transform ${TRANSITION_MS}ms cubic-bezier(0.4, 0, 0.2, 1)` };
-
-  // ── 3D showcase settings (admin-controlled) ──
-  const [model3d, setModel3d] = useState(null);
-  useEffect(() => {
-    Promise.all([
-      getPublicSetting('welcome_3d_enabled', false),
-      getPublicSetting('welcome_3d_model_url', ''),
-      getPublicSetting('welcome_3d_motion', 'float'),
-      getPublicSetting('welcome_3d_clip', ''),
-      getPublicSetting('welcome_3d_scale', 1),
-      getPublicSetting('welcome_3d_speed', 1),
-    ]).then(([enabled, url, motion, clip, scale, speed]) => {
-      setModel3d({
-        enabled: enabled === true || enabled === 'true' || enabled === 1 || enabled === '1',
-        modelUrl: url,
-        motion: motion || 'float',
-        clip: clip || '',
-        scale: Number(scale) || 1,
-        speed: Number(speed) || 1,
-      });
-    }).catch(() => {});
-  }, []);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-dark-950 select-none touch-none">
