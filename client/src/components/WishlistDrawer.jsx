@@ -22,7 +22,7 @@ export default function WishlistDrawer() {
       <div className="px-4 sm:px-6 py-4">
         {items.length === 0 ? (
           <div className="text-center py-12">
-            <svg className="mx-auto w-12 h-12 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="mx-auto w-12 h-12 text-gray-300 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
                 d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
@@ -52,7 +52,7 @@ export default function WishlistDrawer() {
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-200 dark:from-dark-700 dark:to-dark-800 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-6 h-6 text-gray-300 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16M4 16l2-2M16 16l-2-2m2 2l-6 6m6-6l6-6"/>
                       </svg>
                     </div>

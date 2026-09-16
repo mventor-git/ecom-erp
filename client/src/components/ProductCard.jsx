@@ -144,7 +144,7 @@ export default function ProductCard({ product }) {
               }}
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600">
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-400">
               <PlaceholderGlyph />
               <span className="text-[10px] text-gray-200 dark:text-gray-700 font-medium">{product.category_name}</span>
             </div>

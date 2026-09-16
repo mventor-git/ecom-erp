@@ -128,7 +128,7 @@ export default function DocumentViewer({ url, title, onClose }) {
           )}
           {!loading && !error && (
             <div
-              className="doc-sheet max-w-[820px] mx-auto bg-white shadow-2xl rounded-sm min-h-[1123px] p-8 sm:p-12"
+              className="doc-sheet max-w-[820px] mx-auto bg-white shadow-2xl rounded-sm min-h-[1123px] p-4 sm:p-12"
               dangerouslySetInnerHTML={{ __html: html }}
             />
           )}

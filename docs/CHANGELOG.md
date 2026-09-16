@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.29.0] - 2026-09-16 - tickets 101+102: dark-mode misses + mobile top-10
+### Fixed
+- Dark (101): pastel status pills (`StatusBadge` + picking) get real `dark:` variants; `dark:text-gray-600` → `gray-400` (was near-invisible); theme toggle styles itself in dark mode. Light-mode output untouched.
+- Mobile (102): announcements table scrolls in its card; 28–32px steppers → 36–40px; gallery controls tappable on touch; A4 viewer + invoice breathe on phones; bigger drawer close + tracker labels.
+### Verification
+- admin + storefront builds exit 0. Backend untouched.
+
 ## [4.28.0] - 2026-09-16 - ticket 100: RTL mirroring + admin Arabic money/dates
 ### Fixed
 - Full logical-properties pass (69 files): physical text/margin/padding/spacing/border/radius classes → `start/end` equivalents; sidebar + toggle + FABs + dropdowns mirror in RTL; centering/decorative geometry untouched. Admin money is Hindi digits in Arabic mode; all admin dates follow `ar-EG` via hook-free `dateLocale()`; pricing/revenue pages off hardcoded English locales.

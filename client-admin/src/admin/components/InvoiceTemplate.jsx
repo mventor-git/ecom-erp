@@ -147,7 +147,7 @@ export default function InvoiceTemplate() {
         </p>
 
         <div className="mt-3 flex items-end gap-3 flex-wrap">
-          <div className="min-w-72">
+          <div className="min-w-0 flex-1 sm:flex-none sm:min-w-72">
             <label className="block text-xs font-medium text-gray-600 mb-1">Use a real movement (optional — falls back to a test document)</label>
             <select
               value={selectedMovement}

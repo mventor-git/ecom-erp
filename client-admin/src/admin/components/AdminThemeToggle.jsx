@@ -15,7 +15,7 @@ export default function AdminThemeToggle() {
         textColor: theme !== 'dark' ? '#e9c46a' : '#1a2332',
         apply: () => setThemeState(toggleTheme()),
       })}
-      className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+      className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-white/10 transition-colors"
       title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       aria-label="Theme toggle"
     >

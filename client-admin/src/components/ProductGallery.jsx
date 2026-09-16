@@ -273,7 +273,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
                 <button
                   type="button"
                   onClick={() => handleDelete(img.id)}
-                  className="absolute top-1 end-1 w-6 h-6 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 end-1 w-8 h-8 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 max-lg:opacity-100 transition-opacity"
                   title="Delete image"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +284,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
                   <button
                     type="button"
                     onClick={() => openVariantEditor(img)}
-                    className={`absolute top-1 start-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+                    className={`absolute top-1 start-1 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 max-lg:opacity-100 transition-opacity ${
                       hasAssigned ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-black/50 hover:bg-black/70 text-white'
                     }`}
                     title="Assign variants"
