@@ -17,15 +17,29 @@ A brand-new install is intentionally empty — this is what day zero looks like.
 
 ### Admin — guided setup
 ![Setup wizard: company identity, manual checkpoint, checklist](docs/screenshots/admin-setup.png)
+> **Setup wizard (`/setup`, admin app).** The three-step fresh start: 1 · Company identity (store name, tagline, description — written straight into Settings so receipts, journals and the storefront carry it), 2 · the operator-manual checkpoint with “I have read the manual” acknowledgment, 3 · the live checklist (core steps plus counters for products, suppliers, customers and ledger accounts). The 2/5 core-steps card names exactly what's next — company, fiscal period, catalog — recomputed from real records on every visit, so it can never claim something that isn't true.
+
 ![Empty dashboard with setup banner and honest zero metrics](docs/screenshots/admin-overview.png)
+> **Empty dashboard (admin Overview).** Day zero with zero business: every metric reads 0 / 0.00 EGP, charts honestly say “No sales in this period” and “Charts fill in automatically as orders arrive,” and a green banner tracks the remaining core setup steps with a direct “Open setup” link. Nothing is faked to look busy — the numbers only move when real orders happen.
 
 ### Storefront — guided empty states
 ![Welcome screen pointing to the admin setup flow](docs/screenshots/shop-welcome.png)
+> **Welcome screen (`/`, storefront).** Instead of a blank page or an endless spinner, a fresh store shows the merchant exactly what to do: update the product list, feature best sellers, configure the storefront in the admin app — with “Continue to the shop” always available. Once welcome slides are configured in the admin (Site Config → Welcome), this becomes the full-screen photo slider.
+
 ![Home hero guiding a new merchant (add products → feature → configure)](docs/screenshots/shop-home-hero.png)
+> **Home hero (`/home`, no products yet).** The hero section doubles as a setup guide: three glass cards (add products manually or by sheet, flag best sellers as featured, configure slides/identity/sections) plus a “Browse products” button. The moment the first product exists, the hero automatically shows real products; flagging products as featured in the admin gives the curated Ken Burns slideshow.
+
 ![Honest zero-product catalog with sticky filters](docs/screenshots/shop-products.png)
+> **Product catalog (`/products`, empty).** “0 products found” with a plain-language hint, while the filter sidebar (category, dual-thumb price range, brand) stays fully usable — it sticks in place while scrolling on desktop and becomes a slide-in drawer on mobile. Filters populate themselves from real data the moment the first import or product lands.
+
 ![Sign-in (Google + email)](docs/screenshots/shop-login.png)
+> **Customer sign-in.** Google one-tap plus email signup — no passwords to remember. Signing in unlocks faster checkout (pre-filled email), order history, wishlist sync and account profile. Every customer row is created by a real signup; the system never invents customer accounts.
+
 ![Empty cart and wishlist states](docs/screenshots/shop-cart.png)
+> **Empty cart drawer.** Slides in from the side with a friendly “Your cart is empty / Start Shopping” path back to browsing. The drawer later carries quantities with large touch steppers, live totals in the active currency (Arabic mode renders Hindi digits), and the checkout entry point.
+
 ![Empty wishlist](docs/screenshots/shop-wishlist.png)
+> **Empty wishlist drawer.** Same pattern: honest empty copy (“save out-of-stock or favorite items to find them later”) with a “Browse Products” way back. Hearts across product cards feed this list once the catalog fills.
 
 ## Requirements
 
