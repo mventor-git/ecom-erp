@@ -25,15 +25,29 @@ export default function HeroSlider() {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
-    // Fetch featured products
-    fetch('/api/products/featured?limit=5')
+    // Featured products curated by the admin. Fresh installs have none
+    // flagged yet — fall back to newest products so /home always has
+    // a hero instead of rendering nothing.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    fetch('/api/products/featured?limit=5', { signal: ctrl.signal })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           setSlides(data);
+          return;
         }
+        return fetch('/api/products?sort=newest', { signal: ctrl.signal })
+          .then(r => r.json())
+          .then(list => {
+            const arr = Array.isArray(list) ? list : (list?.products || list?.items || []);
+            if (arr.length > 0) setSlides(arr.slice(0, 5));
+          })
+          .catch(() => {});
       })
-      .catch(err => console.error('Error fetching featured products:', err));
+      .catch(err => { if (err?.name !== 'AbortError') console.error('Error fetching featured products:', err); })
+      .finally(() => clearTimeout(timer));
+    return () => { clearTimeout(timer); ctrl.abort(); };
   }, []);
 
   useEffect(() => {
