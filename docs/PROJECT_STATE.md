@@ -2,7 +2,7 @@
 
 **Project:** Ecom-ERP — Open-Source E-commerce + ERP  
 **Location:** `ecom-erp`  
-**Current Phase:** Productization - fresh-install integrity + first-run setup + master-data onboarding delivered (milestones A/B, tickets 094-095); inventory<->GL integrity DELIVERED (093); journey acceptance + docs (096) in progress
+**Current Phase:** Productization COMPLETE — 096 journey acceptance + operator docs delivered 4.26.0 (was: 096 in progress)
 **Status:** Active Development - autonomous product-completion mission
 
 ## Architecture

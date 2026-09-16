@@ -133,6 +133,40 @@ async function initDb() {
   try { db.run("ALTER TABLE users ADD COLUMN signature_path TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE users ADD COLUMN signature_mime TEXT DEFAULT ''"); } catch {}
   try { db.run("ALTER TABLE users ADD COLUMN signature_updated_at DATETIME"); } catch {}
+  // ── Phase-6/7 costing infrastructure (fresh-boot parity, 096): these tables
+  // only existed via manually-applied migrations/006+007 SQL — a brand-new
+  // database never got them, silently degrading FIFO COGS, and the 093
+  // inventory↔GL control reads them. IF NOT EXISTS: zero effect on existing
+  // databases (which already have them), full parity for fresh installs.
+  try { db.run(`CREATE TABLE IF NOT EXISTS inventory_cost_layers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL REFERENCES products(id),
+    variant_id INTEGER REFERENCES product_variants(id),
+    warehouse_id INTEGER REFERENCES warehouses(id),
+    shelf_id INTEGER REFERENCES locations(id),
+    source_movement_id INTEGER REFERENCES inventory_movements(id),
+    source_receipt_id INTEGER,
+    original_quantity INTEGER NOT NULL DEFAULT 0,
+    remaining_quantity INTEGER NOT NULL DEFAULT 0,
+    unit_cost INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_inventory_cost_layers_product ON inventory_cost_layers(product_id)"); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_inventory_cost_layers_variant ON inventory_cost_layers(variant_id)"); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_inventory_cost_layers_warehouse ON inventory_cost_layers(warehouse_id)"); } catch {}
+  try { db.run(`CREATE TABLE IF NOT EXISTS cost_consumption (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    order_item_id INTEGER REFERENCES order_items(id) ON DELETE SET NULL,
+    cost_layer_id INTEGER NOT NULL REFERENCES inventory_cost_layers(id) ON DELETE RESTRICT,
+    qty_consumed INTEGER NOT NULL DEFAULT 0,
+    unit_cost INTEGER NOT NULL DEFAULT 0,
+    total_cost INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_cc_order ON cost_consumption(order_id)"); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_cc_layer ON cost_consumption(cost_layer_id)"); } catch {}
+  try { db.run("CREATE INDEX IF NOT EXISTS idx_cc_order_item ON cost_consumption(order_item_id)"); } catch {}
   }
   applySchemaMigrations(); // upgrade path (tables of an existing DB are present)
 

@@ -399,7 +399,11 @@ router.post('/:id/receive', adminAuth, requirePermission('purchase_orders.update
       console.error('[purchase-receive] posting error:', postErr.message);
     }
 
-    if (newStatus === 'received') {
+    // The transaction derived newStatus internally (out of scope here since
+    // 096): re-derive the same condition from committed state so the event
+    // fires exactly once and is replay-safe.
+    const finalPo = db.prepare('SELECT status FROM purchase_orders WHERE id = ?').get(req.params.id);
+    if (finalPo && finalPo.status === 'received') {
       eventService.emit(eventService.EVENT_TYPES.PO_RECEIVED, eventService.ENTITY_TYPES.PURCHASE_ORDER, po.id, {
         userId: req.session.username || 'admin',
         userRole: 'admin',

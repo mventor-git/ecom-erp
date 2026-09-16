@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.26.0] - 2026-09-16 - ticket 096: business-journey acceptance + operator docs (product-completion gate)
+### Added
+- `server/probes/businessJourney096.js` (46-step fresh-DB journey over real HTTP: wizard → company/period → import → supplier/PO/receive → AP aging → pay+replay → web order+settle → counter sale → return/adjust → recon → statements → audit → negative proofs) + `tests/businessJourney096.test.js` wrapper (240s gate).
+- `docs/FIRST_RUN.md` (operator path: launch → wizard → import → books → real day → limits); README/SETUP/ERP_GUIDE pointers.
+### Fixed
+- Fresh-boot parity: `inventory_cost_layers` + `cost_consumption` IF-NOT-EXISTS in `initDb` (were migration-only; new files silently lost FIFO COGS); layer parity in `inventoryService` (non-purchase value-ins layered at current product cost, same stopgap as GL); PO receive event re-derived from committed state (replay-safe).
+### Verification
+- Journey 46/46 PASS; unit **51 suites / 368 tests exit 0** live+isolated; integration 107/107 (one flaky 2-fail in mobileApi, green on two retries); admin+storefront builds 0; secret scan clean; 4 test-litter orphan lines removed, residue 0.
+
 ## [4.25.0] - 2026-09-14 - milestone C (ticket 093): inventory <-> GL integrity + real counter sales
 ### Added
 - **`inventoryPosting` bridge** — value-changing stock events now reach the books through the ONE movement door (`inventoryService.createMovement` safePost): opening balances `Dr 1300 / Cr 3000` (new equity role in accountChart.SKELETON), adjustments/damages/counts `Dr 5100 / Cr 1300` out and mirrored in (gain reduces expense; new `5100 Inventory Adjustments` role), goods corrections/returns on a BOOKED sale `Dr 1300 / Cr 5000` — the physical-return event 091 deliberately kept out of refunds — vendor returns `Dr 2100 / Cr 1300`. Ownership is exclusive: receipts (087), issues (091 settlement), transfer/reservation/release (GL-inert) are classification-skipped here — **nothing double-posts**. Valuation: movement unit cost wins; else `products.cost_price` as an EXPLICIT LABELED stopgap; unknown cost posts NOTHING and is listed, never invented. All rules identical to the 087 seam (integer cents asserted, zero-skip honest, stranded-draft recovery, one journal per movement, posted/source immutable, period gate fail-closed via postEntry).

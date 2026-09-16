@@ -6,6 +6,8 @@ Self-hosted store + back-office in one repo. Runs from a local PC: Node.js API, 
 
 - **Storefront** — catalog, search, variants (color/size), cart, COD + online checkout, wishlist, order history, Google sign-in.
 - **Admin ERP** — inventory movements ledger, warehouses/locations, suppliers, purchase orders, document numbering, reports + CSV, settings engine, notifications, QR codes, webhooks, users/roles/permissions, immutable event audit trail.
+- **Accounting that is real** — one journal model: chart of accounts, purchase receipts → payables, supplier payments, every sale settlement (online, COD, counter, wire) posts cash/revenue/COGS, refunds reverse through immutable entries, manual journals, period locks that fail closed, journal-derived Trial Balance / P&L / Balance Sheet, plus AP-aging, revenue and inventory↔GL reconciliation controls.
+- **First run is a guided setup** — a fresh install is intentionally empty (no fake demo data), the wizard answers "what does this system need to become my company?", and CSV/XLSX onboarding previews, validates, dedupes and commits atomically. See [docs/FIRST_RUN.md](docs/FIRST_RUN.md).
 - **Mobile** — customer app + staff worker app (Expo), server-side cart, proof-of-delivery.
 - **Payments** — Kashier (live), cash on delivery; Stripe route kept as legacy fallback; Paymob planned.
 

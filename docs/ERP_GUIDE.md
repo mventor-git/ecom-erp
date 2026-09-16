@@ -1,5 +1,7 @@
 # 📖 Ecom-ERP — Owner's Guide to Your ERP & Warehouse System
 
+> **Updated September 2026 (release 4.26.0):** the platform now runs a full double-entry GL behind everything described in this guide. Read **docs/FIRST_RUN.md** first for the brand-new-install path (guided setup wizard, CSV/XLSX master-data onboarding, the first accounting period). New screens this guide predates: Setup, Import Data, Chart of Accounts, Journals, Financial Statements, AP Aging, Revenue Reconciliation, Inventory-to-GL Reconciliation, plus the Finance nav section. Sections 4 (inventory) and 8 (reports) remain accurate as the OPERATIONAL view; the accounting truth is now the journals themselves; closed periods fail CLOSED and no amount is ever invented or edited — corrections are new entries, exactly like this guide already teaches.
+
 **Written for:** You, the business owner. No accounting knowledge needed. No coding knowledge needed.
 **Last updated:** August 2026 (after the Trash System was added)
 

@@ -1,7 +1,7 @@
 ﻿# Backlog
 
-## Active (2026-09-14) — autonomous product-completion mission
-- **091 CLOSED · 092 · 094 · 095 · 093 (inventory↔GL) DELIVERED. IN FLIGHT: 096 — end-to-end BUSINESS JOURNEY acceptance (fresh DB, real HTTP), operator docs rewrite, FINAL PRODUCT READINESS report + A–O stop-condition audit.
+## Active (2026-09-16) — autonomous product-completion mission
+- **091 CLOSED · 092 · 094 · 095 · 093 (inventory↔GL) · 096 (journey acceptance + operator docs) DELIVERED 4.26.0. STOP condition met.**
 - **Owner follow-up from 091:** reconciliation surfaced ~105,000 EGP-cents of pre-091 slider-'paid'-without-journal in the LIVE DB (operational truth, classed `settled_unbooked`); book-only settle (092 UI: journals/settle endpoints) heals them individually — decide which to book vs. leave for audit. No silent backfill was done (correct).
 - ~~**Stabilization F1-F13 (086-089 integrity review):**~~ ✅ DONE 2026-09-12 - 13 confirmed bugs fixed (draft-replay, silent rounding, bad-date regex, reasonless reversal, fingerprint idempotency, posted-journal immutability, fail-open period gates, silent method fallback, out-of-txn overpayment, `order_items` fresh-DB schema fork, test-isolation). `docs/accounting-stabilization-findings.md`.
 - **Owner browser verification 089:** ✅ Passed (panel, partial, settle, reason-gated reversal, overpayment guard, posted-source-journal refusal).

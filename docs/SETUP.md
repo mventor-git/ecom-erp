@@ -1,5 +1,7 @@
 # Deployment Setup Guide
 
+> **First thing to run on a new machine? Read docs/FIRST_RUN.md instead** (start server, guided setup, import data, first period, backups) — this page is only the optional ngrok tunneling flow.
+
 ## Overview
 This guide walks through exposing your store to the internet using **ngrok** — a free HTTP tunnel that gives you a public HTTPS URL instantly.
 

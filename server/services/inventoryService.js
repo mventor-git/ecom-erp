@@ -147,24 +147,45 @@ function createMovement({ productId, warehouseId, locationId, type, reason, refe
   // Keep the storefront's products.stock in sync (total across all warehouses)
   syncProductStock(productId);
 
-  // Smart movement costing (wholesale-baseline model): ANY stock-in that
-  // carries what was actually paid sets the product's default wholesale —
-  // the Pricing Engine baseline. Opt out with setProductCost=false; pair
-  // with deriveRetail to also refresh retail from the default markup.
-  const STOCK_IN_TYPES = [MOVEMENT_TYPES.RECEIPT, MOVEMENT_TYPES.OPENING_BALANCE, MOVEMENT_TYPES.RETURN];
-  if (STOCK_IN_TYPES.includes(type) && unitCost > 0 && setProductCost) {
+  // Smart movement costing (wholesale-baseline model) + 093 ledger↔book parity:
+  //   (a) PRODUCT COST only moves on genuine purchase-like stock-ins (receipt,
+  //       opening, supplier return) that carry what was actually PAID — the
+  //       Pricing Engine baseline. Opt out with setProductCost=false.
+  //   (b) COST LAYERS cover every value-bearing stock-in (incl. goods returns,
+  //       found stock, count gains) so FIFO COGS and the 093 reconciliation
+  //       work on the same facts. A movement without its own cost is layered at
+  //       the product's cost AT THAT TIME — the SAME labeled stopgap the GL
+  //       posting uses — never silently zero, never later price drift.
+  const PURCHASED_IN = [MOVEMENT_TYPES.RECEIPT, MOVEMENT_TYPES.OPENING_BALANCE, MOVEMENT_TYPES.RETURN];
+  const VALUE_IN = [MOVEMENT_TYPES.RECEIPT, MOVEMENT_TYPES.OPENING_BALANCE, MOVEMENT_TYPES.RETURN,
+    MOVEMENT_TYPES.CORRECTION, MOVEMENT_TYPES.ADJUSTMENT, MOVEMENT_TYPES.COUNT];
+  if (PURCHASED_IN.includes(type) && unitCost > 0 && setProductCost) {
     db.prepare('UPDATE products SET cost_price = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?')
       .run(unitCost, productId);
-    // PRESERVE the received cost as a reusable layer so the configurable
-    // inventory-costing + retail-pricing engines (valuationService) have real
-    // history. Overlapping/multiple costs are NEVER overwritten — each receipt
-    // is its own layer. Non-fatal if layer writing is unavailable.
-    try {
-      require('./valuationService').addLayer({
-        productId, warehouseId, qty: qtyChange, unitCost,
-        sourceMovementId: result.lastInsertRowid,
-      });
-    } catch (layerErr) { /* layer recording is best-effort */ }
+  }
+  if (qtyChange > 0 && VALUE_IN.includes(type)) {
+    let layerCost = unitCost > 0 ? unitCost : 0;
+    if (layerCost <= 0 && type !== MOVEMENT_TYPES.RECEIPT) {
+      // Non-purchase value stock-ins (period openers, goods returns, found
+      // stock, count gains) carry no purchase cost: layer them at the product
+      // cost AT THIS TIME — the same labeled stopgap their GL posting uses,
+      // so ledger and book always agree. Purchase receipts stay cost-neutral
+      // unless a cost was explicitly carried (073 contract: layers for
+      // receipts come from the explicit costing path, never an assumption).
+      const cur = db.prepare('SELECT cost_price FROM products WHERE id = ?').get(productId);
+      layerCost = cur && cur.cost_price > 0 ? cur.cost_price : 0;
+    }
+    if (layerCost > 0) {
+      // Non-fatal if layer writing is unavailable (pre-costing legacy rows).
+      try {
+        require('./valuationService').addLayer({
+          productId, warehouseId, qty: qtyChange, unitCost: layerCost,
+          sourceMovementId: result.lastInsertRowid,
+        });
+      } catch (layerErr) { /* layer recording is best-effort */ }
+    }
+  }
+  if (PURCHASED_IN.includes(type) && unitCost > 0 && setProductCost) {
     if (deriveRetail) {
       try {
         const valuationService = require('./valuationService');
