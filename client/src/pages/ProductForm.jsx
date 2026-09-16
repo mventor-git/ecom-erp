@@ -12,7 +12,7 @@ export default function ProductForm() {
     name: '',
     description: '',
     price: '',
-    category_id: 1,
+    category_id: '',
     image_url: '',
     stock: 0,
     active: true,
@@ -95,7 +95,7 @@ export default function ProductForm() {
         name: form.name,
         description: form.description,
         price: parseFloat(form.price),
-        category_id: parseInt(form.category_id),
+        category_id: form.category_id === '' || form.category_id == null ? null : parseInt(form.category_id),
         image_url: form.image_url,
         stock: parseInt(form.stock) || 0,
         active: form.active,
@@ -200,10 +200,11 @@ export default function ProductForm() {
             <div className="flex gap-2">
               <select
                 name="category_id"
-                value={form.category_id}
+                value={form.category_id ?? ''}
                 onChange={handleChange}
                 className="input-field"
               >
+                <option value="">No category</option>
                 {categories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}

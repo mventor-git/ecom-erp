@@ -10,20 +10,12 @@ import { useCurrency } from '../context/CurrencyContext';
 import { useLanguage, localized } from '../i18n';
 import Icon from '../components/Icon';
 
-// Fallbacks used when the admin has not configured these sections yet
+// Fallbacks are intentionally EMPTY (103): homepage sections render only
+// from admin-configured settings — a fresh install shows nothing invented.
 // (no currency hardcoded â€” the active currency is applied at render time)
-const DEFAULT_TRUST_BADGES = [
-  { icon: 'truck', title: 'Free Shipping', description: 'On orders over 500', link: '' },
-  { icon: 'shield', title: 'Secure Payment', description: '100% protected payments', link: '' },
-  { icon: 'return', title: 'Easy Returns', description: '30-day return policy', link: '' },
-  { icon: 'chat', title: '24/7 Support', description: 'Dedicated customer service', link: '' },
-];
+const DEFAULT_TRUST_BADGES = [];
 
-const DEFAULT_FEATURES = [
-  { icon: 'star', title: 'Quality Guaranteed', description: 'Every product is checked before it ships — quality you can trust.', link: '' },
-  { icon: 'bolt', title: 'Fast Delivery', description: 'Quick and reliable delivery. Get what you need when you need it.', link: '' },
-  { icon: 'stetho', title: 'Expert Support', description: 'Questions about a product? Our team of specialists is here to help you choose.', link: '' },
-];
+const DEFAULT_FEATURES = [];
 
 export default function HomePage() {
   const { t, lang } = useLanguage();

@@ -300,6 +300,16 @@ export const ar = {
   'All Brands': 'كل الماركات',
   'This store': 'هذا المتجر',
   'Go to announcement': 'انتقل إلى الإعلان',
+  'Welcome to our store': 'أهلاً بك في متجرنا',
+  'Set up your storefront': 'جهّز واجهة متجرك',
+  'Update your product list, then use the admin app to set up your storefront.': 'حدّث قائمة منتجاتك، ثم استخدم تطبيق الإدارة لتجهيز واجهة متجرك.',
+  'Add your products': 'أضف منتجاتك',
+  'Manually or by importing a sheet.': 'يدوياً أو باستيراد ملف.',
+  'Feature your best sellers': 'ميّز منتجاتك الأكثر مبيعاً',
+  'Flag products as featured in the admin app.': 'علّم المنتجات كمميزة من تطبيق الإدارة.',
+  'Configure your storefront': 'اضبط واجهة المتجر',
+  'Welcome slides, identity and homepage sections.': 'شرائح الترحيب والهوية وأقسام الصفحة الرئيسية.',
+  'Browse products': 'تصفح المنتجات',
 
   // ── Home
 };

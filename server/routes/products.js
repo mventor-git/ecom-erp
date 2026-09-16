@@ -41,7 +41,7 @@ router.get('/', (req, res) => {
                COALESCE((SELECT AVG(rating) FROM reviews r WHERE r.product_id = p.id), 0) as rating,
                (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as rating_count
         FROM products p
-        JOIN categories c ON p.category_id = c.id
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
         WHERE p.active = 1 AND p.is_packaging = 0
       `;
@@ -93,7 +93,7 @@ router.get('/featured', (req, res) => {
       SELECT p.*, c.name as category_name, c.slug as category_slug,
              b.id as brand_id, b.name as brand_name, b.slug as brand_slug, b.icon_url as brand_icon_url
       FROM products p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
       WHERE p.active = 1 AND p.is_packaging = 0 AND p.featured = 1
       ORDER BY p.featured_order ASC, p.created_at DESC
@@ -141,7 +141,7 @@ router.get('/top-selling', (req, res) => {
         SELECT p.*, c.name as category_name, c.slug as category_slug,
                b.id as brand_id, b.name as brand_name, b.slug as brand_slug, b.icon_url as brand_icon_url
         FROM products p
-        JOIN categories c ON p.category_id = c.id
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN brands b ON p.brand_id = b.id
         WHERE p.active = 1 AND p.is_packaging = 0
         ORDER BY p.created_at DESC LIMIT ?
@@ -156,7 +156,7 @@ router.get('/top-selling', (req, res) => {
       SELECT p.*, c.name as category_name, c.slug as category_slug,
              b.id as brand_id, b.name as brand_name, b.slug as brand_slug, b.icon_url as brand_icon_url
       FROM products p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
       WHERE p.id IN (${placeholders}) AND p.active = 1 AND p.is_packaging = 0
     `).all(...sortedIds);
@@ -182,7 +182,7 @@ router.get('/:id', (req, res) => {
              COALESCE((SELECT AVG(rating) FROM reviews r WHERE r.product_id = p.id), 0) as rating,
              (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) as rating_count
       FROM products p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
       WHERE p.id = ? AND p.active = 1 AND p.is_packaging = 0
     `).get(req.params.id);

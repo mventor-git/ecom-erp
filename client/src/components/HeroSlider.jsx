@@ -21,6 +21,7 @@ const TRANSITION_DURATION = 1500; // 1.5 second transition
 export default function HeroSlider() {
   const { lang, t } = useLanguage();
   const [slides, setSlides] = useState([]);
+  const [emptyStore, setEmptyStore] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
@@ -42,6 +43,7 @@ export default function HeroSlider() {
           .then(list => {
             const arr = Array.isArray(list) ? list : (list?.products || list?.items || []);
             if (arr.length > 0) setSlides(arr.slice(0, 5));
+            else setEmptyStore(true);
           })
           .catch(() => {});
       })
@@ -64,7 +66,38 @@ export default function HeroSlider() {
     return () => clearInterval(interval);
   }, [slides.length]);
 
-  if (slides.length === 0) return null;
+  if (slides.length === 0) {
+    if (!emptyStore) return null;
+    // Brand-new store: zero products anywhere. A guided setup hero instead
+    // of a missing section — fancy, honest, and actionable.
+    const steps = [
+      { n: '1', title: t('Add your products'), sub: t('Manually or by importing a sheet.') },
+      { n: '2', title: t('Feature your best sellers'), sub: t('Flag products as featured in the admin app.') },
+      { n: '3', title: t('Configure your storefront'), sub: t('Welcome slides, identity and homepage sections.') },
+    ];
+    return (
+      <div className="relative w-full overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+          <p className="text-xs sm:text-sm font-medium uppercase tracking-widest text-white/70">{t('Welcome to our store')}</p>
+          <h1 className="mt-2 text-3xl sm:text-5xl font-bold text-white leading-tight max-w-2xl">{t('Set up your storefront')}</h1>
+          <p className="mt-3 text-sm sm:text-lg text-white/85 max-w-xl">{t('Update your product list, then use the admin app to set up your storefront.')}</p>
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-3xl">
+            {steps.map(s => (
+              <div key={s.n} className="rounded-xl bg-white/10 backdrop-blur-md border border-white/20 p-4">
+                <div className="w-8 h-8 rounded-full bg-white text-primary-700 font-bold text-sm flex items-center justify-center">{s.n}</div>
+                <p className="mt-2 text-sm font-semibold text-white">{s.title}</p>
+                <p className="mt-0.5 text-xs text-white/70">{s.sub}</p>
+              </div>
+            ))}
+          </div>
+          <Link to="/products" className="mt-8 inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-white text-gray-900 font-semibold text-sm sm:text-base rounded-lg shadow-xl">
+            {t('Browse products')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const currentProduct = slides[currentSlide];
   const titleColor = currentProduct.hero_title_color || '#ffffff';

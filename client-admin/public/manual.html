@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operator Manual — Ecom-ERP</title>
+<style>
+  :root { --bg:#0f172a; --card:#ffffff; --ink:#1e293b; --mut:#64748b; --line:#e2e8f0; --acc:#0d9488; --warn:#b45309; --ok:#15803d; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",Tahoma,Arial,sans-serif; background:#f1f5f9; color:var(--ink); line-height:1.65; }
+  header { background:var(--bg); color:#fff; padding:34px 20px; }
+  header .wrap, main .wrap { max-width:900px; margin:0 auto; }
+  header h1 { margin:0 0 6px; font-size:26px; }
+  header p { margin:0; color:#94a3b8; }
+  nav.toc { background:var(--card); border-bottom:1px solid var(--line); padding:12px 20px; position:sticky; top:0; z-index:5; }
+  nav.toc .wrap { display:flex; flex-wrap:wrap; gap:6px 14px; }
+  nav.toc a { font-size:13px; color:var(--acc); text-decoration:none; }
+  main { padding:26px 20px 60px; }
+  section.card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:22px 24px; margin-bottom:18px; }
+  h2 { margin:0 0 10px; font-size:19px; }
+  h2 .n { display:inline-flex; width:28px; height:28px; border-radius:50%; background:var(--acc); color:#fff; font-size:14px; align-items:center; justify-content:center; margin-inline-end:8px; }
+  ol.steps { margin:8px 0; padding-inline-start:22px; }
+  ol.steps li { margin:7px 0; }
+  code, .kbd { background:#f1f5f9; border:1px solid var(--line); border-radius:6px; padding:1px 7px; font-size:13px; direction:ltr; display:inline-block; }
+  .law { border-inline-start:4px solid var(--acc); background:#f0fdfa; padding:10px 14px; border-radius:0 10px 10px 0; margin:12px 0; font-size:14px; }
+  .warn { border-inline-start:4px solid var(--warn); background:#fffbeb; padding:10px 14px; border-radius:0 10px 10px 0; margin:12px 0; font-size:14px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; margin:10px 0; }
+  th, td { border:1px solid var(--line); padding:8px 10px; text-align:start; }
+  th { background:#f8fafc; }
+  footer { text-align:center; color:var(--mut); font-size:12px; padding:0 20px 40px; }
+  a.back { display:inline-block; margin-top:14px; color:var(--acc); font-weight:600; }
+  @media print { nav.toc { display:none; } section.card { break-inside:avoid; } }
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1>📖 Operator Manual — Ecom-ERP</h1>
+  <p>The full path from a fresh install to daily business. No accounting knowledge needed. Arabic UI mirrors the same flows.</p>
+</div></header>
+<nav class="toc"><div class="wrap">
+  <a href="#s1">1 Launch</a><a href="#s2">2 Setup wizard</a><a href="#s3">3 Import data</a><a href="#s4">4 Purchasing</a><a href="#s5">5 Selling</a><a href="#s6">6 Refunds</a><a href="#s7">7 Supplier payments</a><a href="#s8">8 Inventory</a><a href="#s9">9 Accounting</a><a href="#s10">10 Reconciliations</a><a href="#s11">11 Team</a><a href="#s12">12 Backup</a><a href="#s13">13 Limits</a><a href="#s14">14 FAQ</a>
+</div></nav>
+<main><div class="wrap">
+
+<section class="card" id="s1"><h2><span class="n">1</span>First launch</h2>
+<ol class="steps">
+<li>Backend: <code>cd server &amp;&amp; npm install &amp;&amp; npm start</code> — API on <code>:5172</code>. First run creates an <b>empty</b> database: no products, customers, reviews or transactions — only roles, permissions, Main Warehouse, price lists, chart of accounts and your operator account (from <code>ADMIN_USERNAME</code> / <code>ADMIN_PASSWORD</code> in <code>server/.env</code>).</li>
+<li>Admin panel: <code>cd client-admin &amp;&amp; npm install &amp;&amp; npm run dev</code> — <code>:5174</code>. Log in with the operator account. You land on <b>Setup</b>.</li>
+<li>Storefront: <code>cd client &amp;&amp; npm install &amp;&amp; npm run dev</code> — <code>:5173</code>.</li>
+</ol>
+<div class="law">A brand-new install is empty by design. Anything you see (products, badges, slides) means a previous session entered it — never demo data.</div>
+</section>
+
+<section class="card" id="s2"><h2><span class="n">2</span>The setup wizard (do this in order)</h2>
+<ol class="steps">
+<li><b>Start your site</b> — step 1 on the Setup page: company/store name, tagline, description. Every receipt, journal and the storefront reads it.</li>
+<li><b>Read this manual</b> — you are here. Tick “I have read the manual” on the Setup page so the next steps unlock in order.</li>
+<li><b>Proceed</b> — the wizard checklist, top to bottom:
+  <b>Currency &amp; timezone</b> (change BEFORE first data) → <b>Warehouse</b> (rename Main Warehouse, add shelves) → <b>First financial period</b> (required — postings and stock moves fail outside an open period) → <b>Catalog</b> (import or add products; stock comes later) → <b>Suppliers / customers</b> → <b>Opening stock</b> (counts shelves; each line posts a real movement + GL entry when costed).</li>
+</ol>
+<div class="law">The checklist is recomputed from your real records on every visit — it can never claim something that isn't true.</div>
+</section>
+
+<section class="card" id="s3"><h2><span class="n">3</span>Bringing data in (Setup → Import Data)</h2>
+<ol class="steps">
+<li>Pick the dataset (Products, Suppliers, Customers, Warehouses) and <b>Download template</b> for exact columns.</li>
+<li>Upload CSV/XLSX → <b>Preview</b>: every line marked create / update / error with a reason; duplicates matched by business key (SKU→name, name, email, code); money must be plain amounts ≤ 2 decimals (stored as integer cents, never silently rounded).</li>
+<li><b>Commit</b> (enabled only with 0 errors): one atomic transaction — one bad row aborts everything. Repeating an import updates matched records instead of duplicating.</li>
+</ol>
+<div class="law">Product imports never move stock. Inventory arrives only through receipts, opening balance, or counted adjustments.</div>
+</section>
+
+<section class="card" id="s4"><h2><span class="n">4</span>Purchasing: suppliers → PO → receive → payable</h2>
+<ol class="steps">
+<li><b>Suppliers</b> → create your supplier.</li>
+<li><b>Purchase orders</b> → create (items at real supplier prices) → mark <b>sent → confirmed</b> (approval/rejection needs a reason and is audited).</li>
+<li><b>Receive goods</b> → inventory moves AND the payable recognizes automatically: <code>Dr Inventory / Cr Payables</code>, line by line.</li>
+<li>Check <b>AP Aging</b>: recognition-date aging of open payables with control totals.</li>
+</ol></section>
+
+<section class="card" id="s5"><h2><span class="n">5</span>Selling (every settlement posts journals)</h2>
+<table><tr><th>Channel</th><th>How it settles</th></tr>
+<tr><td>Storefront / mobile order</td><td>Order arrives unpaid. Cash collected via worker COD (auto-settles at delivery) or wire → settle with evidence (<b>POST …/settle</b>: method + reference + reason).</td></tr>
+<tr><td>Counter sale (walk-in)</td><td>Register page: validated price → stock issue + cash/revenue/COGS journal in ONE transaction.</td></tr>
+<tr><td>Online payment (Kashier)</td><td>Webhook settles atomically on provider confirmation.</td></tr></table>
+<div class="warn">You cannot type “paid” into an order status, on admin or worker. Money moves only through settlement — the slider refuses with <code>SETTLEMENT_REQUIRED</code>.</div>
+</section>
+
+<section class="card" id="s6"><h2><span class="n">6</span>Refunds vs goods returns (different things)</h2>
+<ol class="steps">
+<li><b>Refund</b> = money back: posts an immutable <b>reversal</b> entry. The original sale stays. Max one refund per order; partial refunds are refused (no domain truth yet).</li>
+<li><b>Goods return</b> = stock back on the shelf: a counted <b>correction/return movement</b> (inspected OK). Never automatic with a refund.</li>
+</ol></section>
+
+<section class="card" id="s7"><h2><span class="n">7</span>Paying suppliers</h2>
+<p>Supplier payments apply to purchase orders (full / partial / multi-PO, idempotent-safe): <code>Dr Payables / Cr Cash</code>. Posted payments are immutable — mistakes are corrected by <b>reversal</b> (opposite entry + status flip), never edit/delete. Record + reverse from the PO detail payables panel.</p></section>
+
+<section class="card" id="s8"><h2><span class="n">8</span>Inventory (movements, not numbers)</h2>
+<ol class="steps">
+<li>Stock is the <b>result of movements</b> (receipt, issue, adjustment, transfer, count, opening, return) — never type a quantity anywhere.</li>
+<li>Found damage/shrinkage while counting: <b>adjustment</b> (negative) with unit cost when known → books automatically (<code>Dr Adjustments / Cr Inventory</code>). Unknown cost stays listed in <b>Inventory Recon</b> — the system never guesses a number into your ledger.</li>
+<li>Transfers between warehouses/shelves move stock with no GL effect.</li>
+</ol></section>
+
+<section class="card" id="s9"><h2><span class="n">9</span>Accounting (one journal, period locks)</h2>
+<ol class="steps">
+<li><b>Chart of Accounts</b>: your ledger skeleton (referenced accounts can't be deleted).</li>
+<li><b>Journals</b>: every entry, its source, actor and timeline. Bridge journals are machine-owned and immutable; your corrections are <b>manual journals</b> (draft → post; unpost allowed with reason).</li>
+<li><b>Statements</b>: Trial Balance, P&amp;L, Balance Sheet — all computed from posted journals only. Dashboards stay explicitly operational.</li>
+<li><b>Periods</b>: close to lock history. Closed periods fail CLOSED everywhere (settlements, reversals, adjustments, webhooks). Reopen is audited.</li>
+</ol></section>
+
+<section class="card" id="s10"><h2><span class="n">10</span>Reconciliation controls (read these weekly)</h2>
+<table><tr><th>Control</th><th>What it proves</th></tr>
+<tr><td>AP Aging</td><td>Open payables = posted receipts − active payment applications, bucketed, with machine control totals.</td></tr>
+<tr><td>Revenue Reconciliation</td><td>Operationally-settled vs ledger-posted, per order, in 5 difference classes. Legacy “settled but unbooked” rows stay visible until you book-settle them — never auto-repaired.</td></tr>
+<tr><td>Inventory ↔ GL</td><td>Warehouse value vs ledger inventory, per movement, with idempotent catch-up posting.</td></tr></table></section>
+
+<section class="card" id="s11"><h2><span class="n">11</span>Team &amp; permissions</h2>
+<p>One admin app for all employees. Create custom roles (driver, cashier, clerk…) and tick granular permissions — the interface adapts to what each user may touch. Money actions (<code>orders.manage</code>, <code>journals.manage</code>, settle/refund) stay with trusted roles only.</p></section>
+
+<section class="card" id="s12"><h2><span class="n">12</span>Backup &amp; recovery</h2>
+<ol class="steps">
+<li>Database = <code>server/data/store.db</code> (+ 30 daily backups at 02:00). Full backup = copy the project folder.</li>
+<li>Restore = stop the API, swap the file back, restart. Never edit the live file by hand while the server runs.</li>
+<li>Rotate <code>ADMIN_PASSWORD</code> and webhook secrets before exposing anything publicly.</li>
+</ol></section>
+
+<section class="card" id="s13"><h2><span class="n">13</span>Deliberate limits (honest, by design)</h2>
+<ul>
+<li>No supplier invoices / payment terms — AP ages from recognized receipts, not due dates.</li>
+<li>No bank/transfer auto-posting, no cash-flow/VAT books, no retained-earnings closing.</li>
+<li>No partial refunds, no goods-return-coupled refunds, no VIP on-bill receivables.</li>
+<li>Mobile apps need LAN URL + Expo project setup; customer APK needs an Expo account.</li>
+</ul></section>
+
+<section class="card" id="s14"><h2><span class="n">14</span>Troubleshooting</h2>
+<table><tr><th>Symptom</th><th>Do this</th></tr>
+<tr><td>“Closed period” / settlement refused</td><td>Post into the open period, or reopen the period (audited) and retry.</td></tr>
+<tr><td>Slider paid/refund refused</td><td>Use Settle (with evidence) / Refund seams — status can never carry money.</td></tr>
+<tr><td>Import commit disabled</td><td>Fix every preview error row; one bad row blocks the whole file.</td></tr>
+<tr><td>Product invisible in shop</td><td>Check active flag, stock on hand, and (if filtered) its category/brand.</td></tr>
+<tr><td>Numbers look off</td><td>Open the three reconciliations (section 10) — the difference rows name the cause.</td></tr></table>
+<a class="back" href="/setup">← Back to Setup wizard</a>
+</section>
+
+</div></main>
+<footer>Ecom-ERP operator manual · kept with the release · print it from your browser if you want it on paper.</footer>
+</body>
+</html>

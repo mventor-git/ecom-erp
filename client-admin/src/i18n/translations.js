@@ -605,8 +605,7 @@ export const ar = {
   'Ledger net': 'صافي الدفتر',
   'Journal source': 'مصدر القيد',
   'order.status is NOT accounting truth — a difference is either a settlement awaiting its journal (settle dialog, book-only) or a forged state; every row traces to its journal source above.': 'حالة الطلب ليست حقيقة محاسبية — أي فرق هو إما تحصيل بانتظار قيده أو حالة مزورة؛ كل صف يتتبع لمصدر قيده أعلاه.',
-  // ── 099: settings field labels ──
-  'Store name': 'اسم المتجر',
+  // ── 099: settings field labels ──  'Store name': 'اسم المتجر',
   'Tagline': 'السطر التعريفي',
   'Logo URL': 'رابط الشعار',
   'Store description (AI & SEO)': 'وصف المتجر (للذكاء الاصطناعي ومحركات البحث)',
@@ -618,4 +617,10 @@ export const ar = {
   '3D motion preset (float / spin / none)': 'حركة المجسم (طفو / دوران / بدون)',
   '3D scale': 'حجم المجسم',
   '3D speed': 'سرعة المجسم',
+  // ── 103: setup wizard manual checkpoint ──
+  'Read the operator manual': 'اقرأ دليل التشغيل',
+  'The full path from install to daily business — one page, printable.': 'الطريق الكامل من التثبيت للتشغيل اليومي — صفحة واحدة قابلة للطباعة.',
+  'Open the manual': 'افتح الدليل',
+  'I have read the manual': 'قرأت الدليل',
+  'Work through the checklist': 'اشتغل على قائمة التحقق',
 };

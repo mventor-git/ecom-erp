@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.30.0] - 2026-09-16 - ticket 103: zero-placeholder startup + manual + guided wizard
+### Removed
+- Demo taxonomy seeds (4 categories, 5 brands + auto-assign) and marketing seeds (badges/features/headers). Fresh DBs open with zero invented values.
+### Added
+- Uncategorized contract: optional category/brand end-to-end (validation, LEFT JOINs, NULL on category delete, "No category" in ProductForm).
+- Fancy setup-guidance empty states on hero + welcome ("Update your product list, then use the admin app…", bilingual 3 steps).
+- `manual.html`: 14-section operator manual in the admin app; Setup wizard now runs 1 start → 2 manual (ack, never a lock) → 3 checklist.
+### Verification
+- Fresh boot clean (categories 0, zero fakes); journey 46/46; unit 51/368 live+isolated; integration 107/107; both builds 0.
+
 ## [4.29.0] - 2026-09-16 - tickets 101+102: dark-mode misses + mobile top-10
 ### Fixed
 - Dark (101): pastel status pills (`StatusBadge` + picking) get real `dark:` variants; `dark:text-gray-600` → `gray-400` (was near-invisible); theme toggle styles itself in dark mode. Light-mode output untouched.

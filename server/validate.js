@@ -53,12 +53,13 @@ function validateProduct(body) {
   }
   if (price !== null && price === 0) errors.push('Price must be greater than 0');
 
-  const category_id = sanitizeInt(body.category_id, 1);
-  if (category_id === null) errors.push('Valid category_id is required');
+  // Zero-placeholder rule (103): category is OPTIONAL — a fresh startup has
+  // no taxonomy yet. Uncategorized products list and sell normally.
+  const category_id = sanitizeInt(body.category_id, null);
 
   const image_url = sanitizeString(body.image_url, 1000);
   const stock = sanitizeInt(body.stock, 0, 999999) || 0;
-  const brand_id = sanitizeInt(body.brand_id, 1) || null;
+  const brand_id = sanitizeInt(body.brand_id, null) || null;
 
   return {
     valid: errors.length === 0,

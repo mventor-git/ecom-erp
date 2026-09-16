@@ -200,7 +200,7 @@ router.get('/products', adminAuth, (req, res) => {
       SELECT p.*, c.name as category_name, c.slug as category_slug,
              b.id as brand_id, b.name as brand_name, b.slug as brand_slug, b.icon_url as brand_icon_url
       FROM products p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
       WHERE p.deleted_at IS NULL
       ORDER BY p.created_at DESC
@@ -275,7 +275,7 @@ router.post('/products', adminAuth, (req, res) => {
     const result = db.prepare(`
       INSERT INTO products (name, name_ar, description, description_ar, price, cost_price, old_price, category_id, image_url, stock, brand_id, sizes, hero_title_color, hero_desc_color, hero_price_color, hero_badge_color)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)
-    `).run(name, name_ar, description || '', description_ar, priceInCents, costPriceCents, oldPriceInCents, category_id || 1, image_url || '', brand_id || null, sizesJSON, hero_title_color, hero_desc_color, hero_price_color, hero_badge_color);
+    `).run(name, name_ar, description || '', description_ar, priceInCents, costPriceCents, oldPriceInCents, category_id || null, image_url || '', brand_id || null, sizesJSON, hero_title_color, hero_desc_color, hero_price_color, hero_badge_color);
 
     const productId = result.lastInsertRowid;
     const product = db.prepare('SELECT * FROM products WHERE id = ?').get(productId);
@@ -573,7 +573,7 @@ router.get('/featured', adminAuth, (req, res) => {
       SELECT p.*, c.name as category_name, c.slug as category_slug,
              b.id as brand_id, b.name as brand_name, b.slug as brand_slug, b.icon_url as brand_icon_url
       FROM products p
-      JOIN categories c ON p.category_id = c.id
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
       WHERE p.featured = 1
       ORDER BY p.featured_order ASC, p.created_at DESC
@@ -847,29 +847,25 @@ router.put('/categories/:id', adminAuth, (req, res) => {
 });
 
 // DELETE /api/admin/categories/:id - Delete a category
-// Products in this category will be reassigned to the default category (id=1).
-// The default category itself cannot be deleted.
+// Products in this category become uncategorized (category_id NULL —
+// nullable since 103, no invented "default" bucket). Any category deletable.
 router.delete('/categories/:id', adminAuth, (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
-
-    if (id === 1) {
-      return res.status(400).json({ error: 'Cannot delete the default category' });
-    }
 
     const category = db.prepare('SELECT * FROM categories WHERE id = ?').get(id);
     if (!category) {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    // Reassign products from this category to the default category (id=1)
-    db.prepare('UPDATE products SET category_id = 1 WHERE category_id = ?').run(id);
+    // Products become uncategorized instead of moving to an invented bucket
+    db.prepare('UPDATE products SET category_id = NULL WHERE category_id = ?').run(id);
 
     // Delete the category
     db.prepare('DELETE FROM categories WHERE id = ?').run(id);
 
     cache.invalidatePrefix('products:'); // invalidate product cache
-    res.json({ success: true, message: `Category "${category.name}" deleted. Products reassigned to default.` });
+    res.json({ success: true, message: `Category "${category.name}" deleted. Products are now uncategorized.` });
   } catch (err) {
     console.error('Error deleting category:', err);
     res.status(500).json({ error: 'Failed to delete category' });

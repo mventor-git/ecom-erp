@@ -1290,45 +1290,6 @@ async function initDb() {
   // inside this same block region, so it is re-applied after creation)
   try { db.run("ALTER TABLE users ADD COLUMN phone TEXT DEFAULT ''"); } catch {}
 
-  // Seed default categories if empty
-  const catCount = db.exec('SELECT COUNT(*) as cnt FROM categories');
-  if (!catCount || !catCount[0] || !catCount[0].values || catCount[0].values[0][0] === 0) {
-    db.run("INSERT OR IGNORE INTO categories (name, slug) VALUES ('General', 'general')");
-    db.run("INSERT OR IGNORE INTO categories (name, slug) VALUES ('Electronics', 'electronics')");
-    db.run("INSERT OR IGNORE INTO categories (name, slug) VALUES ('Clothing', 'clothing')");
-    db.run("INSERT OR IGNORE INTO categories (name, slug) VALUES ('Home & Garden', 'home-garden')");
-  }
-
-  // Seed default brands if empty
-  const brandCount = db.exec('SELECT COUNT(*) as cnt FROM brands');
-  if (!brandCount || !brandCount[0] || !brandCount[0].values || brandCount[0].values[0][0] === 0) {
-    db.run("INSERT OR IGNORE INTO brands (name, slug, icon_url) VALUES ('Generic', 'generic', '/images/brand-generic.svg')");
-    db.run("INSERT OR IGNORE INTO brands (name, slug, icon_url) VALUES ('TechPro', 'techpro', '/images/brand-techpro.svg')");
-    db.run("INSERT OR IGNORE INTO brands (name, slug, icon_url) VALUES ('StyleCraft', 'stylecraft', '/images/brand-stylecraft.svg')");
-    db.run("INSERT OR IGNORE INTO brands (name, slug, icon_url) VALUES ('HomeEase', 'homeease', '/images/brand-homeease.svg')");
-    db.run("INSERT OR IGNORE INTO brands (name, slug, icon_url) VALUES ('EcoLife', 'ecolife', '/images/brand-ecolife.svg')");
-  }
-
-  // Assign brands to products that don't have one yet (only if brands exist and products have no brand_id)
-  const unassigned = db.exec('SELECT COUNT(*) as cnt FROM products WHERE brand_id IS NULL');
-  if (unassigned && unassigned[0] && unassigned[0].values && unassigned[0].values[0][0] > 0) {
-    // Get brand IDs
-    const brandsData = prepare('SELECT id, slug FROM brands').all();
-    const brandMap = {
-      'electronics': brandsData.find(b => b.slug === 'techpro')?.id,
-      'clothing': brandsData.find(b => b.slug === 'stylecraft')?.id,
-      'home-garden': brandsData.find(b => b.slug === 'homeease')?.id,
-      'general': brandsData.find(b => b.slug === 'generic')?.id,
-    };
-    // Assign based on category
-    const productRows = prepare('SELECT p.id, c.slug as cat_slug FROM products p JOIN categories c ON p.category_id = c.id WHERE p.brand_id IS NULL').all();
-    productRows.forEach(p => {
-      const brandId = brandMap[p.cat_slug] || brandMap['general'];
-      if (brandId) {
-        prepare('UPDATE products SET brand_id = ? WHERE id = ?').run(brandId, p.id);
-      }
-    });
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // ERP INVENTORY MIGRATION (mventor-ticket-021)
@@ -1663,9 +1624,6 @@ async function initDb() {
     ['logo_link', '/', 'string', 'frontend', 'Where the site logo navigates to', 1],
     ['home_categories_enabled', '1', 'boolean', 'frontend', 'Show "Shop by Category" section on the home page', 1],
     ['home_categories', '[]', 'json', 'frontend', 'Category showcase: ordered array of category slugs shown on home (empty = all)', 1],
-    ['home_trust_badges', '[{"icon":"truck","title":"Free Shipping","title_ar":"شحن مجاني","description":"On orders over 500","description_ar":"على الطلبات فوق 500","link":""},{"icon":"shield","title":"Secure Payment","title_ar":"دفع آمن","description":"100% protected payments","description_ar":"حماية كاملة لمدفوعاتك","link":""},{"icon":"return","title":"Easy Returns","title_ar":"إرجاع سهل","description":"30-day return policy","description_ar":"سياسة استبدال وإرجاع 30 يوم","link":""},{"icon":"chat","title":"24/7 Support","title_ar":"دعم على مدار الساعة","description":"Real people, around the clock.","description_ar":"فريق حقيقي في أي وقت.","link":""}]', 'json', 'frontend', 'Trust badges (icon name, bilingual title/description, link)', 1],
-    ['home_features', '[{"icon":"cross","title":"Medical Grade","title_ar":"جودة طبية","description":"All products meet strict medical standards and certifications for safe, effective use.","description_ar":"جميع المنتجات مطابقة لمعايير طبية صارمة وشهادات معتمدة للاستخدام الآمن والفعال.","link":""},{"icon":"bolt","title":"Fast Delivery","title_ar":"توصيل سريع","description":"Quick and reliable delivery across Egypt. Get your health products when you need them.","description_ar":"توصيل سريع وموثوق في كل مصر — منتجاتك الصحية تصلك وقت ما تحتاجها.","link":""},{"icon":"stetho","title":"Expert Support","title_ar":"دعم من متخصصين","description":"Questions about a product? Our team of specialists is here to help you choose.","description_ar":"عندك سؤال عن منتج؟ فريق المتخصصين هيساعدك تختار الأنسب.","link":""}]', 'json', 'frontend', 'Why Choose Us section (icon name, bilingual title/description, link)', 1],
-    ['home_section_headers', '{"categories":{"title_en":"Shop by Category","title_ar":"تسوّق حسب القسم","sub_en":"Find exactly what you need","sub_ar":"هتلاقي بالظبط اللي محتاجه"},"featured":{"title_en":"Featured Products","title_ar":"منتجات مختارة","sub_en":"Handpicked just for you","sub_ar":"مختارة بعناية خصيصاً لك"},"why_us":{"title_en":"Why Shop With Us","title_ar":"ليه تتسوق معانا","sub_en":"Trusted by healthcare professionals","sub_ar":"محط ثقة لأخصائيي الرعاية الصحية"}}', 'json', 'frontend', 'Homepage section headings (title/subtitle, English + Arabic) — editable from Site Config', 1],
     ['reviews_enabled', '1', 'boolean', 'frontend', 'Show product ratings and customer comments site-wide', 1],
   ];
 

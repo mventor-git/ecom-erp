@@ -21,6 +21,18 @@ export default function SetupWizard() {
   const [company, setCompany] = useState({ store_name: '', store_description: '', site_tagline: '' });
   const [saving, setSaving] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
+  // Manual checkpoint (103): ordered guidance — start the site (1), read the
+  // manual (2), then work the checklist (3). An acknowledgment, not a lock:
+  // the store stays fully usable; this only orders the journey.
+  const [manualRead, setManualRead] = useState(() => {
+    try { return localStorage.getItem('setup-manual-read') === '1'; } catch { return false; }
+  });
+  const toggleManualRead = () => {
+    setManualRead((v) => {
+      try { localStorage.setItem('setup-manual-read', v ? '0' : '1'); } catch {}
+      return !v;
+    });
+  };
 
   const refresh = useCallback(() => {
     getSetupStatus()
@@ -119,6 +131,28 @@ export default function SetupWizard() {
             <span className="text-xs text-gray-400">Currency &amp; timezone default to <b>{status.currency}</b> / <b>{status.timezone}</b> — change them in <Link to="/erp/settings" className="text-primary-700 hover:underline">Settings</Link>.</span>
           </div>
         </div>
+      )}
+
+      {status && (
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-1">2 · {t('Read the operator manual')}</h2>
+          <p className="text-xs text-gray-500 mb-3">{t('The full path from install to daily business — one page, printable.')}</p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <a href="/manual.html" target="_blank" rel="noopener noreferrer"
+              className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50">
+              {t('Open the manual')} →
+            </a>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+              <input type="checkbox" checked={manualRead} onChange={toggleManualRead}
+                className="rounded border-gray-300 text-primary-600 w-4 h-4" />
+              {t('I have read the manual')}
+            </label>
+          </div>
+        </div>
+      )}
+
+      {status && (
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">3 · {t('Work through the checklist')}</h2>
       )}
 
       {status && (

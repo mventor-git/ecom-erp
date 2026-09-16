@@ -268,15 +268,29 @@ export default function WelcomePage() {
         </div>
       );
     }
-    // No welcome slides configured YET — an intentional, navigable state
-    // with real placeholder content (never a dead end).
+    // No welcome slides configured YET — a guided setup state, not a dead
+    // end: fancy steps telling the visitor (or the owner) exactly what to do.
+    const setupSteps = [
+      { n: '1', title: t('Add your products'), sub: t('Manually or by importing a sheet.') },
+      { n: '2', title: t('Feature your best sellers'), sub: t('Flag products as featured in the admin app.') },
+      { n: '3', title: t('Configure your storefront'), sub: t('Welcome slides, identity and homepage sections.') },
+    ];
     return (
       <div className="fixed inset-0 bg-dark-950 overflow-y-auto px-6 py-14">
         <div className="text-center max-w-md mx-auto">
           <div className="text-4xl mb-4" aria-hidden="true">🛍️</div>
           <h1 className="text-2xl font-bold text-white mb-2">{storeName || t('This store')}</h1>
-          <p className="text-white/60 mb-8">{t('The shop is open — welcome screen not set yet.')}</p>
+          <p className="text-white/60 mb-8">{t('Update your product list, then use the admin app to set up your storefront.')}</p>
           <Link to="/home" className="btn-secondary text-base px-8 py-3 inline-block">{t('Continue to the shop')}</Link>
+        </div>
+        <div className="max-w-3xl mx-auto mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {setupSteps.map(s => (
+            <div key={s.n} className="rounded-xl bg-white/5 border border-white/10 p-4 text-center">
+              <div className="w-8 h-8 mx-auto rounded-full bg-primary-600 text-white font-bold text-sm flex items-center justify-center">{s.n}</div>
+              <p className="mt-2 text-sm font-semibold text-white">{s.title}</p>
+              <p className="mt-0.5 text-xs text-white/60">{s.sub}</p>
+            </div>
+          ))}
         </div>
         {featured.length > 0 && (
           <div className="max-w-5xl mx-auto mt-12">

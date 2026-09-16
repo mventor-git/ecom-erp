@@ -37,9 +37,10 @@ describe('validateProduct', () => {
     expect(result.errors).toContain('Price must be greater than 0');
   });
 
-  test('missing category_id fails', () => {
+  test('missing category_id is allowed (uncategorized, zero-placeholder rule)', () => {
     const result = v.validateProduct({ name: 'Test', price: 10, category_id: null });
-    expect(result.valid).toBe(false);
+    expect(result.valid).toBe(true);
+    expect(result.data.category_id).toBe(null);
   });
 
   test('long name is truncated', () => {
