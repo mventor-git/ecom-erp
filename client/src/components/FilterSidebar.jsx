@@ -211,7 +211,7 @@ export default function FilterSidebar({
 
         {/* ── Brands ── */}
         <div>
-          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Brand</h4>
+          <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{t('Brand')}</h4>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             <button
               onClick={() => onBrandChange('')}
@@ -221,7 +221,7 @@ export default function FilterSidebar({
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              All Brands
+              {t('All Brands')}
             </button>
             {brands.map(brand => (
               <button

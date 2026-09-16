@@ -4,6 +4,7 @@ import ProductGrid from '../components/ProductGrid';
 import FilterSidebar from '../components/FilterSidebar';
 import CartDrawer from '../components/CartDrawer';
 import { getProducts } from '../api/products';
+import { useLanguage } from '../i18n';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest First' },
@@ -18,6 +19,7 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Read filters from URL search params
   const activeCategory = searchParams.get('category') || '';
@@ -77,15 +79,15 @@ export default function ProductsPage() {
       {/* Header Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Products</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('Products')}</h1>
           <p className="mt-1 text-gray-500 dark:text-gray-400">
-            {loading ? 'Loading...' : `${displayedProducts.length} product${displayedProducts.length !== 1 ? 's' : ''} found`}
+            {loading ? t('Loading...') : `${displayedProducts.length} ${t('products found')}`}
             {hasActiveFilters && (
               <button
                 onClick={() => setSearchParams({})}
                 className="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
               >
-                Clear filters
+                {t('Clear filters')}
               </button>
             )}
           </p>
@@ -101,7 +103,7 @@ export default function ProductsPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm4 6a1 1 0 011-1h8a1 1 0 010 2H8a1 1 0 01-1-1zm2 6a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z" />
             </svg>
-            Filters
+            {t('Filters')}
             {hasActiveFilters && (
               <span className="w-2 h-2 rounded-full bg-primary-500" />
             )}
@@ -114,7 +116,7 @@ export default function ProductsPage() {
             className="px-3 py-2.5 border border-gray-300 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition duration-200 text-sm bg-white/5 dark:bg-dark-800/50 backdrop-blur-sm text-gray-900 dark:text-white"
           >
             {SORT_OPTIONS.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option key={opt.value} value={opt.value}>{t(opt.label)}</option>
             ))}
           </select>
         </div>
@@ -128,7 +130,7 @@ export default function ProductsPage() {
           </svg>
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder={t('Search products') + '...'}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full pl-10 pr-10 py-2.5 bg-transparent border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition duration-200 text-sm text-gray-900 dark:text-white placeholder:text-gray-400"

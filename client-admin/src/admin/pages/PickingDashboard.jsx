@@ -6,9 +6,16 @@ import {
   getUsers, viewPickingSheetUrl,
 } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
+import { useLanguage } from '../../i18n';
 
 const PICKING_STATUS = ['pending', 'in_progress', 'picked'];
 const PACKING_STATUS = ['pending', 'in_progress', 'packed', 'problem', 'completed'];
+
+// English labels for status slugs (translated at render via t()).
+const STATUS_LABEL = {
+  pending: 'Pending', in_progress: 'In progress', picked: 'Picked',
+  packed: 'Packed', problem: 'Problem', completed: 'Completed',
+};
 
 const STATUS_STYLE = {
   pending: 'bg-yellow-100 text-yellow-700',
@@ -21,6 +28,7 @@ const STATUS_STYLE = {
 
 export default function PickingDashboard() {
   const { format } = useAdminCurrency();
+  const { t } = useLanguage();
   const [tab, setTab] = useState('picking');
   const [pickingTasks, setPickingTasks] = useState([]);
   const [packingTasks, setPackingTasks] = useState([]);
@@ -64,50 +72,50 @@ export default function PickingDashboard() {
   const handlePicking = async (task, status) => {
     try {
       await updatePickingStatus(task.id, status, notes[`p-${task.id}`] || '');
-      flash(`Picking task #${task.id} → ${status}`);
+      flash(t('Picking task #{id} → {status}').replace('{id}', task.id).replace('{status}', t(STATUS_LABEL[status] || status)));
       await loadAll();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update');
+      setError(err.response?.data?.error || t('Failed to update'));
     }
   };
 
   const handlePacking = async (task, status) => {
     try {
       await updatePackingStatus(task.id, status, notes[`k-${task.id}`] || '');
-      flash(`Packing task #${task.id} → ${status}`);
+      flash(t('Packing task #{id} → {status}').replace('{id}', task.id).replace('{status}', t(STATUS_LABEL[status] || status)));
       await loadAll();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update');
+      setError(err.response?.data?.error || t('Failed to update'));
     }
   };
 
   const handleAssign = async (task, assigneeId) => {
     try {
       await assignPackingTask(task.id, assigneeId);
-      flash(`Task #${task.id} assigned`);
+      flash(t('Task #{id} assigned').replace('{id}', task.id));
       await loadAll();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to assign');
+      setError(err.response?.data?.error || t('Failed to assign'));
     }
   };
 
-  const statusBadge = (s) => <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[s] || 'bg-gray-100 text-gray-600'}`}>{s.replace(/_/g, ' ')}</span>;
+  const statusBadge = (s) => <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[s] || 'bg-gray-100 text-gray-600'}`}>{t(STATUS_LABEL[s] || s)}</span>;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Picking & Packing</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('Picking & Packing')}</h1>
           <p className="text-sm text-gray-500 mt-1">
-            Pending {stats.pending || 0} · In progress {stats.in_progress || 0} · Packed {stats.packed || 0} · Problem {stats.problem || 0} · Completed {stats.completed || 0}
+            {t('Pending')} {stats.pending || 0} · {t('In progress')} {stats.in_progress || 0} · {t('Packed')} {stats.packed || 0} · {t('Problem')} {stats.problem || 0} · {t('Completed')} {stats.completed || 0}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setTab('picking')} className={`px-4 py-2 text-sm rounded-lg font-medium ${tab === 'picking' ? 'bg-primary-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-            🏭 Picking
+            🏭 {t('Picking')}
           </button>
           <button onClick={() => setTab('packing')} className={`px-4 py-2 text-sm rounded-lg font-medium ${tab === 'packing' ? 'bg-primary-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
-            📦 Packing
+            📦 {t('Packing')}
           </button>
         </div>
       </div>
@@ -122,49 +130,51 @@ export default function PickingDashboard() {
       ) : tab === 'picking' ? (
         <TaskList
           tasks={pickingTasks}
-          title="Picking Tasks"
-          empty="No picking tasks — confirmed orders create them when moved to Warehouse Picking"
+          title={t('Picking Tasks')}
+          empty={t('No picking tasks — confirmed orders create them when moved to Warehouse Picking')}
           notes={notes}
           setNotes={setNotes}
           noteKey={t => `p-${t.id}`}
-          actions={(t) => (
+          actions={(row) => (
             <div className="flex items-center gap-1.5 flex-wrap justify-end">
-              <button onClick={() => setViewDoc({ url: viewPickingSheetUrl(t.order_id), title: `Picking Sheet #${t.order_id}` })} className="px-2.5 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50">🖨 Sheet</button>
-              {t.status === 'pending' && <button onClick={() => handlePicking(t, 'in_progress')} className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start</button>}
-              {t.status !== 'picked' && <button onClick={() => handlePicking(t, 'picked')} className="px-2.5 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700">Picked ✓</button>}
+              <button onClick={() => setViewDoc({ url: viewPickingSheetUrl(row.order_id), title: `Picking Sheet #${row.order_id}` })} className="px-2.5 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50">🖨 {t('Sheet')}</button>
+              {row.status === 'pending' && <button onClick={() => handlePicking(row, 'in_progress')} className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t('Start')}</button>}
+              {row.status !== 'picked' && <button onClick={() => handlePicking(row, 'picked')} className="px-2.5 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700">{t('Picked ✓')}</button>}
             </div>
           )}
           statusBadge={statusBadge}
           format={format}
+          tr={t}
         />
       ) : (
         <TaskList
           tasks={packingTasks}
-          title="Packing Tasks"
-          empty="No packing tasks — they appear when orders reach the Packing stage"
+          title={t('Packing Tasks')}
+          empty={t('No packing tasks — they appear when orders reach the Packing stage')}
           notes={notes}
           setNotes={setNotes}
           noteKey={t => `k-${t.id}`}
           users={users}
           onAssign={handleAssign}
-          actions={(t) => (
+          actions={(row) => (
             <div className="flex items-center gap-1.5 flex-wrap justify-end">
               <select
-                value={t.assignee_id || ''}
-                onChange={e => handleAssign(t, e.target.value ? parseInt(e.target.value) : null)}
+                value={row.assignee_id || ''}
+                onChange={e => handleAssign(row, e.target.value ? parseInt(e.target.value) : null)}
                 className="text-xs border border-gray-300 rounded-lg px-2 py-1.5 bg-white"
               >
-                <option value="">Assign to…</option>
+                <option value="">{t('Assign to…')}</option>
                 {users.map(u => <option key={u.id} value={u.id}>{u.name || u.email}</option>)}
               </select>
-              {t.status === 'pending' && <button onClick={() => handlePacking(t, 'in_progress')} className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start</button>}
-              {['pending', 'in_progress'].includes(t.status) && <button onClick={() => handlePacking(t, 'packed')} className="px-2.5 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700">Packed ✓</button>}
-              {['pending', 'in_progress'].includes(t.status) && <button onClick={() => handlePacking(t, 'problem')} className="px-2.5 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">Problem</button>}
-              {t.status === 'packed' && <button onClick={() => handlePacking(t, 'completed')} className="px-2.5 py-1 text-xs bg-gray-700 text-white rounded-lg hover:bg-gray-800">Complete</button>}
+              {row.status === 'pending' && <button onClick={() => handlePacking(row, 'in_progress')} className="px-2.5 py-1 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700">{t('Start')}</button>}
+              {['pending', 'in_progress'].includes(row.status) && <button onClick={() => handlePacking(row, 'packed')} className="px-2.5 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700">{t('Packed ✓')}</button>}
+              {['pending', 'in_progress'].includes(row.status) && <button onClick={() => handlePacking(row, 'problem')} className="px-2.5 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700">{t('Problem')}</button>}
+              {row.status === 'packed' && <button onClick={() => handlePacking(row, 'completed')} className="px-2.5 py-1 text-xs bg-gray-700 text-white rounded-lg hover:bg-gray-800">{t('Complete')}</button>}
             </div>
           )}
           statusBadge={statusBadge}
           format={format}
+          tr={t}
         />
       )}
 
@@ -173,7 +183,7 @@ export default function PickingDashboard() {
   );
 }
 
-function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, statusBadge, format, users, onAssign }) {
+function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, statusBadge, format, tr, users, onAssign }) {
   const list = Array.isArray(tasks) ? tasks : []; // never white-screen on a shape change
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -197,7 +207,7 @@ function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, stat
                   </p>
                   {t.assignee_id && (
                     <p className="text-xs text-primary-600 mt-0.5">
-                      Assigned to: {t.assignee_name || `User #${t.assignee_id}`}
+                      {tr('Assigned to: ')}{t.assignee_name || `User #${t.assignee_id}`}
                     </p>
                   )}
                   {t.notes && <p className="text-xs text-gray-500 mt-1 italic">{t.notes}</p>}
@@ -207,7 +217,7 @@ function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, stat
               <input
                 value={notes[noteKey(t)] || ''}
                 onChange={e => setNotes(prev => ({ ...prev, [noteKey(t)]: e.target.value }))}
-                placeholder="Note (optional)"
+                placeholder={tr('Note (optional)')}
                 className="mt-2 w-full text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 bg-white"
               />
             </div>

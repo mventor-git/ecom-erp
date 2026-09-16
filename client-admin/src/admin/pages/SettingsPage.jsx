@@ -4,7 +4,6 @@ import { getSettingsByCategory, updateSetting } from '../../api/adminApi';
 import AdminIcon from '../components/AdminIcon';
 import { playTone } from '../../utils/sounds';
 import { useLanguage } from '../../i18n';
-
 /**
  * Settings — rebuilt for speed and clarity.
  *  · Tab per settings category; only the active tab loads & renders.
@@ -165,8 +164,9 @@ export default function SettingsPage() {
 
 /* ── One settings row ─────────────────────────────────────────────────── */
 function Field({ row, value, onChange }) {
+  const { t } = useLanguage();
   const { key, type } = row;
-  const label = pretty(key);
+  const label = t(pretty(key));
   const common = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500';
 
   let control;

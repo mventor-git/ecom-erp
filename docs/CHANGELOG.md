@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.27.0] - 2026-09-16 - ticket 099: arabize zero-coverage pages
+### Added
+- Full Arabic UI on `WelcomePage` (incl. slide `title_ar`/`subtitle_ar`), `ProductsPage` + filters/sort, `HomePage` gaps (badge/category Arabic, fixed raw-key aria-label), admin `PickingDashboard`, `RevenueReconciliation`, `SettingsPage` — ~90 new `ar` dictionary keys. Missing keys still fall back to English.
+### Verification
+- admin + storefront builds exit 0. Backend untouched.
+
 ## [4.26.2] - 2026-09-16 - ticket 098: welcome page never traps on loading
 ### Fixed
 - `client/src/pages/WelcomePage.jsx`: spinner only cleared when the slides request settled — a hung request = infinite bare spinner. Now 12s abort timeout (degrades to content), skeleton hero while loading, and the no-slides state shows newest products as placeholders (escape to shop kept).

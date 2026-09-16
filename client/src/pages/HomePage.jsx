@@ -7,7 +7,7 @@ import ConfigLink from '../components/ConfigLink';
 import { getProducts, getFeatured, getTopSelling, getCategoryShowcase } from '../api/products';
 import { getPublicSetting } from '../api/settings';
 import { useCurrency } from '../context/CurrencyContext';
-import { useLanguage } from '../i18n';
+import { useLanguage, localized } from '../i18n';
 import Icon from '../components/Icon';
 
 // Fallbacks used when the admin has not configured these sections yet
@@ -136,7 +136,7 @@ export default function HomePage() {
                   className={`w-1.5 h-1.5 rounded-full transition-all ${
                     index === currentAnnouncement ? 'bg-white' : 'bg-white/40'
                   }`}
-                  aria-label={t('announcement.go_to', { index: index + 1 })}
+                  aria-label={`${t('Go to announcement')} ${index + 1}`}
                 />
               ))}
             </div>
@@ -166,7 +166,7 @@ export default function HomePage() {
                     {cat.icon || categoryIcons[cat.name] || 'box'}
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white text-sm group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                    {cat.name}
+                    {localized(lang, cat, 'name')}
                   </h3>
                 </Link>
               ))}
@@ -210,7 +210,7 @@ export default function HomePage() {
                     {/^\w+$/.test(badge.icon || '') ? <Icon name={badge.icon} className="w-6 h-6 text-primary-600" /> : (badge.icon || null)}
                   </div>
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{(lang === 'ar' && badge.title_ar) ? badge.title_ar : t(badge.title || '')}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{localizeDescription(badge.description)}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{(lang === 'ar' && badge.description_ar) ? badge.description_ar : localizeDescription(badge.description)}</p>
                 </ConfigLink>
               ))}
             </div>

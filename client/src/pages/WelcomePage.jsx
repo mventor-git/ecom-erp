@@ -4,6 +4,7 @@ import WelcomeModel3D from '../components/WelcomeModel3D';
 import ProductGrid from '../components/ProductGrid';
 import { getPublicSetting } from '../api/settings';
 import { getProducts } from '../api/products';
+import { useLanguage, localized } from '../i18n';
 
 /**
  * WelcomePage - Full-page vertical slider
@@ -23,6 +24,7 @@ export default function WelcomePage() {
   // visitor in an infinite spinner with no way into the store.
   const [slidesLoaded, setSlidesLoaded] = useState(false);
   const [storeName, setStoreName] = useState('');
+  const { t, lang } = useLanguage();
   useEffect(() => {
     getPublicSetting('store_name', '').then((v) => setStoreName(v || '')).catch(() => {});
   }, []);
@@ -272,13 +274,13 @@ export default function WelcomePage() {
       <div className="fixed inset-0 bg-dark-950 overflow-y-auto px-6 py-14">
         <div className="text-center max-w-md mx-auto">
           <div className="text-4xl mb-4" aria-hidden="true">🛍️</div>
-          <h1 className="text-2xl font-bold text-white mb-2">{storeName || 'This store'}</h1>
-          <p className="text-white/60 mb-8">The shop is open — welcome screen not set yet.</p>
-          <Link to="/home" className="btn-secondary text-base px-8 py-3 inline-block">Continue to the shop</Link>
+          <h1 className="text-2xl font-bold text-white mb-2">{storeName || t('This store')}</h1>
+          <p className="text-white/60 mb-8">{t('The shop is open — welcome screen not set yet.')}</p>
+          <Link to="/home" className="btn-secondary text-base px-8 py-3 inline-block">{t('Continue to the shop')}</Link>
         </div>
         {featured.length > 0 && (
           <div className="max-w-5xl mx-auto mt-12">
-            <p className="text-center text-white/40 text-xs uppercase tracking-widest mb-4">Newest in the shop</p>
+            <p className="text-center text-white/40 text-xs uppercase tracking-widest mb-4">{t('Newest in the shop')}</p>
             <ProductGrid products={featured} loading={false} />
           </div>
         )}
@@ -345,12 +347,12 @@ export default function WelcomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 w-full">
           <div className="max-w-2xl space-y-4 sm:space-y-5 md:space-y-6">
             {/* Subtitle */}
-            {currentSlideData.subtitle && (
+            {localized(lang, currentSlideData, 'subtitle') && (
               <p
                 className="text-sm sm:text-base md:text-lg lg:text-xl font-medium uppercase tracking-wider transition-opacity duration-300"
                 style={{ color: currentSlideData.subtitle_color || '#ffffff' }}
               >
-                {currentSlideData.subtitle}
+                {localized(lang, currentSlideData, 'subtitle')}
               </p>
             )}
 
@@ -359,7 +361,7 @@ export default function WelcomePage() {
               className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight transition-opacity duration-300"
               style={{ color: currentSlideData.title_color || '#ffffff' }}
             >
-              {currentSlideData.title}
+              {localized(lang, currentSlideData, 'title')}
             </h1>
 
             {/* Description */}
@@ -379,7 +381,7 @@ export default function WelcomePage() {
                   to={`/products/${currentSlideData.product_id}`}
                   className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto text-center justify-center"
                 >
-                  {currentSlideData.cta_text || 'View Product'}
+                  {currentSlideData.cta_text || t('View Product')}
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -391,7 +393,7 @@ export default function WelcomePage() {
                   to={currentSlideData.cta_link}
                   className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto text-center justify-center"
                 >
-                  {currentSlideData.cta_text || 'Learn More'}
+                  {currentSlideData.cta_text || t('Learn More')}
                   <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
@@ -399,7 +401,7 @@ export default function WelcomePage() {
               )}
 
               <Link to="/home" className="btn-secondary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 w-full sm:w-auto text-center justify-center">
-                Skip to Shop
+                {t('Skip to Shop')}
               </Link>
             </div>
           </div>
