@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.31.0] - 2026-09-16 - ticket 105: screenshots in README + manual, setup.ps1
+### Added
+- 8 day-zero screenshots (en-light) in README gallery + illustrated into `manual.html`; `setup.ps1` one-shot installer for new users (deps + `.env` + next steps).
+### Verification
+- admin build exit 0, `dist/manual.html` + images verified. Backend untouched.
+
 ## [4.30.1] - 2026-09-16 - ticket 104: live database zeroed, seed polluters deleted
 ### Removed
 - All 6 orphan `server/seed-*.js` scripts + `npm run seed` (zero references; they re-dirtied the DB).

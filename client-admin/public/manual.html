@@ -27,6 +27,9 @@
   table { width:100%; border-collapse:collapse; font-size:14px; margin:10px 0; }
   th, td { border:1px solid var(--line); padding:8px 10px; text-align:start; }
   th { background:#f8fafc; }
+  figure.shot { margin:14px 0; }
+  figure.shot img { width:100%; border:1px solid var(--line); border-radius:10px; }
+  figure.shot figcaption { font-size:12px; color:var(--mut); margin-top:6px; }
   footer { text-align:center; color:var(--mut); font-size:12px; padding:0 20px 40px; }
   a.back { display:inline-block; margin-top:14px; color:var(--acc); font-weight:600; }
   @media print { nav.toc { display:none; } section.card { break-inside:avoid; } }
@@ -59,6 +62,10 @@
   <b>Currency &amp; timezone</b> (change BEFORE first data) → <b>Warehouse</b> (rename Main Warehouse, add shelves) → <b>First financial period</b> (required — postings and stock moves fail outside an open period) → <b>Catalog</b> (import or add products; stock comes later) → <b>Suppliers / customers</b> → <b>Opening stock</b> (counts shelves; each line posts a real movement + GL entry when costed).</li>
 </ol>
 <div class="law">The checklist is recomputed from your real records on every visit — it can never claim something that isn't true.</div>
+<figure class="shot"><img src="img/admin-setup.png" alt="Setup wizard with company identity, manual checkpoint and checklist" loading="lazy"><figcaption>The Setup wizard: start your site (1), read the manual (2), work the checklist (3).</figcaption></figure>
+<figure class="shot"><img src="img/admin-overview.png" alt="Empty dashboard with setup banner and zero metrics" loading="lazy"><figcaption>Day-zero dashboard: honest zeros plus the setup banner until core steps finish.</figcaption></figure>
+<figure class="shot"><img src="img/shop-welcome.png" alt="Welcome screen guiding a new merchant" loading="lazy"><figcaption>What visitors see before setup: guided steps, never a blank page.</figcaption></figure>
+<figure class="shot"><img src="img/shop-home-hero.png" alt="Home hero guiding store setup" loading="lazy"><figcaption>The home hero doubles as a setup guide until products arrive.</figcaption></figure>
 </section>
 
 <section class="card" id="s3"><h2><span class="n">3</span>Bringing data in (Setup → Import Data)</h2>
@@ -84,6 +91,10 @@
 <tr><td>Counter sale (walk-in)</td><td>Register page: validated price → stock issue + cash/revenue/COGS journal in ONE transaction.</td></tr>
 <tr><td>Online payment (Kashier)</td><td>Webhook settles atomically on provider confirmation.</td></tr></table>
 <div class="warn">You cannot type “paid” into an order status, on admin or worker. Money moves only through settlement — the slider refuses with <code>SETTLEMENT_REQUIRED</code>.</div>
+<figure class="shot"><img src="img/shop-products.png" alt="Empty product catalog with filters" loading="lazy"><figcaption>Zero-product catalog: honest empty state with working filters.</figcaption></figure>
+<figure class="shot"><img src="img/shop-cart.png" alt="Empty cart drawer" loading="lazy"><figcaption>Empty cart guides shoppers back to browsing.</figcaption></figure>
+<figure class="shot"><img src="img/shop-login.png" alt="Customer sign-in with Google and email" loading="lazy"><figcaption>Customer sign-in: Google one-tap or email, no passwords to remember.</figcaption></figure>
+<figure class="shot"><img src="img/shop-wishlist.png" alt="Empty wishlist" loading="lazy"><figcaption>Empty wishlist with a path back to products.</figcaption></figure>
 </section>
 
 <section class="card" id="s6"><h2><span class="n">6</span>Refunds vs goods returns (different things)</h2>

@@ -11,6 +11,22 @@ Self-hosted store + back-office in one repo. Runs from a local PC: Node.js API, 
 - **Mobile** — customer app + staff worker app (Expo), server-side cart, proof-of-delivery.
 - **Payments** — Kashier (live), cash on delivery; Stripe route kept as legacy fallback; Paymob planned.
 
+## Screenshots (fresh install, English · light)
+
+A brand-new install is intentionally empty — this is what day zero looks like. The full operator walkthrough (14 sections) lives in the admin app at `/manual.html`.
+
+### Admin — guided setup
+![Setup wizard: company identity, manual checkpoint, checklist](docs/screenshots/admin-setup.png)
+![Empty dashboard with setup banner and honest zero metrics](docs/screenshots/admin-overview.png)
+
+### Storefront — guided empty states
+![Welcome screen pointing to the admin setup flow](docs/screenshots/shop-welcome.png)
+![Home hero guiding a new merchant (add products → feature → configure)](docs/screenshots/shop-home-hero.png)
+![Honest zero-product catalog with sticky filters](docs/screenshots/shop-products.png)
+![Sign-in (Google + email)](docs/screenshots/shop-login.png)
+![Empty cart and wishlist states](docs/screenshots/shop-cart.png)
+![Empty wishlist](docs/screenshots/shop-wishlist.png)
+
 ## Requirements
 
 - Node.js 18+
