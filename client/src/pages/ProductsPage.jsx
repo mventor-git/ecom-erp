@@ -148,8 +148,8 @@ export default function ProductsPage() {
 
       {/* Content Area: Sidebar + Grid */}
       <div className="flex gap-8">
-        {/* ── Desktop Filter Sidebar ── */}
-        <div className="hidden lg:block">
+        {/* ── Desktop Filter Sidebar (sticky while the grid scrolls) ── */}
+        <div className="hidden lg:block sticky top-24 self-start max-h-[calc(100vh-7rem)] overflow-y-auto">
           <FilterSidebar
             activeCategory={activeCategory}
             activeBrand={activeBrand}

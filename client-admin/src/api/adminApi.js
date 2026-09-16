@@ -239,7 +239,7 @@ export const getEventCounts = () => api.get('/admin/events/counts');
 // ── ERP: Settings API ──
 export const getSettings = () => api.get('/admin/settings');
 
-export const getSettingsByCategory = (category) => api.get(`/admin/settings/${category}`);
+export const getSettingsByCategory = (category) => api.get('/admin/settings', { params: { category } });
 
 export const updateSettings = (settings) => api.put('/admin/settings', { settings });
 

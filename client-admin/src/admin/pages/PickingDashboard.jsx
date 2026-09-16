@@ -45,10 +45,15 @@ export default function PickingDashboard() {
       getUsers().catch(() => ({ data: [] })),
     ])
       .then(([pickRes, packRes, statsRes, usersRes]) => {
-        setPickingTasks(pickRes.data || []);
-        setPackingTasks(packRes.data || []);
+        // picking list endpoint returns {items, pagination} (service shape);
+        // packing/users return bare arrays — normalize so TaskList always gets an array.
+        const pickD = pickRes.data;
+        const packD = packRes.data;
+        const userD = usersRes.data;
+        setPickingTasks(Array.isArray(pickD) ? pickD : (pickD?.items || []));
+        setPackingTasks(Array.isArray(packD) ? packD : (packD?.items || []));
         setStats(statsRes.data || {});
-        setUsers(usersRes.data || []);
+        setUsers(Array.isArray(userD) ? userD : []);
       })
       .catch(err => console.error('Error loading tasks:', err))
       .finally(() => setLoading(false));
@@ -169,16 +174,17 @@ export default function PickingDashboard() {
 }
 
 function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, statusBadge, format, users, onAssign }) {
+  const list = Array.isArray(tasks) ? tasks : []; // never white-screen on a shape change
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
       <div className="px-5 py-4 border-b border-gray-200">
-        <h2 className="text-sm font-semibold text-gray-900">{title} ({tasks.length})</h2>
+        <h2 className="text-sm font-semibold text-gray-900">{title} ({list.length})</h2>
       </div>
-      {tasks.length === 0 ? (
+      {list.length === 0 ? (
         <div className="p-12 text-center text-sm text-gray-400">{empty}</div>
       ) : (
         <div className="divide-y divide-gray-100 max-h-[34rem] overflow-y-auto">
-          {tasks.map(t => (
+          {list.map(t => (
             <div key={t.id} className="px-5 py-3.5">
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="min-w-0">

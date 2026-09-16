@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.26.1] - 2026-09-16 - ticket 097: admin contract crashes + sticky storefront filters
+### Fixed
+- Picking & Packing white-screen (`tasks.map`): picking list returns `{items, pagination}`, UI stored the object — unwrap + `Array.isArray` guard (page can never crash on a shape change again).
+- Revenue reconciliation white-screen (`operational_settled_cents` of undefined): route wraps `{success, data}`, UI read one level short — unwrap + optional-chained totals.
+- Settings page empty on every tab: category fetch hit `GET /:key` (404 on category names) — now `GET /admin/settings?category=`.
+### Added
+- Storefront `/products`: desktop Filters card is sticky while the grid scrolls (capped height + internal scroll; mobile overlay unchanged).
+### Verification
+- admin + storefront builds exit 0. Backend untouched.
+
 ## [4.26.0] - 2026-09-16 - ticket 096: business-journey acceptance + operator docs (product-completion gate)
 ### Added
 - `server/probes/businessJourney096.js` (46-step fresh-DB journey over real HTTP: wizard → company/period → import → supplier/PO/receive → AP aging → pay+replay → web order+settle → counter sale → return/adjust → recon → statements → audit → negative proofs) + `tests/businessJourney096.test.js` wrapper (240s gate).

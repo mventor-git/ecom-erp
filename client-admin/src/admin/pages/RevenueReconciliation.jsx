@@ -26,7 +26,8 @@ export default function RevenueReconciliation() {
     setLoading(true);
     setError('');
     getRevenueReconciliation()
-      .then(res => setData(res.data))
+      // route wraps {success, data} — unwrap one level (tolerate bare payload too)
+      .then(res => setData(res.data?.data ?? res.data))
       .catch(err => { setError(err.response?.data?.error || 'Failed to load reconciliation'); setData(null); })
       .finally(() => setLoading(false));
   }
@@ -57,8 +58,8 @@ export default function RevenueReconciliation() {
 
       {data && (
         <div className="flex gap-3 flex-wrap mb-5">
-          <StatCard label="Operationally settled" value={format(data.totals.operational_settled_cents)} sub="collected + not refunded" tone="primary" icon="chart" />
-          <StatCard label="Posted revenue (net)" value={format(data.totals.posted_revenue_net_cents)} sub="sale journals − reversals" tone="neutral" icon="chart" />
+          <StatCard label="Operationally settled" value={format(data.totals?.operational_settled_cents ?? 0)} sub="collected + not refunded" tone="primary" icon="chart" />
+          <StatCard label="Posted revenue (net)" value={format(data.totals?.posted_revenue_net_cents ?? 0)} sub="sale journals − reversals" tone="neutral" icon="chart" />
           <StatCard label="Difference" value={format(diff)}
             sub={diff === 0 ? 'views agree ✓' : 'investigate the classes below'}
             tone={diff === 0 ? 'success' : 'warning'} icon="alert" />
