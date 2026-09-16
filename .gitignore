@@ -17,6 +17,9 @@ secrets/
 *.sqlite3
 server/data/
 server/*.sqlite
+# Fresh-start archives: dirty dev databases kept locally, NEVER committed
+server/data/*.bak*
+server/backups/*.db
 
 # ── Build output ──
 client/dist/

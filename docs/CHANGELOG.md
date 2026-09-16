@@ -1,5 +1,14 @@
 # Changelog
 
+## [4.30.1] - 2026-09-16 - ticket 104: live database zeroed, seed polluters deleted
+### Removed
+- All 6 orphan `server/seed-*.js` scripts + `npm run seed` (zero references; they re-dirtied the DB).
+- Live dev database contents (366 products, 188 customers, 182 orders, …) — archived to `server/backups/`, then reset to a clean boot: every business table censused at 0.
+### Added
+- Explicit `.gitignore` archive rules so a dirty dev DB can never be committed.
+### Verification
+- Census zeros; undo path documented (stop → copy archive back → start).
+
 ## [4.30.0] - 2026-09-16 - ticket 103: zero-placeholder startup + manual + guided wizard
 ### Removed
 - Demo taxonomy seeds (4 categories, 5 brands + auto-assign) and marketing seeds (badges/features/headers). Fresh DBs open with zero invented values.
