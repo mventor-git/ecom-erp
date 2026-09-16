@@ -40,7 +40,7 @@ export default function SuccessPage() {
         <p className="text-gray-500 dark:text-gray-400 mb-8">{t("You'll receive a confirmation email shortly.")}</p>
 
         {order && (
-          <div className="bg-white/5 dark:bg-white/5 rounded-xl p-4 mb-8 text-left border border-white/10">
+          <div className="bg-white/5 dark:bg-white/5 rounded-xl p-4 mb-8 text-start border border-white/10">
             <p className="text-sm text-gray-500 dark:text-gray-400">{t('Order #')}{order.id}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t('Total')}: <Price cents={order.total} /></p>
           </div>

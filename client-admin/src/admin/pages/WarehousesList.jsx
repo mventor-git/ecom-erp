@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { dateLocale } from '../../i18n';
 import DataTable from '../components/DataTable';
 import {
   getWarehouses,
@@ -135,7 +136,7 @@ export default function WarehousesList() {
       label: 'Total Stock',
       align: 'right',
       render: (row) => (
-        <span className="font-semibold">{(row.total_stock || 0).toLocaleString()}</span>
+        <span className="font-semibold">{(row.total_stock || 0).toLocaleString(dateLocale())}</span>
       ),
     },
     {
@@ -184,7 +185,7 @@ export default function WarehousesList() {
       label: 'Stock',
       align: 'right',
       render: (row) => (
-        <span className="font-semibold">{(row.total_stock || 0).toLocaleString()}</span>
+        <span className="font-semibold">{(row.total_stock || 0).toLocaleString(dateLocale())}</span>
       ),
     },
     {

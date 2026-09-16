@@ -27,7 +27,7 @@ export default function InventoryPage() {
         </Card>
         <Card title="Low Stock (Real DB)" className="text-sm">
           {lowStock.length === 0 ? <p className="text-slate-500">No low-stock items found. This uses real /inventory/low-stock endpoint.</p> : null}
-          <ul className="list-disc pl-4 space-y-1 text-slate-300">
+          <ul className="list-disc ps-4 space-y-1 text-slate-300">
             {lowStock.map((item, i) => <li key={i}>{item.product_id || item.id} — Qty: {item.qty_on_hand ?? item.quantity}</li>)}
           </ul>
         </Card>

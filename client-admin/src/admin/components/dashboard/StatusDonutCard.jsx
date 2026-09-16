@@ -70,7 +70,7 @@ export default function StatusDonutCard({ statusRows = [], total = 0 }) {
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: row.color }} />
                   <span className="text-gray-600 capitalize flex-1 truncate">{row.status.replace(/_/g, ' ')}</span>
                   <span className="font-semibold text-gray-900">{row.count}</span>
-                  <span className="text-gray-500 w-10 text-right">
+                  <span className="text-gray-500 w-10 text-end">
                     {total > 0 ? Math.round((row.count / total) * 100) : 0}%
                   </span>
                 </li>

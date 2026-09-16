@@ -28,7 +28,7 @@ export default function WarehousePage() {
           {loading && <p className="text-slate-400">Loading...</p>}
           {error && <p className="text-rose-400">{error}</p>}
           {warehouses.length === 0 && !loading && <p className="text-slate-500">No warehouses found. Real DB has warehouses table.</p>}
-          <table className="w-full text-sm text-left">
+          <table className="w-full text-sm text-start">
             <thead className="text-xs uppercase text-slate-400 bg-slate-950">
               <tr><th className="px-4 py-2">Name</th><th className="px-4 py-2">Code</th><th className="px-4 py-2">Address</th><th className="px-4 py-2">Stock</th><th className="px-4 py-2">Products</th><th className="px-4 py-2">Locations</th></tr>
             </thead>

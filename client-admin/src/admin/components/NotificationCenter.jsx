@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getInAppNotifications, markNotificationRead } from '../../api/adminApi';
+import { dateLocale } from '../../i18n';
 
 /**
  * NotificationCenter — bell with unread count + dropdown panel (STEP 16).
@@ -80,14 +81,14 @@ export default function NotificationCenter() {
           />
         </svg>
         {unread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4.5 min-w-[18px] px-1 flex items-center justify-center">
+          <span className="absolute -top-0.5 -end-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full h-4.5 min-w-[18px] px-1 flex items-center justify-center">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
+        <div className="absolute end-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50">
           <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-900">Notifications</h3>
             {unread > 0 && (
@@ -104,14 +105,14 @@ export default function NotificationCenter() {
               <button
                 key={n.id}
                 onClick={() => handleOpen(n)}
-                className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/60' : ''}`}
+                className={`w-full text-start px-4 py-3 hover:bg-gray-50 transition-colors ${!n.is_read ? 'bg-blue-50/60' : ''}`}
               >
                 <div className="flex items-start gap-2">
                   {!n.is_read && <span className="w-2 h-2 rounded-full bg-primary-600 mt-1.5 shrink-0" />}
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900">{n.title}</p>
                     <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{n.message}</p>
-                    <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString('en-GB')}</p>
+                    <p className="text-[10px] text-gray-400 mt-1">{new Date(n.created_at).toLocaleString(dateLocale())}</p>
                   </div>
                 </div>
               </button>

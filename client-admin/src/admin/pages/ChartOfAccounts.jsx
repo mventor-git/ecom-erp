@@ -175,18 +175,18 @@ export default function ChartOfAccounts() {
               <button onClick={() => { setLedger(null); setLedgerDate({ from: '', to: '' }); }} className="px-3 py-1.5 text-sm bg-gray-100 rounded-lg hover:bg-gray-200">Close</button>
             </div>
             <div className="mt-3 flex items-end gap-2">
-              <label className="text-xs text-gray-600">From <input type="date" value={ledgerDate.from} onChange={(e) => setLedgerDate((d) => ({ ...d, from: e.target.value }))} className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm" /></label>
-              <label className="text-xs text-gray-600">To <input type="date" value={ledgerDate.to} onChange={(e) => setLedgerDate((d) => ({ ...d, to: e.target.value }))} className="ml-1 border border-gray-300 rounded-lg px-2 py-1 text-sm" /></label>
+              <label className="text-xs text-gray-600">From <input type="date" value={ledgerDate.from} onChange={(e) => setLedgerDate((d) => ({ ...d, from: e.target.value }))} className="ms-1 border border-gray-300 rounded-lg px-2 py-1 text-sm" /></label>
+              <label className="text-xs text-gray-600">To <input type="date" value={ledgerDate.to} onChange={(e) => setLedgerDate((d) => ({ ...d, to: e.target.value }))} className="ms-1 border border-gray-300 rounded-lg px-2 py-1 text-sm" /></label>
               <button onClick={() => openLedger(ledger.account)} className="px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700">Filter</button>
               {ledger.opening_balance !== undefined && (
-                <span className="ml-auto text-xs text-gray-600">Opening: <b>{format(ledger.opening_balance || 0)}</b></span>
+                <span className="ms-auto text-xs text-gray-600">Opening: <b>{format(ledger.opening_balance || 0)}</b></span>
               )}
             </div>
             {ledger.loading && <p className="mt-4 text-sm text-gray-400">Loading…</p>}
             {ledger.error && <p className="mt-4 text-sm text-red-600">{ledger.error}</p>}
             {ledger.lines && (
               <table className="w-full mt-4 text-sm">
-                <thead><tr className="bg-gray-50 border-b border-gray-200 text-left text-xs font-semibold text-gray-600">
+                <thead><tr className="bg-gray-50 border-b border-gray-200 text-start text-xs font-semibold text-gray-600">
                   <th className="px-3 py-2">Date</th><th className="px-3 py-2">Entry</th><th className="px-3 py-2">Description</th>
                   <th className="px-3 py-2 text-end">Debit</th><th className="px-3 py-2 text-end">Credit</th><th className="px-3 py-2 text-end">Balance</th>
                 </tr></thead>

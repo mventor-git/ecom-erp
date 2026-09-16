@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { dateLocale } from '../../i18n';
 import DataTable from '../components/DataTable';
 import StatCard from '../components/StatCard';
 import ConfirmDialog from '../components/ConfirmDialog';
@@ -172,7 +173,7 @@ export default function FinancialPeriods() {
     },
     {
       key: 'closed_at', label: 'Closed', render: (r) => (
-        <span className="text-xs text-gray-500">{r.closed_at ? new Date(r.closed_at).toLocaleString() : '—'}</span>
+        <span className="text-xs text-gray-500">{r.closed_at ? new Date(r.closed_at).toLocaleString(dateLocale()) : '—'}</span>
       ),
     },
     {

@@ -266,7 +266,7 @@ export default function AIAssistant() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary-600/60 hover:bg-primary-600/90 focus:bg-primary-600/90 text-white rounded-full shadow-lg backdrop-blur-md border border-white/20 hover:shadow-glow transition-all hover:scale-110 z-50 flex items-center justify-center"
+          className="fixed bottom-24 end-4 sm:bottom-6 sm:end-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary-600/60 hover:bg-primary-600/90 focus:bg-primary-600/90 text-white rounded-full shadow-lg backdrop-blur-md border border-white/20 hover:shadow-glow transition-all hover:scale-110 z-50 flex items-center justify-center"
           aria-label={t('Open AI Assistant')}
         >
           <svg className="w-7 h-7 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,7 +277,7 @@ export default function AIAssistant() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-96 sm:max-w-[calc(100vw-3rem)] sm:h-[600px] sm:max-h-[calc(100vh-6rem)] bg-white dark:bg-dark-800 sm:rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-dark-700">
+        <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:end-6 sm:w-96 sm:max-w-[calc(100vw-3rem)] sm:h-[600px] sm:max-h-[calc(100vh-6rem)] bg-white dark:bg-dark-800 sm:rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-200 dark:border-dark-700">
           {/* Header */}
           <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-3 sm:p-4 sm:rounded-t-2xl flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -327,7 +327,7 @@ export default function AIAssistant() {
                         <button
                           key={idx}
                           onClick={() => handleActionClick(action.path)}
-                          className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-between group"
+                          className="w-full text-start px-2 sm:px-3 py-1.5 sm:py-2 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-xs sm:text-sm font-medium transition-colors flex items-center justify-between group"
                         >
                           <span>{action.label}</span>
                           <svg className="w-3 h-3 sm:w-4 sm:h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">

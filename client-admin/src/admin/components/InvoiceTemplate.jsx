@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { dateLocale } from '../../i18n';
 import {
   getInvoices,
   generateInvoice,
@@ -169,7 +170,7 @@ export default function InvoiceTemplate() {
               key={t.type}
               onClick={() => handleMovement(t.type)}
               disabled={generating}
-              className="px-3 py-2.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50 transition-colors text-left"
+              className="px-3 py-2.5 text-xs font-medium text-gray-700 border border-gray-200 rounded-lg hover:border-primary-300 hover:text-primary-600 hover:bg-primary-50 disabled:opacity-50 transition-colors text-start"
             >
               <span className="block font-semibold">{t.label}</span>
               <span className="text-[10px] text-gray-400">{t.prefix}-XXXX.xlsx</span>
@@ -190,12 +191,12 @@ export default function InvoiceTemplate() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{inv.filename}</p>
                   <p className="text-xs text-gray-400">
-                    {new Date(inv.created).toLocaleString()} · {(inv.size / 1024).toFixed(1)} KB
+                    {new Date(inv.created).toLocaleString(dateLocale())} · {(inv.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
                 <a
                   href={getInvoiceDownloadUrl(inv.filename)}
-                  className="ml-3 px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shrink-0"
+                  className="ms-3 px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shrink-0"
                 >
                   Open / Download
                 </a>

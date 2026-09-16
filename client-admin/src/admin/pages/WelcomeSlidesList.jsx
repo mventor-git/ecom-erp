@@ -164,7 +164,7 @@ export default function WelcomeSlidesList() {
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-gray-900 truncate">{slide.title}</p>
                 <p className="text-xs text-gray-400 truncate">
-                  {slide.subtitle && <span className="mr-2">{slide.subtitle}</span>}
+                  {slide.subtitle && <span className="me-2">{slide.subtitle}</span>}
                   {slide.product_name && <span className="text-primary-500">→ {slide.product_name}</span>}
                 </p>
               </div>

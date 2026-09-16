@@ -40,7 +40,7 @@ export default function WishlistDrawer() {
         ) : (
           <ul className="space-y-4">
             {items.map(product => (
-              <li key={product.id} className="flex items-center space-x-4 py-4 border-b border-gray-100 dark:border-white/5">
+              <li key={product.id} className="flex items-center gap-4 py-4 border-b border-gray-100 dark:border-white/5">
                 <Link
                   to={`/products/${product.id}`}
                   onClick={() => setIsOpen(false)}

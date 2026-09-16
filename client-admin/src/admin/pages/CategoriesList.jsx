@@ -174,11 +174,11 @@ export default function CategoriesList() {
                   <h3 className="font-medium text-gray-900 truncate">{cat.name}</h3>
                   <p className="text-xs text-gray-400">
                     {cat.product_count || 0} product{(cat.product_count || 0) !== 1 ? 's' : ''}
-                    {cat.id === 1 && <span className="ml-2 text-primary-500 font-medium">Default</span>}
+                    {cat.id === 1 && <span className="ms-2 text-primary-500 font-medium">Default</span>}
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-1 shrink-0 ml-2">
+              <div className="flex items-center gap-1 shrink-0 ms-2">
                 <Link
                   to={`/categories/${cat.id}`}
                   className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"

@@ -4,7 +4,7 @@ import StatusBadge from '../components/StatusBadge';
 import DocumentViewer from '../components/DocumentViewer';
 import { getAdminOrders, getAdminOrderStats, updateOrderStatus, settleOrder, refundOrder, getOrderStatuses, getOrderTimeline, viewInvoiceUrl, viewReceiptUrl, viewShippingUrl, viewPickingSheetUrl, emailReceipt } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
-import { useLanguage } from '../../i18n';
+import { useLanguage, dateLocale } from '../../i18n';
 
 const VALID_TRANSITIONS = {
   pending: ['paid', 'cancelled'],
@@ -26,7 +26,7 @@ const SETTLEMENT_METHODS = [
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   try {
-    return new Date(dateStr + 'Z').toLocaleDateString('en-US', {      month: 'short', day: 'numeric', year: 'numeric',
+    return new Date(dateStr + 'Z').toLocaleDateString(dateLocale(), {      month: 'short', day: 'numeric', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
   } catch {
@@ -151,7 +151,7 @@ export default function OrdersList() {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2 mb-4">
-        {emailMsg && <span className="text-sm text-green-600 font-medium mr-2">{emailMsg}</span>}
+        {emailMsg && <span className="text-sm text-green-600 font-medium me-2">{emailMsg}</span>}
         <button
           onClick={() => setStatusFilter('')}
           className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
@@ -289,7 +289,7 @@ export default function OrdersList() {
                                   )}
                                   <div>
                                     <span className="text-gray-900 font-medium">{item.name || `Product #${item.id || item.product_id}`}</span>
-                                    {item.color && <span className="text-gray-400 ml-2 text-xs">({item.color})</span>}
+                                    {item.color && <span className="text-gray-400 ms-2 text-xs">({item.color})</span>}
                                   </div>
                                 </div>
                                 <span className="text-gray-500">
@@ -311,7 +311,7 @@ export default function OrdersList() {
                                   <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 font-medium">
                                     {t(ev.event_type.replace(/_/g, ' '))}
                                   </span>
-                                  <span className="text-gray-400">{new Date(ev.created_at).toLocaleString('en-GB')}</span>
+                                  <span className="text-gray-400">{new Date(ev.created_at).toLocaleString(dateLocale())}</span>
                                   <span className="text-gray-400">{ev.user_id || ev.user_role || 'system'}</span>
                                 </div>
                               ))}

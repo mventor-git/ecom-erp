@@ -136,7 +136,7 @@ export default function CartPage() {
                 )}
               </div>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => updateQuantity(item.id, item.quantity - 1, item.color?.name)}
@@ -155,7 +155,7 @@ export default function CartPage() {
                 +
               </button>
             </div>
-            <div className="text-right">
+            <div className="text-end">
               <p className="font-semibold text-gray-900 dark:text-white"><Price cents={item.price * item.quantity} /></p>
               <button
                 type="button"
@@ -206,7 +206,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setPaymentMethod('kashier-wallet')}
-                className={`p-3 rounded-xl border-2 text-left transition-all ${
+                className={`p-3 rounded-xl border-2 text-start transition-all ${
                   paymentMethod === 'kashier-wallet' ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'
                 }`}
               >
@@ -218,7 +218,7 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={() => setPaymentMethod('kashier-card')}
-                className={`p-3 rounded-xl border-2 text-left transition-all ${
+                className={`p-3 rounded-xl border-2 text-start transition-all ${
                   paymentMethod === 'kashier-card' ? 'border-primary-500 bg-primary-50/50 dark:bg-primary-500/10' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'
                 }`}
               >

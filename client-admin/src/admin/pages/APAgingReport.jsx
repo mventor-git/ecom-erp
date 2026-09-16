@@ -50,7 +50,7 @@ export default function APAgingReport() {
   const summaryColumns = [
     { key: 'supplier_name', label: 'Supplier', render: (row) => (
       <button onClick={() => setExpanded(expanded === row.supplier_id ? null : row.supplier_id)}
-        className="text-left font-medium text-primary-700 hover:underline">
+        className="text-start font-medium text-primary-700 hover:underline">
         {expanded === row.supplier_id ? '▾ ' : '▸ '}{row.supplier_name}
       </button>
     ) },

@@ -344,7 +344,7 @@ export default function ProductDetailPage() {
                   {product.rating_count > 0
                     ? `${Number(product.rating).toFixed(1)} (${product.rating_count} review${product.rating_count !== 1 ? 's' : ''})`
                     : 'No reviews yet'}
-                  <button type="button" onClick={scrollToReviews} className="text-primary-600 dark:text-primary-400 font-medium ml-1.5 hover:underline">
+                  <button type="button" onClick={scrollToReviews} className="text-primary-600 dark:text-primary-400 font-medium ms-1.5 hover:underline">
                     · Write a review
                   </button>
                 </span>
@@ -467,7 +467,7 @@ export default function ProductDetailPage() {
                                   `}
                                 >
                                   {size.name}
-                                  {isOutOfStock && <span className="ml-1 text-xs">(Out)</span>}
+                                  {isOutOfStock && <span className="ms-1 text-xs">(Out)</span>}
                                 </button>
                               );
                             })}
@@ -494,7 +494,7 @@ export default function ProductDetailPage() {
             <div className="flex items-center border border-gray-300 dark:border-white/10 rounded-xl bg-white/5 dark:bg-white/5 backdrop-blur-sm shrink-0">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-l-xl transition-colors"
+                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-s-xl transition-colors"
                 aria-label="Decrease quantity"
               >
                 -
@@ -502,7 +502,7 @@ export default function ProductDetailPage() {
               <span className="w-12 text-center font-medium border-x border-gray-300 dark:border-white/10 text-gray-900 dark:text-white">{quantity}</span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-r-xl transition-colors"
+                className="w-11 h-11 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-e-xl transition-colors"
                 aria-label="Increase quantity"
               >
                 +
@@ -669,7 +669,7 @@ export default function ProductDetailPage() {
                 <div className="flex items-center border border-gray-300 dark:border-white/10 rounded-xl bg-white/5 dark:bg-white/5 backdrop-blur-sm shrink-0">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-l-xl transition-colors text-lg"
+                    className="w-10 h-10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-s-xl transition-colors text-lg"
                     aria-label="Decrease quantity"
                   >
                     -
@@ -677,7 +677,7 @@ export default function ProductDetailPage() {
                   <span className="w-9 text-center font-medium border-x border-gray-300 dark:border-white/10 text-gray-900 dark:text-white">{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-10 h-10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-r-xl transition-colors text-lg"
+                    className="w-10 h-10 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-e-xl transition-colors text-lg"
                     aria-label="Increase quantity"
                   >
                     +

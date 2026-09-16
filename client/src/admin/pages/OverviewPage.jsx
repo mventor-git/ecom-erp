@@ -94,7 +94,7 @@ export default function OverviewPage() {
         {/* Status */}
         <div className="text-xs text-slate-500">
           Status: {data?.status || '—'} | Role: {data?.role || '—'}
-          {data?.status === 'unavailable' && <span className="ml-2 text-rose-400">{data?.message}</span>}
+          {data?.status === 'unavailable' && <span className="ms-2 text-rose-400">{data?.message}</span>}
         </div>
       </div>
     </AdminLayout>

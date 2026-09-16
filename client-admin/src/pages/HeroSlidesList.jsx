@@ -185,7 +185,7 @@ export default function HeroSlidesList() {
                     <span className="text-4xl">🖼️</span>
                   </div>
                 )}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2 end-2">
                   <button
                     onClick={() => handleToggleActive(slide)}
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -351,14 +351,14 @@ export default function HeroSlidesList() {
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_active" className="ms-2 block text-sm text-gray-900">
                       Active
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-lg">
+              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 rounded-b-lg">
                 <button
                   type="button"
                   onClick={handleCloseModal}

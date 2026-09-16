@@ -4,6 +4,7 @@ import { getAdminProducts, getAdminCategories, pricingProfitReport } from '../..
 import AdminIcon from '../components/AdminIcon';
 import { playTone } from '../../utils/sounds';
 import { useLanguage } from '../../i18n';
+import { formatAmount } from '../../utils/currency';
 
 /**
  * Profit dashboard — the expanded view behind Pricing Engine's chart.
@@ -13,7 +14,7 @@ import { useLanguage } from '../../i18n';
  * Data: GET /api/admin/pricing/profit-report (through the authed API client)
  */
 
-const fmt = (cents) => ((cents ?? 0) / 100).toLocaleString('en-US', { maximumFractionDigits: 0 });
+const fmt = (cents) => formatAmount(cents, 0);
 
 export default function PricingProfit() {
   const navigate = useNavigate();

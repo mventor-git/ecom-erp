@@ -8,6 +8,7 @@ import {
   getUsers, viewPickingSheetUrl, viewPackingSheetUrl,
 } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
+import { dateLocale } from '../../i18n';
 
 const PICKING_STATUS = ['pending', 'in_progress', 'picked'];
 const PACKING_STATUS = ['pending', 'in_progress', 'packed', 'problem', 'completed'];
@@ -181,7 +182,7 @@ function TaskList({ tasks, title, empty, notes, setNotes, noteKey, actions, stat
                     {statusBadge(t.status)}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {t.customer_name || '—'} · {format(t.total || 0)} · {new Date(t.created_at).toLocaleString()}
+                    {t.customer_name || '—'} · {format(t.total || 0)} · {new Date(t.created_at).toLocaleString(dateLocale())}
                   </p>
                   {t.assignee_id && (
                     <p className="text-xs text-primary-600 mt-0.5">

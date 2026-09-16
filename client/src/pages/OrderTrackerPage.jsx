@@ -152,7 +152,7 @@ function OrderCard({ order, statuses, format, statusLabel, t }) {
             </p>
           )}
         </div>
-        <div className="text-right">
+        <div className="text-end">
           <p className="text-xl font-bold text-primary-600 dark:text-primary-400"><Price cents={order.total} /></p>
           <Link to={`/products/${order.items?.[0]?.id || ''}`} className="text-xs text-primary-600 dark:text-primary-400 hover:underline">
             {t('View products')}
@@ -220,7 +220,7 @@ function OrderCard({ order, statuses, format, statusLabel, t }) {
           <summary className="text-xs font-medium text-gray-500 dark:text-gray-400 cursor-pointer hover:text-primary-600">
             {t('Activity log')} ({order.timeline.length})
           </summary>
-          <div className="mt-3 space-y-1.5 border-l-2 border-gray-100 dark:border-white/10 ml-2 pl-4">
+          <div className="mt-3 space-y-1.5 border-s-2 border-gray-100 dark:border-white/10 ms-2 ps-4">
             {order.timeline.slice().reverse().map((ev, i) => (
               <div key={i} className="text-xs text-gray-500 dark:text-gray-400">
                 <span className="font-medium text-gray-700 dark:text-gray-300">{statusLabel(ev.event.replace('order_', ''))}</span>

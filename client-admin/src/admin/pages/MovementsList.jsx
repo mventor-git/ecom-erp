@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { dateLocale } from '../../i18n';
 import { Link } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import DocumentViewer from '../components/DocumentViewer';
@@ -25,7 +26,7 @@ const MOVEMENT_TYPES = [
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  return d.toLocaleDateString('en-GB') + ' ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(dateLocale()) + ' ' + d.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 const inputClass = 'w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500';

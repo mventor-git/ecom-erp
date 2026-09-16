@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
 import { getEvents, getEventCounts } from '../../api/adminApi';
+import { dateLocale } from '../../i18n';
 
 const EVENT_TYPE_COLORS = {
   'product.created': 'bg-green-100 text-green-700',
@@ -53,7 +54,7 @@ export default function EventsList() {
 
   const columns = [
     { key: 'created_at', label: 'Time', render: (row) => (
-      <span className="text-xs text-gray-500">{new Date(row.created_at).toLocaleString()}</span>
+      <span className="text-xs text-gray-500">{new Date(row.created_at).toLocaleString(dateLocale())}</span>
     )},
     { key: 'event_type', label: 'Event', render: (row) => (
       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${EVENT_TYPE_COLORS[row.event_type] || 'bg-gray-100 text-gray-700'}`}>
@@ -78,7 +79,7 @@ export default function EventsList() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Events & Audit Trail</h1>
-          <p className="text-sm text-gray-500 mt-1">{totalEvents.toLocaleString()} events recorded</p>
+          <p className="text-sm text-gray-500 mt-1">{totalEvents.toLocaleString(dateLocale())} events recorded</p>
         </div>
       </div>
 

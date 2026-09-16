@@ -139,7 +139,7 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
+      <aside className="w-64 bg-slate-900 border-e border-slate-800 flex flex-col shrink-0">
         {loading ? (
           <div className="p-6 text-xs text-slate-500">Loading permissions...</div>
         ) : null}

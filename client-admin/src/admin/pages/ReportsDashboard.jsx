@@ -8,6 +8,7 @@ import {
   getSettings, updateSettingsBatch,
 } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
+import { dateLocale } from '../../i18n';
 
 const REPORT_CARDS = [
   { type: 'inventory_value', label: 'Inventory Value', icon: 'box', category: 'inventory', description: 'Stock value per product/category', color: 'border-blue-200 bg-blue-50 dark:border-blue-800/60 dark:bg-blue-950/40' },
@@ -222,7 +223,7 @@ export default function ReportsDashboard() {
                 <div className="p-3 rounded-lg bg-gray-50 border border-gray-200">
                   <p className="text-sm font-semibold text-gray-900">{REPORT_CARDS.find(c => c.type === activeReport)?.label}</p>
                   <p className="text-xs text-gray-500 mt-1">{REPORT_CARDS.find(c => c.type === activeReport)?.description}</p>
-                  {reportMeta?.generated_at && <p className="text-[11px] text-gray-400 mt-2">Generated {new Date(reportMeta.generated_at).toLocaleString()}</p>}
+                  {reportMeta?.generated_at && <p className="text-[11px] text-gray-400 mt-2">Generated {new Date(reportMeta.generated_at).toLocaleString(dateLocale())}</p>}
                 </div>
               ) : (
                 <p className="text-xs text-gray-400">No report selected — pick a card to view.</p>
@@ -339,7 +340,7 @@ export default function ReportsDashboard() {
               <div className="flex items-center justify-between mb-3">
                 <div>
                   <h2 className="text-sm font-semibold text-gray-900">{reportMeta.label || REPORT_CARDS.find(c => c.type === activeReport)?.label}</h2>
-                  <p className="text-xs text-gray-500">{REPORT_CARDS.find(c => c.type === activeReport)?.description} · {reportData.length} rows · {reportMeta.generated_at ? new Date(reportMeta.generated_at).toLocaleString() : ''}</p>
+                  <p className="text-xs text-gray-500">{REPORT_CARDS.find(c => c.type === activeReport)?.description} · {reportData.length} rows · {reportMeta.generated_at ? new Date(reportMeta.generated_at).toLocaleString(dateLocale()) : ''}</p>
                 </div>
               </div>
 
@@ -421,7 +422,7 @@ export default function ReportsDashboard() {
                 <div key={f.filename} className="flex items-center justify-between px-4 py-2.5">
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{f.filename}</p>
-                    <p className="text-xs text-gray-400">{new Date(f.created).toLocaleString()}</p>
+                    <p className="text-xs text-gray-400">{new Date(f.created).toLocaleString(dateLocale())}</p>
                   </div>
                   <a href={getReportFileUrl(f.filename)} className="ms-3 px-3 py-1 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg shrink-0">Download</a>
                 </div>

@@ -8,6 +8,7 @@ import DocumentViewer from '../components/DocumentViewer';
 import StatusBadge from '../components/StatusBadge';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useAdminCurrency } from '../../utils/currency';
+import { dateLocale } from '../../i18n';
 
 const SHIPMENT_STATUSES = ['pending', 'in_transit', 'out_for_delivery', 'delivered', 'failed', 'returned'];
 
@@ -195,8 +196,8 @@ export default function ShippingDashboard() {
                       {s.provider_name || '—'} · Tracking: <span className="font-mono">{s.tracking_number}</span> · {format(s.total || 0)}
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {s.customer_name || '—'} · {s.shipping_city || ''} · ETA: {s.estimated_delivery ? new Date(s.estimated_delivery).toLocaleDateString('en-GB') : '—'}
-                      {s.delivered_at && ` · Delivered: ${new Date(s.delivered_at).toLocaleString('en-GB')}`}
+                      {s.customer_name || '—'} · {s.shipping_city || ''} · ETA: {s.estimated_delivery ? new Date(s.estimated_delivery).toLocaleDateString(dateLocale()) : '—'}
+                      {s.delivered_at && ` · Delivered: ${new Date(s.delivered_at).toLocaleString(dateLocale())}`}
                     </p>
                     {s.notes && <p className="text-xs text-gray-500 italic mt-0.5">{s.notes}</p>}
                   </div>

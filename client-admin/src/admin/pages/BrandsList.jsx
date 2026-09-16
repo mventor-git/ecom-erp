@@ -173,7 +173,7 @@ export default function BrandsList() {
                     <p className="text-xs text-gray-400">{brand.product_count || 0} product{(brand.product_count || 0) !== 1 ? 's' : ''}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0 ml-2">
+                <div className="flex items-center gap-1 shrink-0 ms-2">
                   <button
                     onClick={() => startEdit(brand)}
                     className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"

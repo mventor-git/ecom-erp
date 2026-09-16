@@ -73,7 +73,7 @@ export default function InventoryReconciliation() {
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead><tr className="bg-gray-50 text-left text-xs font-semibold text-gray-500">
+                  <thead><tr className="bg-gray-50 text-start text-xs font-semibold text-gray-500">
                     <th className="px-4 py-2">Mv</th><th className="px-4 py-2">Type</th><th className="px-4 py-2">Qty</th>
                     <th className="px-4 py-2">Value</th><th className="px-4 py-2">Reference</th><th className="px-4 py-2">Why</th><th className="px-4 py-2 text-end">Action</th>
                   </tr></thead>

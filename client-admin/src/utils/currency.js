@@ -1,5 +1,6 @@
 import { useEffect, useReducer } from 'react';
 import { getSettings } from '../api/adminApi';
+import { useLanguage } from '../i18n';
 
 // Shared currency state for the admin panel — reads the `currency` setting
 // (Settings -> General) and updates every page that uses useAdminCurrency().
@@ -17,8 +18,8 @@ let code = 'EGP';
 let ready = false;
 const subscribers = new Set();
 
-export function formatPrice(cents, decimals = 2) {
-  const amount = ((cents ?? 0) / 100).toLocaleString('en-US', {
+export function formatPrice(cents, decimals = 2, hindi = false) {
+  const amount = ((cents ?? 0) / 100).toLocaleString(hindi ? 'ar-EG' : 'en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
@@ -28,6 +29,22 @@ export function formatPrice(cents, decimals = 2) {
 
 function notify() {
   subscribers.forEach(fn => fn());
+}
+
+/** True when the admin panel is in Arabic mode — reads <html lang>, hook-free. */
+export function adminHindi() {
+  try {
+    return typeof document !== 'undefined' && document.documentElement.lang === 'ar';
+  } catch { return false; }
+}
+
+/** Amount only (no symbol) — locale-aware digits, mirroring the storefront. */
+export function formatAmount(cents, decimals = 2, hindi) {
+  const h = hindi ?? adminHindi();
+  return ((cents ?? 0) / 100).toLocaleString(h ? 'ar-EG' : 'en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 }
 
 export function initAdminCurrency() {
@@ -50,6 +67,7 @@ export function initAdminCurrency() {
 /** Reactive hook — re-renders the page once the currency is loaded */
 export function useAdminCurrency() {
   const [, force] = useReducer(x => x + 1, 0);
+  const { lang } = useLanguage();
   useEffect(() => {
     if (!ready) {
       subscribers.add(force);
@@ -57,5 +75,6 @@ export function useAdminCurrency() {
       return () => subscribers.delete(force);
     }
   }, []);
-  return { code, format: (cents, decimals = 2) => formatPrice(cents, decimals) };
+  // Arabic mode renders Hindi digits (ar-EG), mirroring the storefront.
+  return { code, format: (cents, decimals = 2) => formatPrice(cents, decimals, lang === 'ar') };
 }

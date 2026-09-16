@@ -1,5 +1,11 @@
 # Changelog
 
+## [4.28.0] - 2026-09-16 - ticket 100: RTL mirroring + admin Arabic money/dates
+### Fixed
+- Full logical-properties pass (69 files): physical text/margin/padding/spacing/border/radius classes → `start/end` equivalents; sidebar + toggle + FABs + dropdowns mirror in RTL; centering/decorative geometry untouched. Admin money is Hindi digits in Arabic mode; all admin dates follow `ar-EG` via hook-free `dateLocale()`; pricing/revenue pages off hardcoded English locales.
+### Verification
+- admin + storefront builds exit 0. Backend untouched.
+
 ## [4.27.0] - 2026-09-16 - ticket 099: arabize zero-coverage pages
 ### Added
 - Full Arabic UI on `WelcomePage` (incl. slide `title_ar`/`subtitle_ar`), `ProductsPage` + filters/sort, `HomePage` gaps (badge/category Arabic, fixed raw-key aria-label), admin `PickingDashboard`, `RevenueReconciliation`, `SettingsPage` — ~90 new `ar` dictionary keys. Missing keys still fall back to English.

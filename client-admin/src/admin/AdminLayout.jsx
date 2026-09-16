@@ -107,7 +107,7 @@ export default function AdminLayout() {
             <Link to="/setup" className="underline font-semibold shrink-0">Open setup</Link>
             <button
               onClick={() => { sessionStorage.setItem('setup-banner-dismissed', '1'); setBannerDismissed(true); }}
-              className="ml-auto shrink-0 text-white/80 hover:text-white"
+              className="ms-auto shrink-0 text-white/80 hover:text-white"
               aria-label="Dismiss">✕</button>
           </div>
         )}

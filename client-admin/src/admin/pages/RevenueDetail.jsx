@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../..
 import { Select } from '../../components/ui/select';
 import { Skeleton } from '../../components/ui/skeleton';
 import { getSalesDaily } from '../../api/adminApi';
+import { useAdminCurrency } from '../../utils/currency';
 
 /**
  * Full revenue detail page (mventor-ticket-052).
@@ -19,6 +20,7 @@ export default function RevenueDetail() {
   const [range, setRange] = useState('30');
   const [metric, setMetric] = useState('revenue');
   const [loading, setLoading] = useState(true);
+  const { format } = useAdminCurrency();
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +47,7 @@ export default function RevenueDetail() {
     };
   }, [series]);
 
-  const fmt = c => `${(c / 100).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP`;
+  const fmt = c => format(c);
 
   return (
     <div className="space-y-6">
@@ -114,20 +116,20 @@ export default function RevenueDetail() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 text-left">
-                  <th className="py-2.5 pr-4 font-semibold text-gray-700">Date</th>
-                  <th className="py-2.5 pr-4 font-semibold text-gray-700 text-right">Orders</th>
-                  <th className="py-2.5 pr-4 font-semibold text-gray-700 text-right">Revenue</th>
-                  <th className="py-2.5 font-semibold text-gray-700 text-right">Avg / Order</th>
+                <tr className="border-b border-gray-200 text-start">
+                  <th className="py-2.5 pe-4 font-semibold text-gray-700">Date</th>
+                  <th className="py-2.5 pe-4 font-semibold text-gray-700 text-end">Orders</th>
+                  <th className="py-2.5 pe-4 font-semibold text-gray-700 text-end">Revenue</th>
+                  <th className="py-2.5 font-semibold text-gray-700 text-end">Avg / Order</th>
                 </tr>
               </thead>
               <tbody>
                 {[...series].reverse().map(p => (
                   <tr key={p.day} className="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="py-2.5 pr-4 text-gray-900 font-medium">{p.day}</td>
-                    <td className="py-2.5 pr-4 text-right text-gray-600">{p.orders}</td>
-                    <td className="py-2.5 pr-4 text-right text-gray-900">{fmt(p.revenue)}</td>
-                    <td className="py-2.5 text-right text-gray-600">
+                    <td className="py-2.5 pe-4 text-gray-900 font-medium">{p.day}</td>
+                    <td className="py-2.5 pe-4 text-end text-gray-600">{p.orders}</td>
+                    <td className="py-2.5 pe-4 text-end text-gray-900">{fmt(p.revenue)}</td>
+                    <td className="py-2.5 text-end text-gray-600">
                       {p.orders > 0 ? fmt(Math.round(p.revenue / p.orders)) : '—'}
                     </td>
                   </tr>

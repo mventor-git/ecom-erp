@@ -411,7 +411,7 @@ export default function WelcomePage() {
       {/* Floating Home button — only on the Welcome page, styled like the AI chat button */}
       <Link
         to="/home"
-        className="fixed bottom-24 left-4 sm:bottom-6 sm:left-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary-600/60 hover:bg-primary-600/90 focus:bg-primary-600/90 text-white rounded-full shadow-lg backdrop-blur-md border border-white/20 hover:shadow-glow transition-all hover:scale-110 active:scale-95 z-50 flex items-center justify-center"
+        className="fixed bottom-24 start-4 sm:bottom-6 sm:start-6 w-14 h-14 sm:w-16 sm:h-16 bg-primary-600/60 hover:bg-primary-600/90 focus:bg-primary-600/90 text-white rounded-full shadow-lg backdrop-blur-md border border-white/20 hover:shadow-glow transition-all hover:scale-110 active:scale-95 z-50 flex items-center justify-center"
         aria-label="Go to home page"
         title="Home"
       >

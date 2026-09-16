@@ -95,7 +95,7 @@ export default function ImportCsvModal({ onClose, onImported }) {
               <div className="grid sm:grid-cols-2 gap-3">
                 <button
                   onClick={() => setView('example')}
-                  className="flex flex-col items-start gap-2 rounded-xl border border-gray-200 p-4 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
+                  className="flex flex-col items-start gap-2 rounded-xl border border-gray-200 p-4 text-start hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
                 >
                   <Eye className="w-5 h-5 text-primary-600" />
                   <span className="text-sm font-semibold text-gray-900">Show Example</span>
@@ -103,7 +103,7 @@ export default function ImportCsvModal({ onClose, onImported }) {
                 </button>
                 <button
                   onClick={pickFile}
-                  className="flex flex-col items-start gap-2 rounded-xl border border-gray-200 p-4 text-left hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
+                  className="flex flex-col items-start gap-2 rounded-xl border border-gray-200 p-4 text-start hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
                 >
                   <UploadCloud className="w-5 h-5 text-primary-600" />
                   <span className="text-sm font-semibold text-gray-900">Import CSV</span>
@@ -127,7 +127,7 @@ export default function ImportCsvModal({ onClose, onImported }) {
               <div className="overflow-hidden rounded-lg border border-gray-200">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="bg-gray-50 text-left">
+                    <tr className="bg-gray-50 text-start">
                       <th className="px-2.5 py-2 font-semibold text-gray-700 w-40">Column</th>
                       <th className="px-2.5 py-2 font-semibold text-gray-700">What to put</th>
                     </tr>
@@ -188,12 +188,12 @@ export default function ImportCsvModal({ onClose, onImported }) {
                 <div className="overflow-x-auto rounded-lg border border-gray-200 mb-4">
                   <table className="w-full text-xs">
                     <thead>
-                      <tr className="bg-gray-50 text-left">
+                      <tr className="bg-gray-50 text-start">
                         <th className="px-2.5 py-2 font-semibold text-gray-700">#</th>
                         <th className="px-2.5 py-2 font-semibold text-gray-700">Product</th>
                         <th className="px-2.5 py-2 font-semibold text-gray-700">Result</th>
-                        <th className="px-2.5 py-2 font-semibold text-gray-700 text-right">Wholesale</th>
-                        <th className="px-2.5 py-2 font-semibold text-gray-700 text-right">Initial Stock</th>
+                        <th className="px-2.5 py-2 font-semibold text-gray-700 text-end">Wholesale</th>
+                        <th className="px-2.5 py-2 font-semibold text-gray-700 text-end">Initial Stock</th>
                         <th className="px-2.5 py-2 font-semibold text-gray-700">Photo Link</th>
                       </tr>
                     </thead>
@@ -210,8 +210,8 @@ export default function ImportCsvModal({ onClose, onImported }) {
                               {r.result}
                             </span>
                           </td>
-                          <td className="px-2.5 py-2 text-right text-gray-700">{(r.price / 100).toFixed(2)} EGP</td>
-                          <td className="px-2.5 py-2 text-right text-gray-700">{r.stock_requested}</td>
+                          <td className="px-2.5 py-2 text-end text-gray-700">{(r.price / 100).toFixed(2)} EGP</td>
+                          <td className="px-2.5 py-2 text-end text-gray-700">{r.stock_requested}</td>
                           <td className="px-2.5 py-2 text-gray-500 max-w-[220px] truncate" title={r.image_url}>{r.image_url || '—'}</td>
                         </tr>
                       ))}

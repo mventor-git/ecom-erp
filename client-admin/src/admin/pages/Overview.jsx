@@ -257,7 +257,7 @@ export default function Overview() {
                   >
                     <div className="min-w-0">
                       <span className="text-sm font-semibold text-gray-900">#{order.id}</span>
-                      <span className="text-sm text-gray-600 ml-2 truncate">
+                      <span className="text-sm text-gray-600 ms-2 truncate">
                         {order.customer_name || order.customer_email || t('Guest')}
                       </span>
                     </div>

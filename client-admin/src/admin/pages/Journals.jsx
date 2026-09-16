@@ -7,6 +7,7 @@ import {
 } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
 import { centsToEGPInput, egpToCents } from '../../utils/money';
+import { dateLocale } from '../../i18n';
 
 // mventor-ticket-092 — journals: the one ledger model. Manual entries start
 // as DRAFTS here and become books only through /post (server re-validates
@@ -146,26 +147,26 @@ export default function Journals() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-3 mb-4 flex flex-wrap items-end gap-2">
-        <label className="text-xs text-gray-600">From<input type="date" value={filters.from} onChange={(e) => { setFilters((f) => ({ ...f, from: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></label>
-        <label className="text-xs text-gray-600">To<input type="date" value={filters.to} onChange={(e) => { setFilters((f) => ({ ...f, to: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></label>
+        <label className="text-xs text-gray-600">From<input type="date" value={filters.from} onChange={(e) => { setFilters((f) => ({ ...f, from: e.target.value })); setOffset(0); }} className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></label>
+        <label className="text-xs text-gray-600">To<input type="date" value={filters.to} onChange={(e) => { setFilters((f) => ({ ...f, to: e.target.value })); setOffset(0); }} className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></label>
         <label className="text-xs text-gray-600">Status
-          <select value={filters.status} onChange={(e) => { setFilters((f) => ({ ...f, status: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
+          <select value={filters.status} onChange={(e) => { setFilters((f) => ({ ...f, status: e.target.value })); setOffset(0); }} className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
             <option value="">any</option><option value="draft">draft</option><option value="posted">posted</option>
           </select>
         </label>
         <label className="text-xs text-gray-600">Origin
-          <select value={filters.source} onChange={(e) => { setFilters((f) => ({ ...f, source: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
+          <select value={filters.source} onChange={(e) => { setFilters((f) => ({ ...f, source: e.target.value })); setOffset(0); }} className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
             <option value="">any</option><option value="manual">manual</option><option value="order">sales bridge</option><option value="inventory_movement">stock bridges</option><option value="supplier_payment">supplier payment</option>
           </select>
         </label>
         <label className="text-xs text-gray-600">Account
-          <select value={filters.account} onChange={(e) => { setFilters((f) => ({ ...f, account: e.target.value })); setOffset(0); }} className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white max-w-[10rem]">
+          <select value={filters.account} onChange={(e) => { setFilters((f) => ({ ...f, account: e.target.value })); setOffset(0); }} className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white max-w-[10rem]">
             <option value="">any</option>
             {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
           </select>
         </label>
         <label className="text-xs text-gray-600 flex-1 min-w-[10rem]">Search
-          <input value={filters.q} onChange={(e) => { setFilters((f) => ({ ...f, q: e.target.value })); setOffset(0); }} placeholder="entry no / description" className="ml-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-48" />
+          <input value={filters.q} onChange={(e) => { setFilters((f) => ({ ...f, q: e.target.value })); setOffset(0); }} placeholder="entry no / description" className="ms-1 border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-48" />
         </label>
       </div>
 
@@ -197,21 +198,21 @@ export default function Journals() {
               </label>
             </div>
             <table className="w-full mt-4 text-sm">
-              <thead><tr className="text-left text-xs font-semibold text-gray-500 border-b border-gray-200">
-                <th className="py-2 pr-2">Account</th><th className="py-2 pr-2 w-28">Debit (EGP)</th><th className="py-2 pr-2 w-28">Credit (EGP)</th><th className="py-2 pr-2">Line note</th><th />
+              <thead><tr className="text-start text-xs font-semibold text-gray-500 border-b border-gray-200">
+                <th className="py-2 pe-2">Account</th><th className="py-2 pe-2 w-28">Debit (EGP)</th><th className="py-2 pe-2 w-28">Credit (EGP)</th><th className="py-2 pe-2">Line note</th><th />
               </tr></thead>
               <tbody>
                 {editor.lines.map((l, i) => (
                   <tr key={i} className="border-b border-gray-100">
-                    <td className="py-1.5 pr-2">
+                    <td className="py-1.5 pe-2">
                       <select value={l.account_id} onChange={(e) => setLine(i, { account_id: e.target.value })} className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm bg-white">
                         <option value="">—</option>
                         {accounts.map((a) => <option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}
                       </select>
                     </td>
-                    <td className="py-1.5 pr-2"><input value={l.debitEGP} onChange={(e) => setLine(i, { debitEGP: e.target.value, creditEGP: '' })} placeholder="0" className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
-                    <td className="py-1.5 pr-2"><input value={l.creditEGP} onChange={(e) => setLine(i, { creditEGP: e.target.value, debitEGP: '' })} placeholder="0" className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
-                    <td className="py-1.5 pr-2"><input value={l.description} maxLength={200} onChange={(e) => setLine(i, { description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
+                    <td className="py-1.5 pe-2"><input value={l.debitEGP} onChange={(e) => setLine(i, { debitEGP: e.target.value, creditEGP: '' })} placeholder="0" className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
+                    <td className="py-1.5 pe-2"><input value={l.creditEGP} onChange={(e) => setLine(i, { creditEGP: e.target.value, debitEGP: '' })} placeholder="0" className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
+                    <td className="py-1.5 pe-2"><input value={l.description} maxLength={200} onChange={(e) => setLine(i, { description: e.target.value })} className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-sm" /></td>
                     <td className="py-1.5">{editor.lines.length > 2 && <button onClick={() => removeLine(i)} className="text-xs text-red-500 hover:underline">✕</button>}</td>
                   </tr>
                 ))}
@@ -251,7 +252,7 @@ export default function Journals() {
                 : <>Manual entry{detail.entry.posted_by ? ` posted by ${detail.entry.posted_by}` : ''}.</>}
             </p>
             <table className="w-full mt-4 text-sm">
-              <thead><tr className="text-left text-xs font-semibold text-gray-500 border-b border-gray-200">
+              <thead><tr className="text-start text-xs font-semibold text-gray-500 border-b border-gray-200">
                 <th className="py-2">Account</th><th className="py-2 text-end">Debit</th><th className="py-2 text-end">Credit</th><th className="py-2">Note</th>
               </tr></thead>
               <tbody className="divide-y divide-gray-100">
@@ -272,7 +273,7 @@ export default function Journals() {
                   {detail.events.slice().reverse().map((ev) => (
                     <div key={ev.id} className="flex items-center gap-3 text-xs text-gray-600">
                       <span className="inline-block px-2 py-0.5 rounded-full bg-gray-100 font-medium">{ev.event_type.replace(/_/g, ' ')}</span>
-                      <span className="text-gray-400">{new Date(ev.created_at).toLocaleString('en-GB')}</span>
+                      <span className="text-gray-400">{new Date(ev.created_at).toLocaleString(dateLocale())}</span>
                       <span className="text-gray-400">{ev.user_id || 'system'}</span>
                     </div>
                   ))}

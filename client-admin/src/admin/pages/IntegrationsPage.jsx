@@ -368,7 +368,7 @@ export default function IntegrationsPage() {
               {card.webhookGuide && (
                 <details className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600">
                   <summary className="font-semibold cursor-pointer text-gray-700">?? Webhook setup guide</summary>
-                  <ol className="list-decimal ml-4 mt-2 space-y-1">
+                  <ol className="list-decimal ms-4 mt-2 space-y-1">
                     <li>Save your API Key + Secret Key here and press <b>Verify keys</b>.</li>
                     <li>In the Kashier portal, open <b>Webhooks ? Add endpoint</b>.</li>
                     <li>Paste: <code className="bg-white px-1 rounded">{window.location.origin}/api/kashier/webhook</code></li>

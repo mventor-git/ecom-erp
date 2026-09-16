@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { DollarSign, Package, Clock, TrendingUp, Target, ShoppingCart, BarChart2, Calendar } from 'lucide-react';
 import { getAdminOrders, getAdminOrderStats } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
+import { dateLocale } from '../../i18n';
 
 /**
  * DashboardDetailPage — customized drill-down pages for each dashboard stat card.
@@ -125,11 +126,11 @@ export default function DashboardDetailPage() {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200 sticky top-0">
                     <tr>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">#</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">Customer</th>
-                      <th className="text-right px-4 py-2.5 text-xs font-semibold text-gray-600">Total</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">Status</th>
-                      <th className="text-left px-4 py-2.5 text-xs font-semibold text-gray-600">Date</th>
+                      <th className="text-start px-4 py-2.5 text-xs font-semibold text-gray-600">#</th>
+                      <th className="text-start px-4 py-2.5 text-xs font-semibold text-gray-600">Customer</th>
+                      <th className="text-end px-4 py-2.5 text-xs font-semibold text-gray-600">Total</th>
+                      <th className="text-start px-4 py-2.5 text-xs font-semibold text-gray-600">Status</th>
+                      <th className="text-start px-4 py-2.5 text-xs font-semibold text-gray-600">Date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -137,11 +138,11 @@ export default function DashboardDetailPage() {
                       <tr key={o.id} className="hover:bg-gray-50">
                         <td className="px-4 py-2.5 text-sm font-medium text-gray-900">#{o.id}</td>
                         <td className="px-4 py-2.5 text-sm text-gray-600">{o.customer_name || o.shipping_name || '—'}</td>
-                        <td className="px-4 py-2.5 text-sm font-medium text-right">{format(o.total)}</td>
+                        <td className="px-4 py-2.5 text-sm font-medium text-end">{format(o.total)}</td>
                         <td className="px-4 py-2.5">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLE[o.status] || 'bg-gray-100 text-gray-600'}`}>{o.status}</span>
                         </td>
-                        <td className="px-4 py-2.5 text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString('en-GB')}</td>
+                        <td className="px-4 py-2.5 text-sm text-gray-500">{new Date(o.created_at).toLocaleDateString(dateLocale())}</td>
                       </tr>
                     ))}
                   </tbody>

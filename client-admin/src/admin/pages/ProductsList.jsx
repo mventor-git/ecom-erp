@@ -83,7 +83,7 @@ export default function ProductsList() {
               title={color.name}
             />
           ))}
-          {c.length > 4 && <span className="text-xs text-gray-400 ml-0.5">+{c.length - 4}</span>}
+          {c.length > 4 && <span className="text-xs text-gray-400 ms-0.5">+{c.length - 4}</span>}
         </div>
       );
     } catch {
@@ -131,7 +131,7 @@ export default function ProductsList() {
         const cost = row.cost_price || 0;
         const marginPct = cost > 0 ? Math.round(((row.price - cost) / cost) * 100) : null;
         return (
-          <div className="text-right">
+          <div className="text-end">
             <span className="font-medium">{format(row.price)}</span>
             {cost > 0 && (
               <p className="text-[11px] text-gray-500 leading-tight" title={t('Wholesale (cost) → markup = selling price')}>
@@ -191,7 +191,7 @@ export default function ProductsList() {
       {/* Toolbar: search + import/export */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <div className="relative w-full max-w-md">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -199,7 +199,7 @@ export default function ProductsList() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder={t('Smart search: name, SKU, barcode, category...')}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="w-full ps-10 pe-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           />
         </div>
         <div className="flex items-center gap-2">

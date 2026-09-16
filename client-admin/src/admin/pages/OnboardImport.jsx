@@ -72,7 +72,7 @@ export default function OnboardImport() {
           </label>
           <label className="text-sm text-gray-700 flex-1 min-w-[14rem]">File (CSV or XLSX)
             <input type="file" accept=".csv,.xlsx,.xls" onChange={(e) => { setFile(e.target.files?.[0] || null); reset(); }}
-              className="mt-1 block w-full text-sm file:mr-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-gray-300 file:bg-gray-50" />
+              className="mt-1 block w-full text-sm file:me-3 file:px-3 file:py-1.5 file:rounded-lg file:border file:border-gray-300 file:bg-gray-50" />
           </label>
           <button onClick={() => downloadOnboardingTemplate(type)} className="text-sm px-3 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Download template</button>
         </div>
@@ -107,7 +107,7 @@ export default function OnboardImport() {
           {plan.errors.length > 0 && (
             <div className="mt-3 max-h-56 overflow-auto border border-red-100 rounded-lg">
               <table className="w-full text-xs">
-                <thead className="bg-red-50 text-red-700"><tr><th className="px-3 py-1.5 text-left">Line</th><th className="px-3 py-1.5 text-left">Problem</th></tr></thead>
+                <thead className="bg-red-50 text-red-700"><tr><th className="px-3 py-1.5 text-start">Line</th><th className="px-3 py-1.5 text-start">Problem</th></tr></thead>
                 <tbody>
                   {plan.errors.map((e, i) => <tr key={i} className="border-t border-red-50"><td className="px-3 py-1 font-mono">{e.line}</td><td className="px-3 py-1">{e.error}</td></tr>)}
                 </tbody>
@@ -117,7 +117,7 @@ export default function OnboardImport() {
           )}
           <div className="mt-3 max-h-72 overflow-auto border border-gray-100 rounded-lg">
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-xs text-gray-500"><tr><th className="px-3 py-1.5 text-left">Line</th><th className="px-3 py-1.5 text-left">Action</th><th className="px-3 py-1.5 text-left">Record</th></tr></thead>
+              <thead className="bg-gray-50 text-xs text-gray-500"><tr><th className="px-3 py-1.5 text-start">Line</th><th className="px-3 py-1.5 text-start">Action</th><th className="px-3 py-1.5 text-start">Record</th></tr></thead>
               <tbody className="divide-y divide-gray-50">
                 {plan.preview_rows.map((r, i) => (
                   <tr key={i}>

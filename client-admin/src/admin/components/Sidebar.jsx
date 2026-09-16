@@ -109,7 +109,7 @@ export default function Sidebar({ collapsed, onToggle }) {
   const [theme, setThemeState] = useState(getTheme);
   const [soundOff, setSoundOff] = useState(isMuted);
   const identity = useSiteIdentity();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     try { localStorage.setItem(OPEN_KEY, JSON.stringify(openSections)); } catch { /* ignore */ }
@@ -183,11 +183,11 @@ export default function Sidebar({ collapsed, onToggle }) {
       )}
 
       <aside className={`
-        fixed lg:static inset-y-0 left-0 z-50
+        fixed lg:static inset-y-0 start-0 z-50
         bg-white border-e border-gray-200
         flex flex-col
         transition-all duration-300 ease-in-out
-        ${collapsed ? '-translate-x-full lg:translate-x-0 lg:w-[68px]' : 'translate-x-0 w-64'}
+        ${collapsed ? `${isRTL ? 'translate-x-full' : '-translate-x-full'} lg:translate-x-0 lg:w-[68px]` : 'translate-x-0 w-64'}
       `}>
         {/* Brand */}
         <div className="h-16 flex items-center px-4 border-b border-gray-200 shrink-0">

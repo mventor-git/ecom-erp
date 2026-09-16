@@ -87,7 +87,7 @@ export default function CartDrawer() {
                     +
                   </button>
                 </div>
-                <p className="font-medium text-gray-900 dark:text-white w-16 sm:w-20 lg:w-24 text-right text-sm sm:text-base"><Price cents={item.price * item.quantity} /></p>
+                <p className="font-medium text-gray-900 dark:text-white w-16 sm:w-20 lg:w-24 text-end text-sm sm:text-base"><Price cents={item.price * item.quantity} /></p>
                 <button
                   onClick={() => removeFromCart(item.id, item.color?.name, item.size?.name)}
                   className="text-red-400 hover:text-red-600 dark:hover:text-red-300 ms-1 sm:ms-2 transition-colors"

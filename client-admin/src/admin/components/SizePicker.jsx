@@ -72,7 +72,7 @@ export default function SizePicker({ sizes = [], onChange }) {
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
         Product Sizes
-        <span className="text-xs text-gray-400 ml-2 font-normal">
+        <span className="text-xs text-gray-400 ms-2 font-normal">
           — Size variants (e.g. Small, Medium, Large or 55cm, 65cm, 75cm)
         </span>
       </label>
@@ -111,7 +111,7 @@ export default function SizePicker({ sizes = [], onChange }) {
               ) : (
                 <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 hover:shadow-sm transition-shadow">
                   <span className="text-sm font-medium text-gray-700 min-w-[40px]">{size.name}</span>
-                  <div className="flex gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-0.5 ms-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => startEdit(i)} className="p-1 text-gray-400 hover:text-primary-600" title="Edit">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

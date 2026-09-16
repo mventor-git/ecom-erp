@@ -83,3 +83,15 @@ export function useLanguage() {
   }
   return context;
 }
+
+/**
+ * Document-locale tag for dates/numbers (ar-EG in Arabic mode, en-GB
+ * otherwise). Hook-free on purpose — reads <html lang> so any call site,
+ * including bare toLocaleString() chains, becomes locale-aware with a
+ * one-token swap and no re-render wiring.
+ */
+export function dateLocale() {
+  try {
+    return (typeof document !== 'undefined' && document.documentElement.lang === 'ar') ? 'ar-EG' : 'en-GB';
+  } catch { return 'en-GB'; }
+}

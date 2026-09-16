@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, Mail, Phone, Calendar, Gift, TrendingUp, CreditCard, ListChecks } from 'lucide-react';
+import { dateLocale } from '../../i18n';
 
 export default function ProfileCard({ profile, format, tabs, activeTab, onTabChange, onExport }) {
   const vipPolicy = profile.vip_policy || {};
@@ -23,10 +24,10 @@ export default function ProfileCard({ profile, format, tabs, activeTab, onTabCha
           <div className="flex flex-wrap gap-3 mt-3 text-sm text-stone-600 dark:text-[#a8a29e]">
             <span className="inline-flex items-center gap-1.5" aria-label="Phone"><Phone size={14}/> {profile.phone || '—'}</span>
             <span className="inline-flex items-center gap-1.5" aria-label="Email"><Mail size={14}/> {profile.email || '—'}</span>
-            <span className="inline-flex items-center gap-1.5" aria-label="Joined"><Calendar size={14}/> {new Date(profile.created_at || Date.now()).toLocaleDateString('en-GB')}</span>
+            <span className="inline-flex items-center gap-1.5" aria-label="Joined"><Calendar size={14}/> {new Date(profile.created_at || Date.now()).toLocaleDateString(dateLocale())}</span>
           </div>
         </div>
-        <div className="md:text-right md:min-w-[160px]">
+        <div className="md:text-end md:min-w-[160px]">
           {onExport && (
             <button onClick={onExport} aria-label="Export actions" className="inline-flex items-center gap-2 rounded-lg bg-stone-900 dark:bg-[#fafaf9] text-white dark:text-stone-900 px-4 py-2 text-sm font-semibold hover:opacity-90 transition shadow-sm">
               <ListChecks size={16}/> Export Actions
@@ -63,7 +64,7 @@ export default function ProfileCard({ profile, format, tabs, activeTab, onTabCha
             <button key={t.key} role="tab" aria-selected={activeTab === t.key} aria-label={t.label}
               onClick={() => onTabChange && onTabChange(t.key)}
               className={`px-4 py-2.5 text-sm font-semibold transition-colors rounded-t-lg ${activeTab === t.key ? 'bg-white dark:bg-[#1c1917] border border-b-0 border-stone-200 dark:border-[#302b28] text-stone-900 dark:text-[#fafaf9] shadow-sm -mb-px' : 'text-stone-400 dark:text-[#8b837f] hover:text-stone-600 dark:hover:text-[#a8a29e]'}`}>
-              {t.label} <span className="ml-1.5 text-xs text-stone-400 dark:text-[#6b6560]">({t.count})</span>
+              {t.label} <span className="ms-1.5 text-xs text-stone-400 dark:text-[#6b6560]">({t.count})</span>
             </button>
           ))}
         </div>

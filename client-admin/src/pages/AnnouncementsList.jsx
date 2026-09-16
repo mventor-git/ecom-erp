@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../api/adminApi';
+import { dateLocale } from '../i18n';
 
 export default function AnnouncementsList() {
   const [announcements, setAnnouncements] = useState([]);
@@ -149,12 +150,12 @@ export default function AnnouncementsList() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Text</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
+                <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">Text</th>
+                <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">Schedule</th>
+                <th className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                <th className="px-6 py-3 text-end text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -180,10 +181,10 @@ export default function AnnouncementsList() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {announcement.start_date && (
-                      <div>From: {new Date(announcement.start_date).toLocaleDateString()}</div>
+                      <div>From: {new Date(announcement.start_date).toLocaleDateString(dateLocale())}</div>
                     )}
                     {announcement.end_date && (
-                      <div>To: {new Date(announcement.end_date).toLocaleDateString()}</div>
+                      <div>To: {new Date(announcement.end_date).toLocaleDateString(dateLocale())}</div>
                     )}
                     {!announcement.start_date && !announcement.end_date && (
                       <span className="text-gray-400">No schedule</span>
@@ -192,10 +193,10 @@ export default function AnnouncementsList() {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {announcement.sort_order || 0}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-end text-sm font-medium">
                     <button
                       onClick={() => handleOpenModal(announcement)}
-                      className="text-primary-600 hover:text-primary-900 mr-4"
+                      className="text-primary-600 hover:text-primary-900 me-4"
                     >
                       Edit
                     </button>
@@ -297,14 +298,14 @@ export default function AnnouncementsList() {
                       onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                       className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                     />
-                    <label htmlFor="is_active" className="ml-2 block text-sm text-gray-900">
+                    <label htmlFor="is_active" className="ms-2 block text-sm text-gray-900">
                       Active
                     </label>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 px-6 py-4 flex justify-end space-x-3 rounded-b-lg">
+              <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 rounded-b-lg">
                 <button
                   type="button"
                   onClick={handleCloseModal}

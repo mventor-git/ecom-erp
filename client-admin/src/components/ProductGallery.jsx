@@ -15,7 +15,7 @@ function VariantBadge({ attrs, colors, sizes }) {
   if (tags.length === 0) return null;
 
   return (
-    <div className="absolute bottom-6 left-1 flex flex-wrap gap-0.5 max-w-[90%]">
+                <div className="absolute bottom-6 start-1 flex flex-wrap gap-0.5 max-w-[90%]">
       {tags.map((tag, i) => (
         <span
           key={i}
@@ -234,7 +234,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
         Product Gallery
-        <span className="text-xs text-gray-400 ml-2 font-normal">
+        <span className="text-xs text-gray-400 ms-2 font-normal">
           — Multiple photos, drag to reorder{hasVariants ? ', click image to assign variants' : ''}
         </span>
       </label>
@@ -273,7 +273,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
                 <button
                   type="button"
                   onClick={() => handleDelete(img.id)}
-                  className="absolute top-1 right-1 w-6 h-6 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute top-1 end-1 w-6 h-6 bg-black/50 hover:bg-red-600 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                   title="Delete image"
                 >
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +284,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
                   <button
                     type="button"
                     onClick={() => openVariantEditor(img)}
-                    className={`absolute top-1 left-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
+                    className={`absolute top-1 start-1 w-6 h-6 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity ${
                       hasAssigned ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-black/50 hover:bg-black/70 text-white'
                     }`}
                     title="Assign variants"
@@ -295,7 +295,7 @@ export default function ProductGallery({ images = [], onAdd, onReorder, onDelete
                   </button>
                 )}
                 <VariantBadge attrs={attrs} />
-                <span className="absolute bottom-1 left-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">
+                <span className="absolute bottom-1 start-1 bg-black/50 text-white text-[10px] px-1.5 py-0.5 rounded">
                   {i + 1}
                 </span>
                 <div className="absolute inset-x-0 top-1 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">

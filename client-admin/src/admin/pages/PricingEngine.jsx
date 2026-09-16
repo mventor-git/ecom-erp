@@ -6,6 +6,7 @@ import {
   getSettingsByCategory, updateSetting, getPriceLists,
 } from '../../api/adminApi';
 import { useLanguage } from '../../i18n';
+import { formatAmount } from '../../utils/currency';
 import AdminIcon from '../components/AdminIcon';
 import { AlertTriangle } from 'lucide-react';
 import { playTone } from '../../utils/sounds';
@@ -22,10 +23,7 @@ import { playTone } from '../../utils/sounds';
  *  · Undo reverts the last apply in one tap.
  */
 
-const fmt = (cents, decimals = 0) =>
-  ((cents ?? 0) / 100).toLocaleString('en-US', {
-    minimumFractionDigits: decimals, maximumFractionDigits: decimals,
-  });
+const fmt = (cents, decimals = 0) => formatAmount(cents, decimals);
 
 export default function PricingEngine() {
   const { t } = useLanguage();

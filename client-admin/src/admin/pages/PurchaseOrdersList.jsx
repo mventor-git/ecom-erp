@@ -5,6 +5,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { getPurchaseOrders, getPurchaseOrder, createPurchaseOrder, updatePurchaseOrderStatus, receivePurchaseOrder, getSuppliers, getAdminProducts, getWarehouses, getPoPayables, getPoPayments, recordSupplierPayment, reverseSupplierPayment } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
 import { egpToCents, centsToEGPInput, egpErrorText } from '../../utils/money';
+import { dateLocale } from '../../i18n';
 
 const STATUS_COLORS = {
   draft: 'bg-gray-100 text-gray-700',
@@ -239,7 +240,7 @@ export default function PurchaseOrdersList() {
       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[row.status] || 'bg-gray-100'}`}>{row.status}</span>
     )},
     { key: 'total_cost', label: 'Total', align: 'right', render: (row) => format(row.total_cost || 0) },
-    { key: 'created_at', label: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
+    { key: 'created_at', label: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString(dateLocale()) },
     { key: 'actions', label: '', render: (row) => (
       <div className="flex gap-2 justify-end">
         <button onClick={() => openDetail(row)} className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">View</button>
@@ -318,7 +319,7 @@ export default function PurchaseOrdersList() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-2 text-right text-sm text-gray-500">
+                <div className="mt-2 text-end text-sm text-gray-500">
                   Total: {format(newPo.items.reduce((sum, i) => sum + (i.qty_ordered * i.unit_cost * 100), 0))}
                 </div>
               </div>
@@ -345,20 +346,20 @@ export default function PurchaseOrdersList() {
             <div className="p-6">
               <div className="grid grid-cols-3 gap-4 mb-6 text-sm">
                 <div><span className="text-gray-500">Total:</span> <span className="font-semibold">{format(showDetail.total_cost || 0)}</span></div>
-                <div><span className="text-gray-500">Created:</span> {new Date(showDetail.created_at).toLocaleDateString()}</div>
-                <div><span className="text-gray-500">Expected:</span> {showDetail.expected_at ? new Date(showDetail.expected_at).toLocaleDateString() : '—'}</div>
+                <div><span className="text-gray-500">Created:</span> {new Date(showDetail.created_at).toLocaleDateString(dateLocale())}</div>
+                <div><span className="text-gray-500">Expected:</span> {showDetail.expected_at ? new Date(showDetail.expected_at).toLocaleDateString(dateLocale()) : '—'}</div>
               </div>
               {showDetail.notes && <p className="text-sm text-gray-600 mb-4">{showDetail.notes}</p>}
               <table className="w-full text-sm">
-                <thead><tr className="border-b border-gray-200"><th className="text-left py-2">Product</th><th className="text-right py-2">Ordered</th><th className="text-right py-2">Received</th><th className="text-right py-2">Unit Cost</th><th className="text-right py-2">Total</th></tr></thead>
+                <thead><tr className="border-b border-gray-200"><th className="text-start py-2">Product</th><th className="text-end py-2">Ordered</th><th className="text-end py-2">Received</th><th className="text-end py-2">Unit Cost</th><th className="text-end py-2">Total</th></tr></thead>
                 <tbody>
                   {(showDetail.items || []).map(item => (
                     <tr key={item.id} className="border-b border-gray-100">
                       <td className="py-2">{item.product_name}</td>
-                      <td className="text-right py-2">{item.qty_ordered}</td>
-                      <td className="text-right py-2">{item.qty_received || 0}</td>
-                      <td className="text-right py-2">{format(item.unit_cost || 0)}</td>
-                      <td className="text-right py-2 font-medium">{format((item.qty_ordered || 0) * (item.unit_cost || 0))}</td>
+                      <td className="text-end py-2">{item.qty_ordered}</td>
+                      <td className="text-end py-2">{item.qty_received || 0}</td>
+                      <td className="text-end py-2">{format(item.unit_cost || 0)}</td>
+                      <td className="text-end py-2 font-medium">{format((item.qty_ordered || 0) * (item.unit_cost || 0))}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -366,14 +367,14 @@ export default function PurchaseOrdersList() {
               {/* Audit trail — who did what, when */}
               {(showDetail.approved_by || showDetail.rejected_by || showDetail.ordered_at || showDetail.received_at || showDetail.created_by) && (
                 <div className="mt-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
-                  {showDetail.created_by && <div><span className="text-gray-500">Created by:</span> {showDetail.created_by} · {new Date(showDetail.created_at).toLocaleString()}</div>}
-                  {showDetail.ordered_at && <div><span className="text-gray-500">Submitted:</span> {new Date(showDetail.ordered_at).toLocaleString()}</div>}
-                  {showDetail.approved_by && <div><span className="text-gray-500">Approved by:</span> {showDetail.approved_by} · {showDetail.approved_at ? new Date(showDetail.approved_at).toLocaleString() : '—'}</div>}
-                  {showDetail.received_at && <div><span className="text-gray-500">Received:</span> {new Date(showDetail.received_at).toLocaleString()}</div>}
+                  {showDetail.created_by && <div><span className="text-gray-500">Created by:</span> {showDetail.created_by} · {new Date(showDetail.created_at).toLocaleString(dateLocale())}</div>}
+                  {showDetail.ordered_at && <div><span className="text-gray-500">Submitted:</span> {new Date(showDetail.ordered_at).toLocaleString(dateLocale())}</div>}
+                  {showDetail.approved_by && <div><span className="text-gray-500">Approved by:</span> {showDetail.approved_by} · {showDetail.approved_at ? new Date(showDetail.approved_at).toLocaleString(dateLocale()) : '—'}</div>}
+                  {showDetail.received_at && <div><span className="text-gray-500">Received:</span> {new Date(showDetail.received_at).toLocaleString(dateLocale())}</div>}
                   {showDetail.reject_reason && (
                     <div className="p-2 bg-red-50 border border-red-200 rounded text-red-700">
                       <span className="font-medium">Rejected by {showDetail.rejected_by || '—'}</span>
-                      {showDetail.rejected_at ? ` · ${new Date(showDetail.rejected_at).toLocaleString()}` : ''}: {showDetail.reject_reason}
+                      {showDetail.rejected_at ? ` · ${new Date(showDetail.rejected_at).toLocaleString(dateLocale())}` : ''}: {showDetail.reject_reason}
                     </div>
                   )}
                 </div>
@@ -403,11 +404,11 @@ export default function PurchaseOrdersList() {
                             <span className="font-mono font-medium text-gray-900">{p.payment_no}</span>
                             <span>{format(p.applied_amount || 0)}</span>
                             <StatusBadge status={p.status} />
-                            <span className="text-gray-500">{p.paid_at ? new Date(p.paid_at).toLocaleDateString() : '—'}</span>
+                            <span className="text-gray-500">{p.paid_at ? new Date(p.paid_at).toLocaleDateString(dateLocale()) : '—'}</span>
                             <span className="text-gray-500">· by {p.created_by || '—'}</span>
                             {p.status === 'recorded' && (
                               <button onClick={() => setPendingPayReverse(p)}
-                                className="ml-auto text-red-600 hover:text-red-800 font-medium">Reverse</button>
+                                className="ms-auto text-red-600 hover:text-red-800 font-medium">Reverse</button>
                             )}
                           </div>
                           {p.status === 'reversed' && (

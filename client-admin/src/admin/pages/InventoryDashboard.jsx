@@ -7,7 +7,7 @@ import ImportCsvModal from '../components/ImportCsvModal';
 import { getInventorySummary, getLowStockItems, getWarehouses, getAdminProducts } from '../../api/adminApi';
 import { useAdminCurrency } from '../../utils/currency';
 import AdminIcon from '../components/AdminIcon';
-import { useLanguage } from '../../i18n';
+import { useLanguage, dateLocale } from '../../i18n';
 
 /**
  * Inventory dashboard — stock overview + low-stock alerts, styled to match
@@ -65,7 +65,7 @@ export default function InventoryDashboard() {
 
   const statCards = [
     { label: t('Total Products'), value: totalProducts, color: 'text-blue-600', icon: 'box' },
-    { label: t('Total Stock'), value: totalStock.toLocaleString(), color: 'text-green-600', icon: 'chart' },
+    { label: t('Total Stock'), value: totalStock.toLocaleString(dateLocale()), color: 'text-green-600', icon: 'chart' },
     { label: t('Stock Value'), value: format(totalValue), color: 'text-primary-600', icon: 'wallet' },
     { label: t('Low Stock Alerts'), value: lowStockCount, color: lowStockCount > 0 ? 'text-red-600' : 'text-gray-600', icon: 'bell' },
     { label: t('Warehouses'), value: warehouses.length, color: 'text-purple-600', icon: 'building' },

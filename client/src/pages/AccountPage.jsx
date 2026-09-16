@@ -96,7 +96,7 @@ export default function AccountPage() {
             <p className="text-gray-500 dark:text-gray-400 text-sm">{user.email}</p>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
               {t('Member since')} {formatDate(user.created_at)}
-              {user.phone && <span className="ml-2">· {user.phone}</span>}
+              {user.phone && <span className="ms-2">· {user.phone}</span>}
             </p>
           </div>
           <button

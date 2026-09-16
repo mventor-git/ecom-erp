@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
 import { getNotificationRules, createNotificationRule, getInAppNotifications, markNotificationRead } from '../../api/adminApi';
+import { dateLocale } from '../../i18n';
 
 export default function NotificationsPage() {
   const [tab, setTab] = useState('rules');
@@ -59,7 +60,7 @@ export default function NotificationsPage() {
     { key: 'name', label: 'Name', render: (row) => (
       <div>
         <span className="font-medium text-gray-900">{row.name}</span>
-        {row.is_active === 0 && <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactive</span>}
+        {row.is_active === 0 && <span className="ms-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Inactive</span>}
       </div>
     )},
     { key: 'event_type', label: 'Event Type', render: (row) => (
@@ -80,7 +81,7 @@ export default function NotificationsPage() {
 
   const inAppColumns = [
     { key: 'created_at', label: 'Time', render: (row) => (
-      <span className="text-xs text-gray-500">{new Date(row.created_at).toLocaleString()}</span>
+      <span className="text-xs text-gray-500">{new Date(row.created_at).toLocaleString(dateLocale())}</span>
     )},
     { key: 'title', label: 'Title', render: (row) => (
       <span className={`font-medium ${row.is_read ? 'text-gray-500' : 'text-gray-900'}`}>{row.title}</span>

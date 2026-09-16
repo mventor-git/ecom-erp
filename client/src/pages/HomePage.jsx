@@ -122,7 +122,7 @@ export default function HomePage() {
                   index === currentAnnouncement ? 'opacity-100' : 'opacity-0 absolute inset-0'
                 }`}
               >
-                <span className="mr-2">{announcement.icon || ''}</span>
+                <span className="me-2">{announcement.icon || ''}</span>
                 <span className="font-medium">{announcement.text}</span>
               </div>
             ))}

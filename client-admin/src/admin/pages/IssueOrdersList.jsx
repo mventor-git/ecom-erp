@@ -7,7 +7,7 @@ import {
   getIssueOrder, viewIssueOrderUrl,
 } from '../../api/adminApi';
 import AdminIcon from '../components/AdminIcon';
-import { useLanguage } from '../../i18n';
+import { useLanguage, dateLocale } from '../../i18n';
 
 const inputClass = 'w-full border border-gray-300 dark:border-white/10 rounded-lg px-3 py-2 text-sm bg-white dark:bg-dark-800 text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500';
 const labelClass = 'block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1';
@@ -164,7 +164,7 @@ export default function IssueOrdersList() {
     {
       key: 'created_at', label: t('Created'),
       render: (r) => r.created_at
-        ? <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(r.created_at).toLocaleDateString('en-GB')}</span>
+        ? <span className="text-xs text-gray-500 dark:text-gray-400">{new Date(r.created_at).toLocaleDateString(dateLocale())}</span>
         : '—',
     },
     { key: 'status', label: t('Status'), render: (r) => statusPill(r.status) },

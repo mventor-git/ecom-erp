@@ -169,7 +169,7 @@ export default function ProductForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Price (EGP) *</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">EGP</span>
+              <span className="absolute start-3 top-1/2 -translate-y-1/2 text-gray-400">EGP</span>
               <input
                 type="number"
                 name="price"
@@ -177,7 +177,7 @@ export default function ProductForm() {
                 onChange={handleChange}
                 step="0.01"
                 min="0"
-                className="input-field pl-8"
+                className="input-field ps-8"
                 required
               />
             </div>
@@ -244,10 +244,10 @@ export default function ProductForm() {
             id="active"
             className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
           />
-          <label htmlFor="active" className="ml-2 text-sm text-gray-700">Active (visible to customers)</label>
+          <label htmlFor="active" className="ms-2 text-sm text-gray-700">Active (visible to customers)</label>
         </div>
 
-        <div className="flex items-center justify-end space-x-4 pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-end gap-4 pt-4 border-t border-gray-200">
           <Link to="/admin/dashboard" className="btn-secondary">Cancel</Link>
           <button type="submit" disabled={saving} className="btn-primary">
             {saving ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}

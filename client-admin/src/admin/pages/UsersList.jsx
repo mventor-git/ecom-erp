@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import DataTable from '../components/DataTable';
-import { useLanguage } from '../../i18n';
+import { useLanguage, dateLocale } from '../../i18n';
 import { getUsers, createUser, updateUser, deleteUser, getRoles, getPermissions, getUserRoles, setUserRoles, checkAdmin } from '../../api/adminApi';
 
 const ROLE_LABEL_KEYS = {
@@ -151,7 +151,7 @@ export default function UsersList() {
     { key: 'name', label: 'Name', render: (row) => (
       <div>
         <span className="font-medium text-gray-900">{row.name}</span>
-        {!row.is_active && <span className="ml-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t('Inactive')}</span>}
+        {!row.is_active && <span className="ms-2 text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{t('Inactive')}</span>}
       </div>
     )},
     { key: 'email', label: 'Email' },
@@ -161,8 +161,8 @@ export default function UsersList() {
           .map(name => roleBadge(name))}
       </div>
     )},
-    { key: 'last_login_at', label: 'Last Login', render: (row) => row.last_login_at ? new Date(row.last_login_at).toLocaleString() : t('Never') },
-    { key: 'created_at', label: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString() },
+    { key: 'last_login_at', label: 'Last Login', render: (row) => row.last_login_at ? new Date(row.last_login_at).toLocaleString(dateLocale()) : t('Never') },
+    { key: 'created_at', label: 'Created', render: (row) => new Date(row.created_at).toLocaleDateString(dateLocale()) },
     { key: 'actions', label: '', render: (row) => {
       const targetsSuperAdmin = (row.roles || []).includes('super_admin');
       const rolesDisabled = !isSuperAdmin && targetsSuperAdmin;

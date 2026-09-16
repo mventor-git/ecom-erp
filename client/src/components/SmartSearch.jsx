@@ -196,7 +196,7 @@ export default function SmartSearch() {
           onChange={handleChange}
           onFocus={handleFocus}
           onKeyDown={handleKeyDown}
-          className="w-full pl-10 pr-10 py-2.5 text-sm sm:text-base bg-gray-100 dark:bg-dark-800 border border-transparent rounded-xl focus:outline-none focus:bg-white dark:focus:bg-dark-700 focus:border-primary-300 dark:focus:border-primary-600 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white"
+          className="w-full ps-10 pe-10 py-2.5 text-sm sm:text-base bg-gray-100 dark:bg-dark-800 border border-transparent rounded-xl focus:outline-none focus:bg-white dark:focus:bg-dark-700 focus:border-primary-300 dark:focus:border-primary-600 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white"
           aria-label={t('Search products')}
           autoComplete="off"
         />

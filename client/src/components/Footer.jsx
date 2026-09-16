@@ -40,11 +40,11 @@ export default function Footer() {
           {/* Brand */}
           <div>
             {logoIsExternal ? (
-              <a href={logoLink} target="_blank" rel="noopener noreferrer" className="flex items-center space-x-3 mb-4">
+              <a href={logoLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 mb-4">
                 {logoContent}
               </a>
             ) : (
-              <Link to={logoLink} className="flex items-center space-x-3 mb-4">
+              <Link to={logoLink} className="flex items-center gap-3 mb-4">
                 {logoContent}
               </Link>
             )}

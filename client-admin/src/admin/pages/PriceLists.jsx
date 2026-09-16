@@ -149,7 +149,7 @@ export default function PriceLists() {
               </p>
               {blockedReason && <p className="text-[11px] text-amber-600 mt-0.5">{blockedReason}</p>}
             </div>
-            <div className="flex items-center gap-2 shrink-0 ml-3">
+            <div className="flex items-center gap-2 shrink-0 ms-3">
               <button onClick={() => handleToggle(list)} className="px-2.5 py-1 text-xs bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                 {list.is_active ? 'Deactivate' : 'Activate'}
               </button>

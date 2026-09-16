@@ -1,4 +1,6 @@
 import { useMemo } from 'react';
+import { dateLocale } from '../../../i18n';
+import { useAdminCurrency } from '../../../utils/currency';
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
@@ -7,7 +9,7 @@ const AXIS_TICK = { fontSize: 11, fill: '#78716c' };
 
 function shortDay(iso) {
   const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' });
 }
 
 function TooltipBox({ active, payload }) {
@@ -26,13 +28,14 @@ function TooltipBox({ active, payload }) {
  * Animations: ease-out draw-in on mount + on every data change.
  */
 export default function SalesChart({ series = [], metric = 'revenue', height = 260 }) {
+  const { format } = useAdminCurrency();
   const data = useMemo(() => series.map(p => ({
     day: shortDay(p.day),
     display: metric === 'revenue'
-      ? `Revenue: ${(p.revenue / 100).toLocaleString('en-EG', { minimumFractionDigits: 2 })} EGP`
+      ? `Revenue: ${format(p.revenue)}`
       : `Orders: ${p.orders}`,
     value: metric === 'revenue' ? p.revenue / 100 : p.orders,
-  })), [series, metric]);
+  })), [series, metric, format]);
 
   return (
     <ResponsiveContainer width="100%" height={height}>

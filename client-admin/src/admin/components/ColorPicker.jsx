@@ -168,7 +168,7 @@ export default function ColorPicker({ colors = [], onChange }) {
     <div className="space-y-3">
       <label className="block text-sm font-medium text-gray-700">
         Product Colors
-        <span className="text-xs text-gray-400 ml-2 font-normal">
+        <span className="text-xs text-gray-400 ms-2 font-normal">
           — Each color can have its own photo
         </span>
       </label>
@@ -236,7 +236,7 @@ export default function ColorPicker({ colors = [], onChange }) {
                         onError={e => { e.target.style.display = 'none'; }} />
                     </div>
                   )}
-                  <div className="flex gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex gap-0.5 ms-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={() => startEdit(i)} className="p-1 text-gray-400 hover:text-primary-600" title="Edit">✏️</button>
                     <button onClick={() => moveColor(i, -1)} className="p-1 text-gray-400 hover:text-gray-600" title="Move left" disabled={i === 0}>←</button>
                     <button onClick={() => moveColor(i, 1)} className="p-1 text-gray-400 hover:text-gray-600" title="Move right" disabled={i === current.length - 1}>→</button>
@@ -252,7 +252,7 @@ export default function ColorPicker({ colors = [], onChange }) {
       {editingIndex === null && (
         <div className="space-y-2">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-xs text-gray-400 mr-1">Quick add:</span>
+            <span className="text-xs text-gray-400 me-1">Quick add:</span>
             {PRESET_COLORS.slice(0, 10).map(preset => (
               <button
                 key={preset.hex}
@@ -271,7 +271,7 @@ export default function ColorPicker({ colors = [], onChange }) {
             ))}
             <button
               onClick={() => setShowPresets(!showPresets)}
-              className="text-xs text-primary-600 hover:text-primary-700 ml-1"
+              className="text-xs text-primary-600 hover:text-primary-700 ms-1"
             >
               {showPresets ? 'Less' : `+${PRESET_COLORS.length - 10} more`}
             </button>
