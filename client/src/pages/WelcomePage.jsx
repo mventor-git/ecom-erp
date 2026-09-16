@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import WelcomeModel3D from '../components/WelcomeModel3D';
+import ProductGrid from '../components/ProductGrid';
 import { getPublicSetting } from '../api/settings';
+import { getProducts } from '../api/products';
 
 /**
  * WelcomePage - Full-page vertical slider
@@ -65,15 +67,31 @@ export default function WelcomePage() {
     });
   }, [slides]);
 
-  // Fetch welcome slides
+  // Fetch welcome slides. Hard timeout: a hung request must NEVER trap the
+  // visitor on the spinner — it degrades to the empty (navigable) state.
   useEffect(() => {
-    fetch('/api/welcome-slides')
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    fetch('/api/welcome-slides', { signal: ctrl.signal })
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setSlides(data);
       })
-      .catch(err => console.error('Error fetching welcome slides:', err))
-      .finally(() => setSlidesLoaded(true));
+      .catch(err => { if (err?.name !== 'AbortError') console.error('Error fetching welcome slides:', err); })
+      .finally(() => { clearTimeout(timer); setSlidesLoaded(true); });
+    return () => { clearTimeout(timer); ctrl.abort(); };
+  }, []);
+
+  // Placeholder content when no slides are configured: newest products so
+  // the welcome screen is never a bare page (escape link always stays).
+  const [featured, setFeatured] = useState([]);
+  useEffect(() => {
+    getProducts({ sort: 'newest' })
+      .then(res => {
+        const arr = Array.isArray(res.data) ? res.data : (res.data?.products || res.data?.items || []);
+        if (arr.length > 0) setFeatured(arr.slice(0, 4));
+      })
+      .catch(() => {});
   }, []);
 
   const goToSlide = useCallback((index) => {
@@ -204,24 +222,42 @@ export default function WelcomePage() {
     };
   }, [goNext, goPrev, isTransitioning]);
 
-  // Loading
+  // Loading — skeleton hero, never a bare spinner on a black void.
   if (slides.length === 0) {
     if (!slidesLoaded) {
       return (
-        <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
+        <div className="fixed inset-0 bg-dark-950 overflow-hidden" aria-busy="true" aria-label="Loading store">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 h-full flex items-center">
+            <div className="max-w-2xl w-full space-y-5 animate-pulse">
+              <div className="h-4 w-40 rounded bg-white/10" />
+              <div className="h-12 w-3/4 rounded-lg bg-white/10" />
+              <div className="h-12 w-1/2 rounded-lg bg-white/10" />
+              <div className="h-4 w-2/3 rounded bg-white/10" />
+              <div className="flex gap-3 pt-4">
+                <div className="h-12 w-44 rounded-xl bg-white/10" />
+                <div className="h-12 w-44 rounded-xl bg-white/10" />
+              </div>
+            </div>
+          </div>
         </div>
       );
     }
-    // No welcome slides configured YET — an intentional, navigable state.
+    // No welcome slides configured YET — an intentional, navigable state
+    // with real placeholder content (never a dead end).
     return (
-      <div className="fixed inset-0 bg-dark-950 flex items-center justify-center px-6">
-        <div className="text-center max-w-md">
+      <div className="fixed inset-0 bg-dark-950 overflow-y-auto px-6 py-14">
+        <div className="text-center max-w-md mx-auto">
           <div className="text-4xl mb-4" aria-hidden="true">🛍️</div>
           <h1 className="text-2xl font-bold text-white mb-2">{storeName || 'This store'}</h1>
           <p className="text-white/60 mb-8">The shop is open — welcome screen not set yet.</p>
           <Link to="/home" className="btn-secondary text-base px-8 py-3 inline-block">Continue to the shop</Link>
         </div>
+        {featured.length > 0 && (
+          <div className="max-w-5xl mx-auto mt-12">
+            <p className="text-center text-white/40 text-xs uppercase tracking-widest mb-4">Newest in the shop</p>
+            <ProductGrid products={featured} loading={false} />
+          </div>
+        )}
       </div>
     );
   }

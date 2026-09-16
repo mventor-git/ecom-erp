@@ -1,5 +1,9 @@
 # Changelog
 
+## [4.26.2] - 2026-09-16 - ticket 098: welcome page never traps on loading
+### Fixed
+- `client/src/pages/WelcomePage.jsx`: spinner only cleared when the slides request settled — a hung request = infinite bare spinner. Now 12s abort timeout (degrades to content), skeleton hero while loading, and the no-slides state shows newest products as placeholders (escape to shop kept).
+
 ## [4.26.1] - 2026-09-16 - ticket 097: admin contract crashes + sticky storefront filters
 ### Fixed
 - Picking & Packing white-screen (`tasks.map`): picking list returns `{items, pagination}`, UI stored the object — unwrap + `Array.isArray` guard (page can never crash on a shape change again).
